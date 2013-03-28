@@ -173,7 +173,29 @@ function Simulator(modules, G, R, UI) {
 	// Pre-generate some values for the simulation so they only have to be calculated once
 	this.bakedValues = {};
 	this.bakedValues.latDistances = [];
-	//for (var i = 0; i < 90)
+	var getGridDistance = function (lat,latdelta,lngdelta) {
+		var phi = latdelta/180*Math.PI,
+			theta = lngdelta/180*Math.PI,
+			phix = lat/180*Math.PI,
+			phiy = (lat+latdelta)/180*Math.PI;
+		
+		var a = (Math.sin(phi/2) * Math.sin(phi/2) +
+		        Math.sin(theta/2) * Math.sin(theta/2) * Math.cos(phix) * Math.cos(phiy)); 
+		return 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)) * 6378; // rough estimate of the radius of the earth in km (6378.1)
+	}
+	for (var i = 0; i < 90; i++) {
+		// directly adjacent points clockwise from top, then diagonal points clockwise from top right.
+		this.bakedValues.latDistances.push([
+			getGridDistance(i+0.5,-1, 0),
+			getGridDistance(i+0.5, 0, 1),
+			getGridDistance(i+0.5, 1, 0),
+			getGridDistance(i+0.5, 0,-1),
+			getGridDistance(i+0.5,-1, 1),
+			getGridDistance(i+0.5, 1, 1),
+			getGridDistance(i+0.5, 1,-1),
+			getGridDistance(i+0.5,-1,-1)
+		]);
+	}
 
 	if(this.points == undefined) {
 		if(G != undefined && R != undefined) {
@@ -480,17 +502,17 @@ Simulator.prototype.tick = function() {
 			else if(spread_rand < 5)
 				target = current.adjacent[1];
 			else if(spread_rand < 6)
-				target = current.adjacent[3];
-			else if(spread_rand < 7)
 				target = current.adjacent[2];
+			else if(spread_rand < 7)
+				target = current.adjacent[3];
 			else if(spread_rand < 7.705)
-				target = current.adjacent[0].adjacent[3];
-			else if(spread_rand < 8.410)
-				target = current.adjacent[2].adjacent[3];
-			else if(spread_rand < 9.115)
 				target = current.adjacent[0].adjacent[1];
-			else
+			else if(spread_rand < 8.410)
 				target = current.adjacent[2].adjacent[1];
+			else if(spread_rand < 9.115)
+				target = current.adjacent[2].adjacent[3];
+			else
+				target = current.adjacent[0].adjacent[3];
 			
 			// infect is for all squares, infectSelf is for just its own square, mobili
 			strength.infect = 0;
