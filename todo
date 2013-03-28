@@ -1,0 +1,40 @@
+Make zombies move based on true distance and with probability distribution
+--
+Stirling's approximation and probability distribution - INTEGRAL OF (2/sqrt(2*pi*100))*e^(-x^2/(2*100)) where 100 is # steps, x is probability of landing on that spot
+
+prob = 1-erf(n/sqrt(2N)) where N is steps and n is where you want to end up going past
+
+def erf(x):
+    # save the sign of x
+    sign = 1 if x >= 0 else -1
+    x = abs(x)
+
+    # constants
+    a1 =  0.254829592
+    a2 = -0.284496736
+    a3 =  1.421413741
+    a4 = -1.453152027
+    a5 =  1.061405429
+    p  =  0.3275911
+
+    # A&S formula 7.1.26
+    t = 1.0/(1.0 + p*x)
+    y = 1.0 - (((((a5*t + a4)*t) + a3)*t + a2)*t + a1)*t*math.exp(-x*x)
+    return sign*y # erf(-x) = -erf(x)
+--
+
+Add a preview grid to evolution menu so player can see
+
+Add functionality to genes to affect other adjacent genes
+
+Add interface in UI to display news in the ticker and popup warnings/notifications (like research started!)
+
+Add tutorial function that overlays graphics and removes them on triggers
+
+
+
+Make values for defining land color smoothly shift from one data square to the other - i.e. as it moves left 1.00,0.00 0.75,0.25 0.50,0.50 0.25,0.75 for 4x4 texture pixels per data, same for down
+
+Fix land being at zero moisture for horse latitudes, no mixing or mixing of identically dry squares or something
+
+WHEN MOVING TO SERVER:  make climate data image load from file, make UI html load from files, make simulator modules load from files

@@ -1,0 +1,498 @@
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed, 
+figure, figcaption, footer, header, hgroup, 
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-size: 100%;
+	font: inherit;
+	vertical-align: baseline;
+}
+/* HTML5 display-role reset for older browsers */
+article, aside, details, figcaption, figure, 
+footer, header, hgroup, menu, nav, section {
+	display: block;
+}
+body {
+	line-height: 1;
+}
+ol, ul {
+	list-style: none;
+}
+blockquote, q {
+	quotes: none;
+}
+blockquote:before, blockquote:after,
+q:before, q:after {
+	content: '';
+	content: none;
+}
+table {
+	border-collapse: collapse;
+	border-spacing: 0;
+}
+
+body {
+	background-color: #111;
+	font-family: Arial, sans-serif;
+}
+h1, h2 {
+	font-size: 140%;
+	font-weight: bold;
+	margin-top: 0;
+}
+h3 {
+	font-size: 130%;
+	font-weight: bold;
+	margin-top: 1em;
+}
+.strong {
+	font-weight: bold;
+}
+.emphasis {
+	font-style: italic;
+}
+
+#container, body {
+	overflow: hidden;
+}
+
+#ui, #ui_mask {
+	position: absolute;
+	z-index: 10;
+	width: 100%;
+	height: 100%;
+	left: 0px;
+	top: 0px;
+}
+#ui_mask {
+	z-index: 12;
+	background: black;
+	opacity: 0.6;
+	visibility: hidden;
+}
+
+div.dataField {
+	z-index: 11;
+	position: absolute;	
+	color: white;
+	font-size: small;
+	font-family: monospace;
+}
+div.overlay {
+	z-index: 20;
+	width: 800px;
+	height: 600px;
+	margin-left: -400px;
+	margin-top: -300px;
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	background-color: #080808;
+	border: 1px solid #111;
+	overflow: hidden;
+}
+div.overlay h3, div.overlay p {
+	margin-left: 16px;
+}
+div.overlay .menu {
+	position: absolute;
+	bottom: 16px;
+	right: 16px;
+	width: 768px;
+}
+div.overlay .dragging {
+	position: absolute;
+	z-index: 30;
+	opacity: 0.3;
+}
+div.overlay .dragging.valid {
+	opacity: 0.8;
+}
+
+div.overlay .menu button {
+	float: right;
+}
+div.overlay .menu button.dataField-mutationMenu_clear {
+	float: left;
+	background-image: url('../ui/refresh.png');
+}
+
+
+div.stats {
+	left: 0px;
+	top: 0px;
+	height: 300px;
+	width: 200px;
+	padding: 12px;
+}
+div.stats a {
+	color: #6666ff;
+}
+
+.menu button {
+	padding: 7px;
+	border: 0;
+	color: black;
+	border-radius: 3px;
+	background-color: #ffaa00;
+}
+.menu button.icon {
+	font-weight: bold;
+	background: #ffaa00;
+	background-position: center center;
+	background-repeat: no-repeat;
+	background-color: #e0e0e0;
+	width: 28px; 
+}
+.menu button.primary {
+	font-weight: bold;
+}
+.menu button.secondary {
+	background: transparent;
+	text-decoration: underline;
+	color: #ffaa00;
+}
+.menu button:hover {
+	background-color: #ffdd22;
+}
+.menu button.icon:hover {
+	background-color: #f5f5f5;
+}
+.menu button.secondary:hover {
+	background: transparent;
+	color: #ffdd22;
+}
+
+div.main_menu {
+	left: 0px;
+	bottom: 0px;
+	width: 200px;
+	padding: 12px;
+}
+div.main_menu button, div.monitor button {
+	color: white;
+	background: #990000;
+	display: block;
+	width: 100%;
+	margin-top: 8px;
+	border: 0;
+	padding: 4px;
+}
+div.main_menu button.primary {
+	padding: 10px;
+	font-size: medium;
+}
+div.main_menu button.selected, div.monitor button.selected {
+	background: #cc3333;
+}
+div.main_menu button.close {
+	background: #551111;
+}
+div.main_menu button:hover, div.monitor button:hover {
+	background: #aa1111;
+	cursor: pointer;	
+}
+div.main_menu .dataViewList {
+	position: absolute;
+	margin-top: 8px;
+}
+div.main_menu .dataViewList button {
+	padding: 5px;
+	border-bottom: 1px solid #330000;
+	margin: 0;
+	width: 200px;
+}
+
+div.monitor {
+	position: absolute;
+	top: 0;
+	right: 0;
+	height: 100%;
+	width: 190px;
+}
+div.monitor>div {
+	width: 210px;
+}
+div.monitor .monitorControl {
+	height: 20%;
+	margin: 12px;
+	position: fixed;
+	top: 0;
+	right: 0;
+	padding-top: 4.5em;
+}
+div.monitor .monitorView {
+	height: 80%;
+	width: 210px;
+	margin-right: 12px;
+	position: fixed;
+	bottom: 0;
+	right: 0;
+	border-top: 1px solid white;
+}
+div.monitor .monitorView>div {
+	height: 100%;
+	width: 210px;
+}
+.money_panel {
+	z-index: 24;
+	position: absolute;
+	top: 0;
+	right: 0;
+	padding-right: 16px;
+	color: white;
+	font-size: small;
+}
+.money_panel span {
+	float: right;
+	font-size: 200%;
+}
+div.shipping {
+	overflow-y: scroll;
+	overflow-x: hidden;
+}
+div.shipping h3 {
+	width: 100%;
+}
+div.dataField-progressBar {
+	height: 60px;
+	width: 100%;
+}
+div.dataField-progressBar h3{
+	font-size: small;
+	font-weight: normal;
+}
+div.dataField-progressBar div.progress {
+	width: 188px;
+	height: 10px;
+	float: left;
+	position: relative;
+	background: #222277;
+}
+div.dataField-progressBar div.progress div {
+	width: 188px;
+	height: 10px;
+	background: #9999ff;
+}
+div.dataField-progressBar div.date {
+	margin-left: 1em;
+	background: transparent;
+}
+div.dataField-progressBar div.date div {
+	background: transparent;
+}
+div.shipping div.dataField-progressBar:hover {
+	background-color: #333;
+}
+
+div.news p {
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+}
+
+div.evolution>h3 {
+	margin-left: 16px;
+	z-index: 24;
+	position: absolute;
+	top: 0;
+	left: 0;
+}
+div.draggable, canvas.draggable {
+	width: 1000px;
+	height: 1000px;
+	top: -200px;
+	left: -100px;
+	position: absolute;
+	z-index: 20;
+}
+div.draggable {
+	z-index: 21;
+}
+canvas.draggable {
+	background-image: url('../ui/hash.gif');
+}
+div.evolution>div div {
+	width: 30px;
+	height: 30px;
+	border-radius: 15px;
+	margin-left: -15px;
+	margin-top: -15px;
+	position: absolute;
+	z-index: 22;
+	background-image: url('../ui/evol_sprite_unavail.png');
+}
+div.evolution>div div.available {
+	background-image: url('../ui/evol_sprite_avail.png');
+}
+div.evolution>div div.active {
+	background-image: url('../ui/evol_sprite_active.png');
+}
+
+div.alert {
+	width: 400px;
+	height: 300px;
+	margin-left: -200px;
+	margin-top: -150px;
+	background-image: url('../ui/hash.gif');
+}
+
+div.bottom_stats {
+	height: 80px;
+	width: 100%;
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	z-index: 10;
+}
+div.bottom_stats div.dataField-progressBar {
+	width: 300px;
+	position: absolute;
+	bottom: 0;
+	left: 50%;
+	margin-left: -150px;
+}
+div.bottom_stats div.dataField-progressBar div.progress, div.bottom_stats div.dataField-progressBar div.progress div {
+	width: 300px;
+	height: 10px;
+}
+
+div.toolbox {
+	width: 800px;
+	float: left;
+	height: 600px;
+}
+div.toolbox #tb_board {
+	float: left;
+	background-color: #151515;
+	margin-left: 5px;
+	margin-top: 5px;
+	width: 335px;
+	height: 334px;
+	display: table;
+}
+div.toolbox #tb_board>div {
+	display: table-cell;
+	vertical-align: middle;
+}
+div.toolbox #tb_board .grid {
+	background-image: url('../ui/grid2.gif');
+	margin: 0 auto;
+	position: relative;
+}
+div.toolbox #tb_gene {
+	display: none;
+}
+div.toolbox .geneBlock.active {
+	padding: 10px;
+	margin-left: 5px;
+	margin-top: 5px;
+	background-color: #151515;
+	float: left;
+	width: 88px;
+	height: 88px;
+	display: table;
+	position: static;
+}
+div.toolbox .geneBlock.active:nth-child(2n) {
+	width: 89px;
+}
+div.toolbox .geneBlock.active p.image {
+	display: table-row;
+	text-align: center;
+	vertical-align: middle;
+}
+div.toolbox .geneBlock>img {
+	float: left;
+}
+div.toolbox .geneBlock.active p.image img {
+	margin: 10px;
+}
+div.toolbox .geneBlock.active p.name{
+	color: white;
+	margin: 0;
+	font-size: small;
+	text-align: center;
+	display: table-row;
+	height: 1px;
+}
+div.toolbox .geneBlock.active.used {
+	opacity: 0.3;
+}
+div.toolbox div.grid .placed {
+	position: absolute;
+	z-index: 29;
+}
+
+.tooltip {
+	z-index: 25;
+	position: absolute;
+	font-size: small;
+	padding: 8px;
+	overflow: hidden;
+	visibility: hidden;
+}
+#render_tooltip {
+	color: white;
+	background-color: black;
+	opacity: 0.8;
+	border-radius: 4px;
+}
+#tooltip {
+	color: black;
+	background-color: #ffcc00;
+}
+#tooltip table {
+	border-spacing: 6px;
+	border-collapse: separate;
+	width: 100%;
+}
+#tooltip td, #tooltip th {
+	padding: 0;
+	vertical-align: middle;
+}
+#tooltip tr th {
+	padding-bottom: 10px;
+	font-size: 130%;
+	vertical-align: top;
+	font-weight: bold;
+	text-align: left;
+}
+#tooltip td p {
+	margin-top: 0.5em;
+}
+#tooltip table td:first-child {
+	width: 4em;
+}
+
+#progress {
+	margin: 14em auto;
+	width: 200px;
+}
+#progress p {
+	text-align: center;
+	color: white;
+	font-size: x-small;
+	font-family: monospace;
+	margin-top: 1em;
+}
+#progress .progressbar {
+	height: 8px;
+	border: 1px solid rgb(60,60,60);
+}
+#progress .progressbar div {
+	height: 8px;
+	width: 200px;
+	background: rgb(45,45,45);
+	width: 0;
+}
