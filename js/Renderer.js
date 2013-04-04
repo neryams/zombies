@@ -262,6 +262,7 @@ var Renderer = function() {
         if(Math.abs(rotation.y - mouseVector.y * 0.002) < PI_HALF)
             rotation.y -= mouseVector.y * 0.002;
 
+        TWEEN.update();
         sphere.rotation.y = -rotation.x;
         sphere.rotation.x = rotation.y;
 
@@ -454,8 +455,15 @@ var Renderer = function() {
                 renderer.setSize( newWidth, newHeight );          
             }
         },
+        lookAt: function (square) {
+            var tween = new TWEEN.Tween(rotation).to({x: -(90 - square.lng) * Math.PI / 180, y: square.lat * Math.PI / 180, z: 0}, 2000);
+            tween.easing(TWEEN.Easing.Cubic.Out);
+            tween.start();
+        },
         setData: function(dataPoint, popLength, zomLength) {
             if(zomLength) {
+                if(Math.abs(zomLength - popLength) < 0.2)
+                    zomLength = popLength + 0.2;
                 dataPoint.vertices_zom[1].setLength(popLength);
                 dataPoint.vertices_zom[3].setLength(popLength);
                 dataPoint.vertices_zom[4].setLength(popLength);

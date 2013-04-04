@@ -173,6 +173,7 @@ function Simulator(modules, G, R, UI) {
 	// Pre-generate some values for the simulation so they only have to be calculated once
 	this.bakedValues = {};
 	this.bakedValues.latDistances = [];
+	this.bakedValues.latCumChance = [];
 	var getGridDistance = function (lat,latdelta,lngdelta) {
 		var phi = latdelta/180*Math.PI,
 			theta = lngdelta/180*Math.PI,
@@ -195,6 +196,23 @@ function Simulator(modules, G, R, UI) {
 			getGridDistance(i+0.5, 1,-1),
 			getGridDistance(i+0.5,-1,-1)
 		]);
+		var total_dists = 0;
+		for(var j = 0; j < 8; j++) {
+			total_dists += 1/this.bakedValues.latDistances[i][j];
+		}
+		this.bakedValues.latCumChance.push([
+			1/this.bakedValues.latDistances[i][0]/total_dists,
+			1/this.bakedValues.latDistances[i][1]/total_dists,
+			1/this.bakedValues.latDistances[i][2]/total_dists,
+			1/this.bakedValues.latDistances[i][3]/total_dists,
+			1/this.bakedValues.latDistances[i][4]/total_dists,
+			1/this.bakedValues.latDistances[i][5]/total_dists,
+			1/this.bakedValues.latDistances[i][6]/total_dists,
+			1/this.bakedValues.latDistances[i][7]/total_dists
+		]);
+		for(var j = 1; j < 8; j++) {
+			this.bakedValues.latCumChance[i][j] += this.bakedValues.latCumChance[i][j-1];
+		}
 	}
 
 	if(this.points == undefined) {
@@ -260,6 +278,7 @@ Simulator.prototype.start = function(strainId) {
 
 
 		that.UI.load.end();
+		that.Renderer.lookAt(startSq);
 
 		that.tick()
 		that.interval = setInterval( (function(self) { return function() {self.tick()}} )(that), 500);
@@ -483,36 +502,41 @@ Simulator.prototype.tick = function() {
 	if(this.paused)
 		return false;
 
-	var i,j,n,spread_rand,rand,target,strength = {},
+	var i,j,n,spread_rand,rand,target,current,chance,chances,direction,distance,beginInfected,strength = {},
 		S = this;
 	if(this.strain != null) {
         var size;
 
 		for(i = 0, n = this.activePoints.length; i < n; i++) {
 			current = this.activePoints[i];
-			var beginInfected = current.infected;
+			chances = this.bakedValues.latCumChance[Math.floor(Math.abs(current.lat))];
+			beginInfected = current.infected;
 
 			rand = Math.random();
-			spread_rand = rand * 9.82; // 3 chances for self, 1 chance for each side, and 0.705 for each diagonal
-			rand = (rand * 100) % 1; // 3 chances for self, 1 chance for each side, and 0.705 for each diagonal
-			if(spread_rand < 3)
-				target = current;
-			else if(spread_rand < 4)
+			if(rand < chances[0]) {
 				target = current.adjacent[0];
-			else if(spread_rand < 5)
+			}
+			else if(rand < chances[1]) {
 				target = current.adjacent[1];
-			else if(spread_rand < 6)
+			}
+			else if(rand < chances[2]) {
 				target = current.adjacent[2];
-			else if(spread_rand < 7)
+			}
+			else if(rand < chances[3]) {
 				target = current.adjacent[3];
-			else if(spread_rand < 7.705)
+			}
+			else if(rand < chances[4]) {
 				target = current.adjacent[0].adjacent[1];
-			else if(spread_rand < 8.410)
+			}
+			else if(rand < chances[5]) {
 				target = current.adjacent[2].adjacent[1];
-			else if(spread_rand < 9.115)
+			}
+			else if(rand < chances[6]) {
 				target = current.adjacent[2].adjacent[3];
-			else
+			}
+			else {
 				target = current.adjacent[0].adjacent[3];
+			}
 			
 			// infect is for all squares, infectSelf is for just its own square, mobili
 			strength.infect = 0;
@@ -524,8 +548,8 @@ Simulator.prototype.tick = function() {
 			for(j = 0; j < this.activeModules.infect.length; j++)
 				this.activeModules.infect[j].process(current,target,strength);
 			
-			if(this.strain.process(current,target,strength,rand))
-				this.activePoints.push(target);
+			this.strain.process(current,current,strength);
+			this.strain.process(current,target,strength);
 
 			for(j = 0; j < this.activeModules.spread.length; j++)
 				this.activeModules.spread[j].process(current,strength);
@@ -540,15 +564,6 @@ Simulator.prototype.tick = function() {
 				}
 			} else if(beginInfected > 0) {
 				this.Renderer.setData(current,180,180);
-			}
-			if(target.infected > 0) {
-				size_pop = ((target.total_pop+10) / G.config.max_pop) * 60 + 200;
-				size_zom = ((target.infected+10) / G.config.max_pop) * 60 + size_pop + 0.5;
-
-				this.Renderer.setData(target,size_pop);
-				if(size_zom > 0) {
-					this.Renderer.setData(target,size_zom,size_pop);			
-				}
 			}
 		}
 		for(j = 0; j < this.activeModules.event.length; j++)
@@ -565,6 +580,16 @@ Simulator.prototype.tick = function() {
 	}
 	return false;
 }
+Simulator.prototype.updateSquare = function(target) {
+	var	size_pop = ((target.total_pop+10) / G.config.max_pop) * 60 + 200,
+		size_zom = ((target.infected+10) / G.config.max_pop) * 60 + size_pop + 0.5;
+	if(target.infected > 0) {
+		this.Renderer.setData(target,size_pop);
+		if(size_zom > 0) {
+			this.Renderer.setData(target,size_zom,size_pop);			
+		}
+	}
+}
 
 /*
 	Infection modifier objects. Runs the activated functions on every tick of the simulator.
@@ -573,10 +598,12 @@ Simulator.prototype.tick = function() {
 			Valid Values:
 				infect  -- runs processFunction ON EVERY SQUARE at INFECT TIME with parameters CURRENT, TARGET and STRENGTH
 					Modifies chance (various options of STRENGTH) of a square (CURRENT) infecting another square or self (TARGET) based on the parameters of each square.
-				strain  -- runs processFunction ON EVERY SQUARE at INFECT TIME with parameters CURRENT, TARGET, STRENGTH, and RAND.
+				strain  -- runs processFunction ON EVERY SQUARE at INFECT TIME with parameters CURRENT, TARGET, STRENGTH, and CHANCE.
 					Returns TRUE if the target had no infections and now does (becomes newly 'active'). 
 					UNIQUE, multiple 'strain's will remove all but the last.
-					Runs after infect. Changes parameters in TARGET based on CURRENT and STRENGTH with random number RAND. Actually infects people or dead bodies, kills people, raises panic, all of that jazz.
+					Runs after infect. Changes parameters in TARGET based on CURRENT and STRENGTH. Actually infects people or dead bodies, kills people, raises panic, all of that jazz.
+					CHANCE is the multiplier for the effects on the target square (if the target square isn't itself). It's the chance that the square was selected, since further squares will
+					actually get hit less often.
 				spread  -- runs processFunction ON EVERY SQUARE with parameter CURRENT and STRENGTH. 
 					Runs after strain. Can simulate resistance killing infected, burning bodies, closing airports, developing medicine, etc.
 				event   -- runs processFunction once at the end of every tick. Can also be non-active (alwaysActive = false) to run function ON USER INPUT.
@@ -691,21 +718,19 @@ var SimulatorModules = {};
 	STRAIN - Simple virus. Infects  or kills healthy people, raises panic based on infected. 1 evo point per tick.
 */
 SimulatorModules['main'] = function() {
-	var newModule = new Module('strain', function(current,target,strength,rand) {
+	var newModule = new Module('strain', function(current,target,strength) {
 		var newInfection = false,
 			totalConverted = 0,
 			totalKilled = 0,
-			totalMoved = 0;
+			totalMoved = 0,
+			rand = Math.random();
 		if(target.total_pop > 0) {
 			// Kill people in self tile
 			if(target.dead == undefined)
 				target.dead = 0;
 			if(current.infected == 0)
 				strength.infect = 0;
-			if(target.id == current.id) {
-				strength.infect *= 1.5; // Better infection rates in same cell.
-				strength.mobility = 0;
-			} else {
+			if(target.id != current.id) {
 				strength.kill = 0;
 				strength.infectSelf = 0;
 			}
@@ -720,7 +745,7 @@ SimulatorModules['main'] = function() {
 				if(rand < (strength.infect/600)) {
 					totalConverted = Math.round(rand * strength.infect/600);
 					if(totalConverted > 0) {
-						newInfection = true;						
+						this.S.activePoints.push(target);				
 					}
 				}
 			} else if(strength.infect) {
@@ -737,40 +762,6 @@ SimulatorModules['main'] = function() {
 			target.total_pop -= totalKilled;
 			target.infected += totalConverted;
 			target.dead += totalKilled;
-
-			// Zombies walking around, distance probability distribution function based in strength. mobility being in km/h, and radius of planet being 6378.1 km
-			// Don't bother simulating zombies moving between squares with lots of zombies, this process is expensive and doesn't really do much for the simulation
-			if(target.infected < 5 || current.infected < 2) {
-				// error function approximation. No need to worry about sign, since x, or distance/maxDistance, will always be positive
-			    var a = [0.254829592,-0.284496736,1.421413741,-1.453152027,1.061405429];
-			    var p  =  0.3275911;
-
-			    var d = 111.319*0.5 // Distance in kilometers needed to travel to be in the next square
-			    var N = 24; // 24 "steps", or hours, in a day. Each step is the distance the zombie can travel in one hour, or kph.
-			    strength.mobility = 5;
-			    var x = d/Math.sqrt(2*N*strength.mobility);
-
-			    // A&S formula 7.1.26
-			    var t = 1.0/(1.0 + p*x)
-			    var y = 1.0 - (((((a[4]*t + a[3])*t) + a[2])*t + a[1])*t + a[0])*t*Math.pow(Math.E,-x*x)
-
-
-
-				// Factor of 1.5 is to adjust for the fact that the simulator does "spread" only 2/3 of the time
-			    if(rand*100%1 > 1-(1-y)*1.5)
-			    	totalMoved = 1;
-
-			    /*if(strength.mobility) {
-					// Factor of 1.5 is to adjust for the fact that the simulator does "spread" only 2/3 of the time
-					totalMoved = Math.round(Math.sqrt(current.infected*strength.mobility*24*1.5));
-				}*/
-				if(current.infected < totalMoved)
-					totalMoved = current.infected;
-				if(totalMoved > 0 && target.infected == 0)
-					newInfection = true;	
-				target.infected += totalMoved;
-				current.infected -= totalMoved;				
-			}
 
 			// Add the cumulative panic level into the country and the world
 			strength.panic = Math.round((totalConverted*1.5+totalKilled) * (target.total_pop/this.S.config.max_pop + 0.5) * strength.panic / 10);
@@ -790,7 +781,7 @@ SimulatorModules['main'] = function() {
 
 			callback(this.S.countries[randCountry].capitol);
 		},
-		children: ['panic','world_stats','gridBoost','population','climate','seaports','vaccine','bite','viral_infect','moving']
+		children: ['panic','world_stats','gridBoost','population','climate','seaports','vaccine','bite','viral_infect','movement']
 	});
 	return newModule;
 }
@@ -894,10 +885,8 @@ SimulatorModules['panic'] = function() {
 SimulatorModules['population'] = function() {
 	var newModule = new Module('infect', function(current,target,strength) {
 		var infect_strength = current.infected*(1+target.total_pop/this.S.config.max_pop);
-		if(current.id == target.id)
-			strength.infectSelf *= infect_strength;
-		else
-			strength.infect *= infect_strength;
+		strength.infectSelf *= infect_strength;
+		strength.infect *= infect_strength;
 	},{
 		runtime: 9,
 		children: ['aggression'],
@@ -907,9 +896,110 @@ SimulatorModules['population'] = function() {
 }
 
 /*
+	Movement: causes zombies to wander around.
+*/
+SimulatorModules['movement'] = function() {
+	var newModule = new Module('spread', function(current,strength) {
+		// Zombies walking around, distance probability distribution function based in strength. mobility being in km/h, and radius of planet being 6378.1 km
+		// Don't bother simulating zombies moving between squares with lots of zombies, this process is expensive and doesn't really do much for the simulation
+		if(strength.mobility > 0 && current.infected > 0) {
+			if(current.infectedMovement === undefined)
+				current.infectedMovement = 0;
+
+			// error function approximation. No need to worry about sign, since x, or distance/maxDistance, will always be positive
+		    var direction,target,normalRand,normalMean,cumChance,
+		    	chances = this.cumChance(current.lat, (strength.mobility + current.infectedMovement));
+				rand = Math.random(),
+		    	totalMoved = 0;
+		    var cumChance = (chances[0]+chances[1]+chances[2]+chances[3]+chances[4]+chances[5]+chances[6]+chances[7])*current.infected;
+			if(cumChance > 1)
+				rand *= cumChance;
+
+		    // TODO: vertical spread chance doesn't quite match up with horizontal spread chance near the poles. vertical chance astronomically tiny
+
+			// save some processing if rand is way too high to catch the spreading
+			if(rand < cumChance)
+				for(direction = 0; direction < 8; direction++) {
+					chances[direction] *= current.infected;
+					// We want cumulative chance for the randomization
+					if(direction > 0)
+						chances[direction] += chances[direction-1];
+					// If at least one zombie makes it to the next square, calculate how many actually make it in
+					if(rand < chances[direction]) {
+						if(direction > 0)
+							normalRand = (rand - chances[direction-1])/(chances[direction]-chances[direction-1]);
+						else 
+							normalRand = rand/chances[direction];
+						// mean number of transfers is equal to the square root of the total possible.
+						normalMean = Math.ceil(Math.pow(current.infected,0.75)); 
+						// standard deviation of transfers is 1/3 of the mean, so that 99% of the number of transfers is within the mean.
+						totalMoved = Math.ceil((normalRand*2 + (normalRand*10%1)*2 + (normalRand*100%1)*2 - 3)*(normalMean/3) + normalMean);
+						if(totalMoved < 1)
+							totalMoved = 1;
+
+						target = current.adjacent[direction];
+						break;
+					}
+				}
+
+			// If the zombie didn't make it, add a movement value for the next move.
+			if(totalMoved == 0 || !target)
+		    	current.infectedMovement += strength.mobility;
+			// If the zombie is actually moving, do the movement stuff
+			else if(target.total_pop > 0 || target.infected > 0) {
+		    	current.infectedMovement = 0;
+
+				if(current.infected < totalMoved)
+					totalMoved = current.infected;
+
+				if(totalMoved > 0 && target.infected == 0)
+					this.S.activePoints.push(target);
+
+				target.infected += totalMoved;
+				current.infected -= totalMoved;
+				this.S.updateSquare(target);
+			}
+		}
+	},{
+		init: function() {
+			this.bakedMoveChance = [];
+			this.cumChance = function (lat,movement) {
+				var lat = Math.floor(Math.abs(lat)),
+					movement = Math.floor(movement);
+				var chances = this.S.bakedValues.latCumChance[lat];
+				if(!this.bakedMoveChance[lat])
+					this.bakedMoveChance[lat] = [];
+				if(!this.bakedMoveChance[lat][movement]) {
+					var result = [];
+					for(var direction = 0; direction < 8; direction++) {
+						distance = this.S.bakedValues.latDistances[lat][direction];
+						// A&S erf formula 7.1.26
+						var a = [0.254829592,-0.284496736,1.421413741,-1.453152027,1.061405429],
+					    	p  =  0.3275911,
+
+					    	// distance is the distance in kilometers needed to travel to be in the next square
+					    	// 24 "steps", or hours, in a day. Each step is the distance the zombie can travel in one hour, or kph.
+					    	x = distance*0.5/Math.sqrt(2*24*movement),
+
+					    	t = 1.0/(1.0 + p*x);
+						result[direction] = (((((a[4]*t + a[3])*t) + a[2])*t + a[1])*t + a[0])*t*Math.pow(Math.E,-x*x);
+					}
+					this.bakedMoveChance[lat][movement] = result;
+				}
+				return this.bakedMoveChance[lat][movement].slice(0); // return a copy so the array can be freely modified
+			}
+		},
+		alwaysActive: true,
+		children: ['movespeed']
+
+	});
+	return newModule;
+}
+
+/*
 	Climate: Module to change the infect and killing rate (overall zombie strength) based on the climate. Zombies like the climate that they start in.
 */
-SimulatorModules['moving'] = function() {
+SimulatorModules['movespeed'] = function() {
 	var newModule = new Module('infect', function(current,target,strength) {
 		// If this is running  due to an upgrade, do the upgrade
 		if(arguments.length < 3) {
@@ -939,9 +1029,9 @@ SimulatorModules['moving'] = function() {
 			this.panic = 0;
 			this.S.addUpgrades(this,
 				{cost: 1000,paths:['bite'],name:'Hunched Walk', description:'Zombies move and spread faster, are slightly more deadly, and make people panic. All movement boosts synergize with biting.', gene:{size: 4, shape: 's', color: 'grey'}},
-				{cost: 2000,paths:['moving-0'],name:'Upright Walk', description:'Zombies move spread even faster, are slightly more deadly, and make people panic. All movement boosts synergize with biting.', gene:{size: 4, shape: 's', color: 'grey'}},
-				{cost: 2000,paths:['moving-0'],name:'Famished Trot', description:'Zombies can shuffle quickly to chase prey. More deadly, slightly faster spreading.', gene:{size: 5, shape: 'c', color: 'red'}},
-				{cost: 8000,paths:['moving-2'],name:'Ravenous Sprint', description:'Zombies can sprint. Results in abject terror and a large increase in deadliness.', gene:{size: 6, shape: 'c', color: 'red'}}
+				{cost: 2000,paths:['movespeed-0'],name:'Upright Walk', description:'Zombies move spread even faster, are slightly more deadly, and make people panic. All movement boosts synergize with biting.', gene:{size: 4, shape: 's', color: 'grey'}},
+				{cost: 2000,paths:['movespeed-0'],name:'Famished Trot', description:'Zombies can shuffle quickly to chase prey. More deadly, slightly faster spreading.', gene:{size: 5, shape: 'c', color: 'red'}},
+				{cost: 8000,paths:['movespeed-2'],name:'Ravenous Sprint', description:'Zombies can sprint. Results in abject terror and a large increase in deadliness.', gene:{size: 6, shape: 'c', color: 'red'}}
 			);
 		},
 		runtime: 0,
@@ -1015,8 +1105,8 @@ SimulatorModules['bite'] = function() {
 			this.val('panic',2);
 			this.val('infectPower',1);
 		// Otherwise this is a standard run
-		} else if(current.id == target.id) {
-			strength.infectSelf = this.infectPower * current.infected * this.S.modules['aggression'].val('aggression') * (strength.mobility + this.S.modules['moving'].val('burstSpeed'));
+		} else {
+			strength.infectSelf = this.infectPower * current.infected * this.S.modules['aggression'].val('aggression') * (strength.mobility + this.S.modules['movespeed'].val('burstSpeed'));
 			strength.panic += this.panic;
 		}
 	},{
@@ -1130,10 +1220,8 @@ SimulatorModules['aggression'] = function() {
 			this.val('panic',3);
 		// Otherwise this is a standard run
 		} else {
-			if(target.id == current.id) {
-				strength.kill = current.infected * this.aggression * (strength.mobility + this.S.modules['moving'].val('burstSpeed')) / 5;
-				strength.panic = this.panic;
-			}
+			strength.kill = current.infected * this.aggression * (strength.mobility + this.S.modules['movespeed'].val('burstSpeed')) / 5;
+			strength.panic = this.panic;
 		}
 	},{
 		runtime: 0,

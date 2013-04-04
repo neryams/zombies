@@ -955,7 +955,7 @@ var UserInterface = function UserInterface(Renderer) {
 			}*/
 		});
 
-        UI.interfaceParts.evolveMenu_button.element.trigger('click');
+        //UI.interfaceParts.evolveMenu_button.element.trigger('click');
         //UI.interfaceParts.mutateMenu_button.element.trigger('click');
 	}
 
