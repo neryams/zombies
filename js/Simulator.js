@@ -907,7 +907,7 @@ SimulatorModules['movement'] = function() {
 				current.infectedMovement = 0;
 
 			// error function approximation. No need to worry about sign, since x, or distance/maxDistance, will always be positive
-		    var direction,target,normalRand,normalMean,cumChance,
+		    var direction,target,normalRand,normalMean,cumChance,actualChance,
 		    	chances = this.cumChance(current.lat, (strength.mobility + current.infectedMovement));
 				rand = Math.random(),
 		    	totalMoved = 0;
@@ -922,6 +922,7 @@ SimulatorModules['movement'] = function() {
 				for(direction = 0; direction < 8; direction++) {
 					chances[direction] *= current.infected;
 					// We want cumulative chance for the randomization
+					actualChance = chances[direction];
 					if(direction > 0)
 						chances[direction] += chances[direction-1];
 					// If at least one zombie makes it to the next square, calculate how many actually make it in
@@ -947,7 +948,7 @@ SimulatorModules['movement'] = function() {
 		    	current.infectedMovement += strength.mobility;
 			// If the zombie is actually moving, do the movement stuff
 			else if(target.total_pop > 0 || target.infected > 0) {
-		    	current.infectedMovement = 0;
+		    	current.infectedMovement *= (1 - actualChance/cumChance);
 
 				if(current.infected < totalMoved)
 					totalMoved = current.infected;
