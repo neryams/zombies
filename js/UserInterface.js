@@ -549,7 +549,7 @@ Evolution.prototype.buildWeb = function(upgrade,lastTheta,depth) {
 
 var UserInterface = function UserInterface(Renderer) {
 	var mouse = { x:0, y:0, lastx:0, lasty:0, spherelng:0, spherelat:0, down:false, movement:null },
-		sphere_coords,visualization = '', WorldData, Generator, Simulator, 
+		sphere_coords,visualization = '', WorldData, Simulator, 
 		status = { pauseUI: false, showToolTip: false, toolTipMode: '', mutateGridSize: 0 },
 		dataFieldsRoot = [], interfaceParts = {},lang = {},alerts = {},
 		langOption = 'en';
@@ -575,7 +575,7 @@ var UserInterface = function UserInterface(Renderer) {
 	var load = {
 		loading: {
 			done: 0, curProg: 0, curShare: 0, curStep: 0, 
-			steps: ['loading resources','generating textures','setting height','calculating coastline','generating heat','simulating climate','populating world','playing the game of thrones','reticulating splines']
+			steps: ['loading resources','generating textures','setting height','calculating coastline','generating heat','simulating climate','populating world','playing the game of thrones','curing cancer','reticulating splines']
 		},
 		start: function() {
 			$('#setup').css('display','none');
@@ -602,7 +602,7 @@ var UserInterface = function UserInterface(Renderer) {
 					opens: [uiMenuDataviews] 
 				}).val('Data Views').element.position();
 			uiMenuDataviews.addDataField('button',{ class: 'close', onClick: function() { this.parent.hide(); } }).val('Close');
-			uiMenuDataviews.addDataField('button',{ onClick: function() { Renderer.setVisualization('country'); this.parent.hide(); activatePlanetTooltip(function(point){ return '<strong>' + Generator.data.countries[point.country].name + '</strong>'; });}}).val('Political');
+			uiMenuDataviews.addDataField('button',{ onClick: function() { Renderer.setVisualization('country'); this.parent.hide(); activatePlanetTooltip(function(point){ return '<strong>' + gData.countries[point.country].name + '</strong>'; });}}).val('Political');
 			uiMenuDataviews.addDataField('button',{ onClick: function() { Renderer.setVisualization('precipitation'); this.parent.hide(); activatePlanetTooltip(function(point){ return Math.round(point.precipitation*10)/10 + 'mm'; });}}).val('Precipitation');
 			uiMenuDataviews.addDataField('button',{ onClick: function() { Renderer.setVisualization('temperature'); this.parent.hide(); activatePlanetTooltip(function(point){ return Math.round((point.temperature - 273)*10)/10 + 'C'; });}}).val('Temperature');
 			uiMenuDataviews.addDataField('button',{ onClick: function() { Renderer.closeVisualization(); this.parent.hide(); deactivatePlanetTooltip(); } }).val('Disable All');
@@ -743,7 +743,7 @@ var UserInterface = function UserInterface(Renderer) {
 			if(sphere_coords && !isNaN(sphere_coords[0]) && !isNaN(sphere_coords[1])) {
 				$('#render_tooltip').css('top',mouse.y+10).css('left',mouse.x+30);
 				//$('#tooltip').css('display','block').html('asf');
-				var point = Generator.data.points[(Math.floor(90-sphere_coords[0])*Generator.config.w + Math.floor(sphere_coords[1]))];
+				var point = gData.points[(Math.floor(90-sphere_coords[0])*gConfig.w + Math.floor(sphere_coords[1]))];
 				if(point != undefined && point.total_pop > 0) {
 					if($('#render_tooltip').css('visibility') != 'visible')
 						$('#render_tooltip').css('visibility','visible');
@@ -1033,9 +1033,6 @@ var UserInterface = function UserInterface(Renderer) {
 		addEvolution: function(name,runOnClick,options) {
 			var newEvolution = new Evolution(name,runOnClick,options);
 			return newEvolution;
-		},
-		setGenerator: function(G) {
-			Generator = G;
 		},
 		setSimulator: function(S) {
 			Simulator = S;

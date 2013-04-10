@@ -5,7 +5,6 @@
 var Renderer = function() {
     var container, camera, scene, renderer, earthMesh, group, mouseVector, point, point2, sphere2DRadius, windowX, windowY, 
         visualLayer, visualLayerGeometry, visualLayerTexture, visualArc, config, climateGradient,visualizations={},visualization,
-        G,
         subgeo = new THREE.Geometry();
         rotation = { x: 0, y: 0, z: 0 },
         PI_HALF = Math.PI / 2,
@@ -23,25 +22,24 @@ var Renderer = function() {
     }
 
     // Function for filling the canvases with the data generated previously
-    function buildImage(globeTexture,globeHeightmap) {
+    function buildImage(globeTexture,globeHeightmap,texture) {
         var ctxT = globeTexture.getContext("2d");
         var ctxH = globeHeightmap.getContext("2d");
         var ctxC = climateGradient.getContext("2d");
-        var imgdT = ctxT.getImageData(0,0,G.config.tx_w,G.config.tx_h);
-        var imgdH = ctxH.getImageData(0,0,G.config.tx_w,G.config.tx_h);
+        var imgdT = ctxT.getImageData(0,0,gConfig.tx_w,gConfig.tx_h);
+        var imgdH = ctxH.getImageData(0,0,gConfig.tx_w,gConfig.tx_h);
         var imgdC = ctxC.getImageData(0,0,climateGradient.width,climateGradient.height);
         var pixT = imgdT.data;
         var pixH = imgdH.data;
         var grdC = imgdC.data;
         var current,dtI,gradX,gradY,gradI,color,color_ratio;
 
-        var data_ratio = G.config.tx_w / G.config.w;
-        var texture = G.getTexture();
+        var data_ratio = gConfig.tx_w / gConfig.w;
         for(i = 0, j = 0, n = texture.length; i < n; i++) {
             current = Math.floor(texture[i]);
-            dtI = Math.floor(i/G.config.tx_w/data_ratio)*G.config.w + Math.floor(i%G.config.tx_w / data_ratio);
-            currentConditions = G.data.points[dtI];
-            //current = Math.floor(G.data[dtI].height);
+            dtI = Math.floor(i/gConfig.tx_w/data_ratio)*gConfig.w + Math.floor(i%gConfig.tx_w / data_ratio);
+            currentConditions = gData.points[dtI];
+            //current = Math.floor(gData[dtI].height);
 
             gradY = Math.round((1 - (312.5 - currentConditions.temperature)/60)*255);
             if(gradY < 0)
@@ -53,15 +51,15 @@ var Renderer = function() {
                 gradX = 0; 
             gradI = gradY*climateGradient.width+gradX;
             color = [grdC[gradI*4],grdC[gradI*4+1],grdC[gradI*4+2]];
-            if(current > G.config.waterLevel) {
-                pixH[i*4+2] = pixH[i*4+1] = pixH[i*4] = Math.floor((current - G.config.waterLevel)/10);
+            if(current > gConfig.waterLevel) {
+                pixH[i*4+2] = pixH[i*4+1] = pixH[i*4] = Math.floor((current - gConfig.waterLevel)/10);
                 pixT[i*4+0] = color[0];
                 pixT[i*4+1] = color[1];
                 pixT[i*4+2] = color[2];
             } else {
                 pixH[i*4+2] = pixH[i*4+1] = pixH[i*4] = 0;
                 pixT[i*4] = 0;
-                pixT[i*4+1] = Math.floor(G.config.waterLevel/2) - (G.config.waterLevel - current)*3;
+                pixT[i*4+1] = Math.floor(gConfig.waterLevel/2) - (gConfig.waterLevel - current)*3;
                 pixT[i*4+2] = current*2+10;
 
                 if(currentConditions.temperature < 252.5) {
@@ -75,33 +73,31 @@ var Renderer = function() {
         ctxH.putImageData(imgdH, 0, 0);
     }
 
-    var init = function(Generator) {
+    var init = function(texture) {
         //imgd,heights,gridData,configLoad
         /* Create Textures for Globe ----------- */
-        G = Generator;
-
         var globeTexture = document.createElement( 'canvas' ); 
-        globeTexture.width = G.config.tx_w;
-        globeTexture.height = G.config.tx_h;
+        globeTexture.width = gConfig.tx_w;
+        globeTexture.height = gConfig.tx_h;
         var ctx = globeTexture.getContext("2d");
         ctx.fillStyle = "rgba(0, 0, 0, 255)"; 
-        ctx.fillRect(0, 0, G.config.tx_w, G.config.tx_h);
+        ctx.fillRect(0, 0, gConfig.tx_w, gConfig.tx_h);
 
         var globeHeightmap = document.createElement( 'canvas' ); 
-        globeHeightmap.width = G.config.tx_w;
-        globeHeightmap.height = G.config.tx_h;
+        globeHeightmap.width = gConfig.tx_w;
+        globeHeightmap.height = gConfig.tx_h;
         var ctx = globeHeightmap.getContext("2d");
         ctx.fillStyle = "rgba(0, 0, 0, 255)";
-        ctx.fillRect(0, 0, G.config.tx_w, G.config.tx_h);
+        ctx.fillRect(0, 0, gConfig.tx_w, gConfig.tx_h);
 
         visualization = document.createElement( 'canvas' );
-        visualization.width = G.config.w;
-        visualization.height = G.config.h;
+        visualization.width = gConfig.w;
+        visualization.height = gConfig.h;
         var ctx = visualization.getContext("2d");
         ctx.fillStyle = "rgba(0, 0, 0, 255)";
-        ctx.fillRect(0, 0, G.config.w, G.config.h);
+        ctx.fillRect(0, 0, gConfig.w, gConfig.h);
 
-        buildImage(globeTexture,globeHeightmap);
+        buildImage(globeTexture,globeHeightmap,texture);
 
         /* Create 3D Globe --------------------- */
         windowX = window.innerWidth;
@@ -203,13 +199,13 @@ var Renderer = function() {
         var infectColor = new THREE.Color();
         infectColor.setHSV( 0, 1.0, 0.9 );
 
-        for (i = 0; i < G.data.points.length; i++) {
-            element = G.data.points[i].total_pop / G.config.max_pop;
-            //element = (G.data.points[i].temperature - 220) / 100;
-            if(G.data.points[i].water) element = 0;
+        for (i = 0; i < gData.points.length; i++) {
+            element = gData.points[i].total_pop / gConfig.max_pop;
+            //element = (gData.points[i].temperature - 220) / 100;
+            if(gData.points[i].water) element = 0;
             if(element > 0) {
                 color.setHSV( ( 0.6 - ( element * 0.3 ) ), 1.0, 1.0 );
-                addPoint(G.data.points[i].lat, G.data.points[i].lng, element * 60, color, infectColor, G.data.points[i]);                
+                addPoint(gData.points[i].lat, gData.points[i].lng, element * 60, color, infectColor, gData.points[i]);                
             }
         }
 
@@ -305,13 +301,13 @@ var Renderer = function() {
         if(visualizations[layer] != undefined)
             return visualizations[layer];
 
-        visualization.width = G.config.w;
-        visualization.height = G.config.h;
+        visualization.width = gConfig.w;
+        visualization.height = gConfig.h;
 
         var ctx = visualization.getContext("2d"),
-            imgd = ctx.getImageData(0,0,G.config.w,G.config.h),
+            imgd = ctx.getImageData(0,0,gConfig.w,gConfig.h),
             pix = imgd.data,
-            data_ratio = G.config.tx_w / G.config.w,
+            data_ratio = gConfig.tx_w / gConfig.w,
             i,n;
         switch(layer) {
             case 'precipitation': 
@@ -350,9 +346,9 @@ var Renderer = function() {
                 var save = true; break;
             case 'country': 
                 var setColor = function(i,val) {
-                        pix[i*4] = G.data.countries[val].color[0];
-                        pix[i*4+1] = G.data.countries[val].color[1];
-                        pix[i*4+2] = G.data.countries[val].color[2];       
+                        pix[i*4] = gData.countries[val].color[0];
+                        pix[i*4+1] = gData.countries[val].color[1];
+                        pix[i*4+2] = gData.countries[val].color[2];       
                 };
                 var organizeColor = function(i) {
                     if(pix[i*4] == 0 && pix[i*4+1] == 0 && pix[i*4+2] == 0)
@@ -371,9 +367,9 @@ var Renderer = function() {
                 }; 
                 var save = true; break;
         }
-        //dtI = Math.floor(i/G.config.tx_w/data_ratio)*G.config.w + Math.floor(i%G.config.tx_w / data_ratio);
+        //dtI = Math.floor(i/gConfig.tx_w/data_ratio)*gConfig.w + Math.floor(i%gConfig.tx_w / data_ratio);
         for(i = 0, n = pix.length/4; i < n; i++) {
-            currentSq = G.data.points[i];
+            currentSq = gData.points[i];
             pix[i*4] = pix[i*4+1] = pix[i*4+2] = 0;
             pix[i*4+3] = 255;
             if(currentSq.total_pop > 0) {
@@ -401,7 +397,7 @@ var Renderer = function() {
         }
 
         ctx = visualization.getContext("2d");
-        imgd = ctx.getImageData(0,0,G.config.tx_w,G.config.tx_h);
+        imgd = ctx.getImageData(0,0,gConfig.tx_w,gConfig.tx_h);
         pix = imgd.data;
 
         for(i = 0, n = pix.length/4; i < n; i++) {
@@ -411,8 +407,8 @@ var Renderer = function() {
         
         if(save) {
             visualizations[layer] = document.createElement( 'canvas' );
-            visualizations[layer].width = G.config.tx_w;
-            visualizations[layer].height = G.config.tx_h;
+            visualizations[layer].width = gConfig.tx_w;
+            visualizations[layer].height = gConfig.tx_h;
             ctx = visualizations[layer].getContext("2d");
             ctx.drawImage(visualization,0,0);
         }

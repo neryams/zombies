@@ -3,32 +3,11 @@
 	Populates an object with randomly generated planet information. Can change config to change generation options.
 	Dependencies: jQuery, UserInterface
 	Parameters:
-		UI      -- Reference to UI object for reporting loading/generating progress
 		seed    -- Seed for the random number generator. Providing the same seed will always result in the same planet.
 		options -- Object with keys for overriding the default options.
 */
 
-function DataPoint(i,config) {
-	this.lat = config.h / 2 - Math.floor(i/config.w) - 0.5;
-	this.lng = i%config.w + 0.5;
-	this.id = i;
-}
-DataPoint.prototype = {
-	id: 0,
-	lat: 0,
-	lng: 0,
-	infected: 0,
-	total_pop: 0,
-	dead: 0,
-	water: false,
-	polar: false,
-	coast_distance: 0,
-	precipitation: -1,
-	temperature: -1,
-	height: 0,
-	country: 0,
-	adjacent:[]
-}
+importScripts('third-party/seedrandom.min.js','third-party/perlinsimplex.min.js','DataPoint.js');
 
 function Country(i,center){
 	this.id = i;
@@ -97,7 +76,7 @@ Planet.prototype.setHeight = function(heightmap) {
 
 // Sets the population for all the points on the globe using a provided perlin heightmap
 // Also define countries
-Planet.prototype.generatePop = function(heightmap,borderNoise) {
+Planet.prototype.generatePop = function(heightmap,borderNoise,progressShare) {
 	var i,j,k,n,current,result_pop,livability,concentration,world_pop=0,centroids=[]
 		planet = this;
 
@@ -142,6 +121,7 @@ Planet.prototype.generatePop = function(heightmap,borderNoise) {
 		delete current.wind;
 		delete current.blend;
 	}
+	self.postMessage({cmd: 'progress',share: progressShare,progress: 0.2});
 
 	// Determine the population multiplier based on the desired total world population
 	this.config.pop_ratio = this.config.world_pop / world_pop;
@@ -168,6 +148,7 @@ Planet.prototype.generatePop = function(heightmap,borderNoise) {
 		}
 		current.perlinTest = borderNoise[i];
 	}
+	self.postMessage({cmd: 'progress',share: progressShare,progress: 0.4});
 
 	// Fuzzify the country edges based on perlin noise, otherwise the country borders will be straight lines
 	for(j = 0; j < 10; j++) {
@@ -181,6 +162,7 @@ Planet.prototype.generatePop = function(heightmap,borderNoise) {
 			}
 		}
 	}
+	self.postMessage({cmd: 'progress',share: progressShare,progress: 0.6});
 
 	for(i = 0, n = this.data.length; i < n; i++) {
 		current = this.data[i];
@@ -192,6 +174,7 @@ Planet.prototype.generatePop = function(heightmap,borderNoise) {
 				current.country = current.adjacent[1].country;
 		}
 	}
+	self.postMessage({cmd: 'progress',share: progressShare,progress: 0.7});
 
 	for(i = 0, n = this.data.length; i < n; i++) {
 		current = this.data[i];
@@ -199,6 +182,7 @@ Planet.prototype.generatePop = function(heightmap,borderNoise) {
 		if(current.total_pop > 0 && (this.countries[current.country].capitol == null || this.countries[current.country].capitol.total_pop < current.total_pop))
 			this.countries[current.country].capitol = current;
 	}
+	self.postMessage({cmd: 'progress',share: progressShare,progress: 0.85});
 
 	// Remove countries without capitols (meaning countries with no population), set capitol names
 	for(i = 1; i < this.countries.length; i++) {
@@ -213,6 +197,7 @@ Planet.prototype.generatePop = function(heightmap,borderNoise) {
 			this.countries[i].capitol.name = this.generateName('city');
 		}*/
 	}
+	self.postMessage({cmd: 'progress',share: progressShare,progress: 1});
 }
 
 // Figure out how far each tile is from the coast
@@ -273,7 +258,7 @@ Planet.prototype.calculateCoastLine = function(onComplete) {
 // Simulate the climate by following the wind across the tiles and monitoring the progress
 // Going over water "recharges" the moisture based on latitude (more recharging when warmer), going over land lowers it based on altitude change. (mountains sap all the water)
 // Wind starts at +-32 degrees latitude (Horse Latitude) and at the poles and starts out with no moisture.
-Planet.prototype.calculateClimate = function(UI,turbulence,progressShare,onComplete) {
+Planet.prototype.calculateClimate = function(turbulence,progressShare,onComplete) {
 	var winds = this.data.slice(this.data.length/2-(this.config.horse_lats+1)*this.config.w,this.data.length/2-(this.config.horse_lats-1)*this.config.w).concat(
 				this.data.slice(this.data.length/2+(this.config.horse_lats-1)*this.config.w,this.data.length/2+(this.config.horse_lats+1)*this.config.w),
 				this.data.slice(0,this.config.w),
@@ -290,187 +275,185 @@ Planet.prototype.calculateClimate = function(UI,turbulence,progressShare,onCompl
 	var i,j,k,k2,n2,curTarget,mixFalloff,baseTemperature,baseTemperatureAlt,dryModifier;
 	var target = [];
 
-	i = 0;
 	// Run in three sets of loops, just to record progress
-	foreach(0,n/planet.config.horse_lats,function(cx) {
-		for(j=0;j<planet.config.horse_lats;j++) {
-			// Only continue if there are actually winds to process
-			if(winds.length > 0) {
-				// Do one set of north/south latitudes at a time, one row at a time, return to for loop after doing one round
-				currLatAbs = Math.abs(winds[0].lat);
-				currWind = winds[0].lat;
+	for(i=0;i<n;i++) {
+		// Only continue if there are actually winds to process
+		if(winds.length > 0) {
+			// Do one set of north/south latitudes at a time, one row at a time, return to for loop after doing one round
+			currLatAbs = Math.abs(winds[0].lat);
+			currWind = winds[0].lat;
 
-				// Set base temperature and moisture for each square and determine mixing
-				while(winds.length > 0 && currWind == winds[0].lat) {
-					current = winds.shift();
-					target.length = 0;
-					if(current.water)
-						adjustedLat = currLatAbs*0.7+15;
-					else
-						adjustedLat = currLatAbs;
+			// Set base temperature and moisture for each square and determine mixing
+			while(winds.length > 0 && currWind == winds[0].lat) {
+				current = winds.shift();
+				target.length = 0;
+				if(current.water)
+					adjustedLat = currLatAbs*0.7+15;
+				else
+					adjustedLat = currLatAbs;
 
-					// Initial temperature approximated on approximate solar insolation and elevation. 0.0065 is the ISA temperature lapse rate in Kelvin/meter
-					baseTemperature = (planet.config.temperature + 40*(Math.cos(adjustedLat * Math.PI / 90)) + (0.5-turbulence[current.id])*4);
-					baseTemperatureAlt = baseTemperature - 0.0065 * current.height * planet.config.height_ratio;
+				// Initial temperature approximated on approximate solar insolation and elevation. 0.0065 is the ISA temperature lapse rate in Kelvin/meter
+				baseTemperature = (planet.config.temperature + 40*(Math.cos(adjustedLat * Math.PI / 90)) + (0.5-turbulence[current.id])*4);
+				baseTemperatureAlt = baseTemperature - 0.0065 * current.height * planet.config.height_ratio;
 
-					// Start the wind front for the first squares at each High zone (subsequent squares will have wind provided by the last iteration)
-					if(current.wind == undefined) { 
-						current.temperature = baseTemperatureAlt;
-						current.wind = { moisture: 0, temperature: current.temperature, saturationPressure: 0 }
+				// Start the wind front for the first squares at each High zone (subsequent squares will have wind provided by the last iteration)
+				if(current.wind == undefined) { 
+					current.temperature = baseTemperatureAlt;
+					current.wind = { moisture: 0, temperature: current.temperature, saturationPressure: 0 }
 
-						// polar winds
-						if(currLatAbs > planet.config.polar_lats) 
-							if(current.lat < 0)
-								current.wind.direction = ['p','n'];
-							else 
-								current.wind.direction = ['p','s'];
-
-						// easterly trade winds (towards equator)
-						else if(currLatAbs < planet.config.horse_lats) 
-							if(current.lat < 0)
-								current.wind.direction = ['e','n'];
-							else 
-								current.wind.direction = ['e','s'];
-
-						// westerly trade winds (away from equator)
+					// polar winds
+					if(currLatAbs > planet.config.polar_lats) 
+						if(current.lat < 0)
+							current.wind.direction = ['p','n'];
 						else 
-							if(current.lat < 0)
-								current.wind.direction = ['w','s'];
-							else 
-								current.wind.direction = ['w','n'];
-						current.wind.direction[2] = 'normal';
-					} else if(current.wind.direction[2] == 'mix') {
-						current.blend.temperature = current.blend.temperature*0.9 + current.wind.temperature*0.1;
-						current.blend.moisture = current.blend.moisture*0.9 + current.wind.moisture*0.1;
-						current.wind = current.blend;
-						delete current.blend;
-						current.precipitation = 0;
-					}
-					if(current.precipitation == -1) 
-						current.precipitation = 0;
+							current.wind.direction = ['p','s'];
 
-					// Modify wind based on current conditions
-					if(current.water)
-						current.wind.temperature = current.wind.temperature*0.5+baseTemperatureAlt*0.5;
-					else
-						current.wind.temperature = current.wind.temperature*0.7 + baseTemperature*0.05 + baseTemperatureAlt*0.25;
-					// Equation for saturation pressure vs temperature: http://www.engineeringtoolbox.com/water-vapor-saturation-pressure-air-d_689.html
-					current.wind.saturationPressure = Math.pow(Math.E,77.3450+0.0057*current.wind.temperature-7235/current.wind.temperature)/Math.pow(current.wind.temperature,8.2);
+					// easterly trade winds (towards equator)
+					else if(currLatAbs < planet.config.horse_lats) 
+						if(current.lat < 0)
+							current.wind.direction = ['e','n'];
+						else 
+							current.wind.direction = ['e','s'];
 
-					// Add moisture up to saturation when over water
-					if(current.water) 
-						current.wind.moisture += (current.wind.saturationPressure - current.wind.moisture)*0.1;
-
-					windsToProcess.push(current);
-				}
-
-				while(windsToProcess.length > 0) {
-					current = windsToProcess.shift();
-					target[0] = target[1] = current;
-					mixFalloff = 1;
-					n2 = planet.config.wind_mix;
-					if(current.wind.direction[0] == 'e') {
-						if(currLatAbs < planet.config.horse_lats / 1.5)
-							n2++;
-						if(currLatAbs < planet.config.horse_lats / 3)
-							n2 += 2;
-						if(currLatAbs < planet.config.horse_lats / 6)
-							n2 += 4;							
-					}
-					for(k=0;k<n2; k++) {
-						target[0] = target[0].adjacent[3];
-						target[1] = target[1].adjacent[1];
-						mixFalloff += k+1;
-						for(k2=0;k2<2; k2++) {
-							curTarget = target[k2];
-							if(current.height < curTarget.height)
-								mixFalloff += (curTarget.height/current.height);
-							/*if(((current.wind.direction[0] == 'e' || current.wind.direction[0] == 'p') && k2 == 0) || (current.wind.direction[0] == 'w' && k2 == 1))
-								mixFalloff *= 2;*/
-
-							current.wind.moisture += (curTarget.wind.moisture - current.wind.moisture)/(mixFalloff*Math.log(current.wind.moisture/100+3));
-							current.wind.temperature += (curTarget.wind.temperature - current.wind.temperature)/mixFalloff;
-						}
-					}
+					// westerly trade winds (away from equator)
+					else 
+						if(current.lat < 0)
+							current.wind.direction = ['w','s'];
+						else 
+							current.wind.direction = ['w','n'];
 					current.wind.direction[2] = 'normal';
-					windsToProcess2.push(current);
+				} else if(current.wind.direction[2] == 'mix') {
+					current.blend.temperature = current.blend.temperature*0.9 + current.wind.temperature*0.1;
+					current.blend.moisture = current.blend.moisture*0.9 + current.wind.moisture*0.1;
+					current.wind = current.blend;
+					delete current.blend;
+					current.precipitation = 0;
+				}
+				if(current.precipitation == -1) 
+					current.precipitation = 0;
+
+				// Modify wind based on current conditions
+				if(current.water)
+					current.wind.temperature = current.wind.temperature*0.5+baseTemperatureAlt*0.5;
+				else
+					current.wind.temperature = current.wind.temperature*0.7 + baseTemperature*0.05 + baseTemperatureAlt*0.25;
+				// Equation for saturation pressure vs temperature: http://www.engineeringtoolbox.com/water-vapor-saturation-pressure-air-d_689.html
+				current.wind.saturationPressure = Math.pow(Math.E,77.3450+0.0057*current.wind.temperature-7235/current.wind.temperature)/Math.pow(current.wind.temperature,8.2);
+
+				// Add moisture up to saturation when over water
+				if(current.water) 
+					current.wind.moisture += (current.wind.saturationPressure - current.wind.moisture)*0.1;
+
+				windsToProcess.push(current);
+			}
+
+			while(windsToProcess.length > 0) {
+				current = windsToProcess.shift();
+				target[0] = target[1] = current;
+				mixFalloff = 1;
+				n2 = planet.config.wind_mix;
+				if(current.wind.direction[0] == 'e') {
+					if(currLatAbs < planet.config.horse_lats / 1.5)
+						n2++;
+					if(currLatAbs < planet.config.horse_lats / 3)
+						n2 += 2;
+					if(currLatAbs < planet.config.horse_lats / 6)
+						n2 += 4;							
+				}
+				for(k=0;k<n2; k++) {
+					target[0] = target[0].adjacent[3];
+					target[1] = target[1].adjacent[1];
+					mixFalloff += k+1;
+					for(k2=0;k2<2; k2++) {
+						curTarget = target[k2];
+						if(current.height < curTarget.height)
+							mixFalloff += (curTarget.height/current.height);
+						/*if(((current.wind.direction[0] == 'e' || current.wind.direction[0] == 'p') && k2 == 0) || (current.wind.direction[0] == 'w' && k2 == 1))
+							mixFalloff *= 2;*/
+
+						current.wind.moisture += (curTarget.wind.moisture - current.wind.moisture)/(mixFalloff*Math.log(current.wind.moisture/100+3));
+						current.wind.temperature += (curTarget.wind.temperature - current.wind.temperature)/mixFalloff;
+					}
+				}
+				current.wind.direction[2] = 'normal';
+				windsToProcess2.push(current);
+			}
+
+			// Process precipitation and move wind up
+			while(windsToProcess2.length > 0) {
+				current = windsToProcess2.shift();
+
+				current.temperature = current.wind.temperature;
+				current.wind.saturationPressure = Math.pow(Math.E,77.3450+0.0057*current.wind.temperature-7235/current.wind.temperature)/Math.pow(current.wind.temperature,8.2);
+				
+				// If temperature decreases for whatever reason and lowers the saturation pressure, rain out the extra water
+				if(current.wind.saturationPressure < current.wind.moisture ) {
+					current.precipitation += (current.wind.moisture - current.wind.saturationPressure)*0.2;
+				}
+				current.precipitation += (current.wind.moisture/current.wind.saturationPressure) * current.wind.moisture * 0.1
+				current.wind.moisture -= current.precipitation;
+				if(current.water && current.wind.moisture > current.wind.saturationPressure) {
+					current.wind.moisture = current.wind.saturationPressure;
+				}
+				dryModifier = 18/(current.precipitation+1) - 3;
+				if(dryModifier + current.temperature > 312.5)
+					dryModifier = 312.5 - current.temperature;
+				current.temperature += dryModifier;
+				current.wind.temperature = current.wind.temperature * 0.9 + current.temperature * 0.1;
+
+				// Advance wind front
+				target.length = 0;
+				switch(current.wind.direction[1]) {
+					case 'n':
+						target[0] = current.adjacent[0];
+						break;
+					case 's':
+						target[0] = current.adjacent[2];
+						break;
+				}
+				switch(current.wind.direction[0]) {
+					case 'e':
+						if(currLatAbs < planet.config.horse_lats / 1.5)
+							target[0] = target[0].adjacent[3];
+						if(currLatAbs < planet.config.horse_lats / 3)
+							target[0] = target[0].adjacent[3];
+						if(currLatAbs < planet.config.horse_lats / 6)
+							target[0] = target[0].adjacent[3];
+					case 'p':
+						target[0] = target[0].adjacent[3];
+						break;
+					case 'w':
+						target[0] = target[0].adjacent[1];
+						break;
+					default:
+						target[0] = null;
 				}
 
-				// Process precipitation and move wind up
-				while(windsToProcess2.length > 0) {
-					current = windsToProcess2.shift();
+				if(target[0] != undefined && target[0] != null) {
+					curTarget = target[0];
+					if(curTarget.wind != undefined) {
+						if(current.wind.direction[1] == 'n')
+							curTarget = current.adjacent[0];
+						else if(current.wind.direction[1] == 's')
+							curTarget = current.adjacent[2];
+						if((current.wind.direction[1] == 'n' && turbulence[curTarget.id] < 0.5) || (current.wind.direction[1] == 's' && turbulence[curTarget.id] > 0.5)) {
 
-					current.temperature = current.wind.temperature;
-					current.wind.saturationPressure = Math.pow(Math.E,77.3450+0.0057*current.wind.temperature-7235/current.wind.temperature)/Math.pow(current.wind.temperature,8.2);
-					
-					// If temperature decreases for whatever reason and lowers the saturation pressure, rain out the extra water
-					if(current.wind.saturationPressure < current.wind.moisture ) {
-						current.precipitation += (current.wind.moisture - current.wind.saturationPressure)*0.2;
-					}
-					current.precipitation += (current.wind.moisture/current.wind.saturationPressure) * current.wind.moisture * 0.1
-					current.wind.moisture -= current.precipitation;
-					if(current.water && current.wind.moisture > current.wind.saturationPressure) {
-						current.wind.moisture = current.wind.saturationPressure;
-					}
-					dryModifier = 18/(current.precipitation+1) - 3;
-					if(dryModifier + current.temperature > 312.5)
-						dryModifier = 312.5 - current.temperature;
-					current.temperature += dryModifier;
-					current.wind.temperature = current.wind.temperature * 0.9 + current.temperature * 0.1;
-
-					// Advance wind front
-					target.length = 0;
-					switch(current.wind.direction[1]) {
-						case 'n':
-							target[0] = current.adjacent[0];
-							break;
-						case 's':
-							target[0] = current.adjacent[2];
-							break;
-					}
-					switch(current.wind.direction[0]) {
-						case 'e':
-							if(currLatAbs < planet.config.horse_lats / 1.5)
-								target[0] = target[0].adjacent[3];
-							if(currLatAbs < planet.config.horse_lats / 3)
-								target[0] = target[0].adjacent[3];
-							if(currLatAbs < planet.config.horse_lats / 6)
-								target[0] = target[0].adjacent[3];
-						case 'p':
-							target[0] = target[0].adjacent[3];
-							break;
-						case 'w':
-							target[0] = target[0].adjacent[1];
-							break;
-						default:
-							target[0] = null;
-					}
-
-					if(target[0] != undefined && target[0] != null) {
-						curTarget = target[0];
-						if(curTarget.wind != undefined) {
-							if(current.wind.direction[1] == 'n')
-								curTarget = current.adjacent[0];
-							else if(current.wind.direction[1] == 's')
-								curTarget = current.adjacent[2];
-							if((current.wind.direction[1] == 'n' && turbulence[curTarget.id] < 0.5) || (current.wind.direction[1] == 's' && turbulence[curTarget.id] > 0.5)) {
-
-								curTarget.blend = (JSON.parse(JSON.stringify(current.wind))); // clone datapoint object for blending to prevent conflicts
-								curTarget.wind.direction[2] = 'mix';
-								winds.push(curTarget);
-							}
-						} else {
-							curTarget.wind = current.wind;
+							curTarget.blend = (JSON.parse(JSON.stringify(current.wind))); // clone datapoint object for blending to prevent conflicts
+							curTarget.wind.direction[2] = 'mix';
 							winds.push(curTarget);
 						}
+					} else {
+						curTarget.wind = current.wind;
+						winds.push(curTarget);
 					}
 				}
 			}
-			i++;
 		}
-		UI.load.progress(i/n,progressShare);
-		timer = setTimeout(cx, 0);
-	}, onComplete);
+		if(i % this.config.horse_lats == 0)
+ 			self.postMessage({cmd: 'progress',share: progressShare,progress: i/n});
+	}
+
+	onComplete();
 }
 
 Planet.prototype.getAdj = function(i,direction) {
@@ -533,76 +516,74 @@ Planet.prototype.generatePerlinSphere = function(P,w,scale,octaves,progressShare
 	P.noiseDetail(octaves,.50);
 
 	// This construct runs the progress bar updater in between sets of calculations, so the script doesn't lock up the progress bar
-	foreach(0,n/times,function(cx) {
-		for(j=0;j<times;j++) {
-			radx = (((i%w+0.5)/multiplier)/180)*Math.PI // we want to use the centers of the lat and long grid squares to avoid calculating with the poles
-			rady = (((Math.floor(i/w+0.5))/multiplier)/180)*Math.PI;
-			xx = Math.sin(rady)*Math.cos(radx)*scale;
-			yy = Math.sin(rady)*Math.sin(radx)*scale;
-			zz = Math.cos(rady)*scale;
+	for(i=0;i<n;i++) {
+		radx = (((i%w+0.5)/multiplier)/180)*Math.PI // we want to use the centers of the lat and long grid squares to avoid calculating with the poles
+		rady = (((Math.floor(i/w+0.5))/multiplier)/180)*Math.PI;
+		xx = Math.sin(rady)*Math.cos(radx)*scale;
+		yy = Math.sin(rady)*Math.sin(radx)*scale;
+		zz = Math.cos(rady)*scale;
 
-			switch(noiseFunction) {
-				case "terrain":
-					P.noiseDetail(octaves,.45);
-					landMask  = P.noise(xx*0.8,yy*0.8,zz*0.8) - modifier/2; // landmasses mask
+		switch(noiseFunction) {
+			case "terrain":
+				P.noiseDetail(octaves,.45);
+				landMask  = P.noise(xx*0.8,yy*0.8,zz*0.8) - modifier/2; // landmasses mask
 
-					P.noiseDetail(4,.50)
-					rBase = (landMask - (P.noise(xx,yy,zz))*modifier); // base terrain
-					if(rBase > modifier)
-						rBase = (rBase - modifier)*1.5+modifier;
-					P.noiseDetail(6,.50)
+				P.noiseDetail(4,.50)
+				rBase = (landMask - (P.noise(xx,yy,zz))*modifier); // base terrain
+				if(rBase > modifier)
+					rBase = (rBase - modifier)*1.5+modifier;
+				P.noiseDetail(6,.50)
 
-					rRidge = Math.pow(P.noise(xx*2,yy,zz*2),3);
-					rRidge = Math.pow(1 - Math.abs(landMask-0.5)*2-0.1,6) - rRidge*2.5 // mountains
-					if(rRidge < 0) rRidge = 0;
+				rRidge = Math.pow(P.noise(xx*2,yy,zz*2),3);
+				rRidge = Math.pow(1 - Math.abs(landMask-0.5)*2-0.1,6) - rRidge*2.5 // mountains
+				if(rRidge < 0) rRidge = 0;
 
-					result = (rBase+rRidge*1.1)*256;
-					if(result > 256)
-						result = (256 - result)/10 + result;
-					break;
+				result = (rBase+rRidge*1.1)*256;
+				if(result > 256)
+					result = (256 - result)/10 + result;
+				break;
 
-				case "climate":
-					result = (P.noise(xx,yy*2,zz)-0.5)*2+0.5;
-					break;
+			case "climate":
+				result = (P.noise(xx,yy*2,zz)-0.5)*2+0.5;
+				break;
 
-				case "population":
-					P.noiseDetail(octaves,.40)
-					result = P.noise(xx+5,yy,zz);
-					break;
+			case "population":
+				P.noiseDetail(octaves,.40)
+				result = P.noise(xx+5,yy,zz);
+				break;
 
-				case "countries":
-					result = P.noise(xx-10,yy,zz);
-					break;
-			}
-			landGen[i] = result;
-			i++;
-		};
-		UI.load.progress(i/n,progressShare);
-		timer = setTimeout(cx, 0);
-	}, onComplete);
+			case "countries":
+				result = P.noise(xx-10,yy,zz);
+				break;
+		}
+		landGen[i] = result;
+		if(i % times == times - 1)
+	 		self.postMessage({cmd: 'progress',share: progressShare,progress: i/n});
+	};
+	setTimeout(onComplete,50);
 	return landGen;
 }
 
 // Generates all the data for the planet
-Planet.prototype.generate = function(UI,P,callback) {
+Planet.prototype.generate = function(P,callback) {
 	// Generate terrain texture
 	var planet = this;
-	planet.texture = planet.generatePerlinSphere(P,planet.config.tx_w,0.62,8,0.7, "terrain", function () {
+	planet.texture = planet.generatePerlinSphere(P,planet.config.tx_w,0.62,8,0.75, "terrain", function () {
 		// Convert texture to heightmap
-		UI.load.progress();
+	 	self.postMessage({cmd: 'progress'});
 		planet.setHeight(planet.texture);
 
 		// Calculate coastline and distance to water
-		UI.load.progress();
+	 	self.postMessage({cmd: 'progress'});
 		planet.calculateCoastLine(function() {
 			// Calculate temperatures based on proximity to water and elevation and lat/long
 			var climateTurb = planet.generatePerlinSphere(P,planet.config.w,4,2,0.05, "climate", function () {
-				planet.calculateClimate(UI,climateTurb,0.05,function() {
+				planet.calculateClimate(climateTurb,0.05,function() {
 					// Calculate population affected by elevation, temperature, proximity to water, and precipitation
-					var popGen = planet.generatePerlinSphere(P,planet.config.w,4,8,0.1, "population", function () {
-						var cBorders = planet.generatePerlinSphere(P,planet.config.w,2,7,0.1, "countries", function () {
-							UI.load.progress();
-							planet.generatePop(popGen,cBorders);
+					var popGen = planet.generatePerlinSphere(P,planet.config.w,4,8,0.05, "population", function () {
+						var cBorders = planet.generatePerlinSphere(P,planet.config.w,2,7,0.05, "countries", function () {
+							planet.generatePop(popGen,cBorders,0.05);
+	 						self.postMessage({cmd: 'progress'});
 							setTimeout(callback,50);
 						});
 					});
@@ -614,38 +595,26 @@ Planet.prototype.generate = function(UI,P,callback) {
 
 Planet.prototype.generateName = function(c){var d=[];switch(c){case"virus":d=[{options:["V"]},{type:"int",min:10,max:4999},{options:[".H"]},{type:"int",min:1,max:17},{options:["N"]},{type:"int",min:1,max:9},{options:[".A",".B",".C",".I",".II",".III"]}];break;case"country":d=[{chance:0.12,options:["United ","United States of ","Republic of ","Democratic Republic of ","Kingdom of ","Empire of ","New "]},{chance:0.5,options:["Alb","Arg","Arm","Ant","Ger","Isr","Ald","Cor","Mac","Lux","Mad","Zim","Els"]},{exclude:1,options:["A","B","C","G","J","K","L","M","Q","N","H","Ir","Br","Am","Br","Fr","Sp","Ter"]},{options:["a","au","ae","ay","e","i","o","a","e","i","o","u","y","ya"]},{require:2,chance:0.5,options:["b","n","g","t","tr","r","th","sh","d","v","z","s","w"]},{require:4,options:["i","i","o","o","a","ai","ua"]},{chance:0.5,exclude:4,require:2,options:["r","n","t","m","l","th","b"]},{chance:0.7,require:6,options:["stan","sia","nia","ria","lia","via","da","ra","ia","la","gua","ea","y","ay","bourg","it","stein","scar",""]},{chance:0.7,exclude:7,options:["stan","scar","tania","nia","nia","lia","ria","via","sia","stein","da","ra","lia","thia","la","zil","gua","na","mar","in","ca","nce","que","pan","nya","os","on","non","don","ger",""]},];break;case"city":d=[{chance:0.1,options:["New ","Old ","San ","Los ","Sao "]},{chance:0.2,options:["Winter","Wood","Summer","Sunny","Hill","Somer","River","Angel","Riven","Small","Hog","Fog"]},{require:1,options:["ville","vale","town","fell","fale","thale","hale","set","dale","dell","butte","smeade","warts","cliff","bourg"]},{exclude:1,options:["Q","T","Y","Az","M","W","J","Sh","Om","Lux","L","M","P","V","O","H","R","Cr","U","D"]},{require:3,options:["a","o","er","aka","u","a","a","a","em","y","o","o","e","e","e"]},{require:3,options:["kyo-","rk-","this-","bourg-","djan-","scow-","th","long","nd","ng","ngh-","ris-","nice-","me-","ka-","kk","ji-","je-","scent-"]},{require:4,chance:0.7,options:["ai","u","yu","ah","y","ay","is","am","ym","im","on","aido"]}];break}var a="";for(var b=0;b<d.length;b++){if(d[b].chance!=undefined&&d[b].chance<1){if(Math.random()>d[b].chance){continue}}if(d[b].exclude!=undefined&&d[d[b].exclude].used){continue}if(d[b].require!=undefined&&!d[d[b].require].used){continue}d[b].used=true;switch(d[b].type){case"int":if(d[b].min==undefined){d[b].min=0}a+=Math.floor(Math.random()*(d[b].max+1-d[b].min))+d[b].min;break;case"string":default:a+=d[b].options[parseInt(Math.random()*d[b].options.length)];break}if(a.substr(-1)=="-"){break}}return a.replace(/^\s+|[\s-]+$/g,"")};
 
-// CFS progressbar
-function foreach(init, max, body, c) {
-    doLoop(init);
-    function doLoop(i) {
-        if (i < max) {
-            body(function(){doLoop(i+1);});
-        }
-        else {
-            c();
-        }
-    }
-}
+self.addEventListener('message', function(event) {
+	var data = event.data;
 
-var Generator = function(UI, seed, options) {
 	var CONFIG = { tx_w: 720, tx_h: 0, w: 360, h: 0, waterLevel: 75, horse_lats: 32, polar_lats: 60, wind_mix: 5, temperature: 268.15, pop_ratio: 26991953, height_ratio: 34, world_pop: 6000000000, max_pop: 0 },
-		myEarth,P,debug,seed;
-
-	if(seed == undefined || seed == '') {
-		var d = new Date();
-		seed = d.getTime();
-	}
-	Math.seedrandom(seed);
+		myEarth,P,seed;
 
 	/* -----------------
 		Offer options for world population and technological advancement, adjust pop ratio to match
 	-------------------- */
 
 	// Override default configs with supplied ones, if they exist.
-	if(options != undefined)
-		for (var key in options)
-    		if (options.hasOwnProperty(key))
-				CONFIG[key] = options[key];
+	for (var key in data)
+		if (data.hasOwnProperty(key))
+			CONFIG[key] = data[key];
+
+	if(data.seed == undefined || data.seed == '') {
+		var d = new Date();
+		CONFIG.seed = d.getTime();
+	}
+	Math.seedrandom(CONFIG.seed);
 
 	myEarth = new Planet(CONFIG,P);
 
@@ -654,31 +623,43 @@ var Generator = function(UI, seed, options) {
 	Country.prototype.generateName = generateName;
 	Planet.prototype.generateName = generateName;
 
-	function init(onComplete) {
-		UI.load.start();
-		var that = this;
 
-		CONFIG.tx_h = CONFIG.tx_w / 2; // Force Mercator projection dimensions on image
-		CONFIG.h = CONFIG.w / 2; // Force Mercator projection dimensions on rand functions
-		debug = new Array(20);
+	CONFIG.tx_h = CONFIG.tx_w / 2; // Force Mercator projection dimensions on image
+	CONFIG.h = CONFIG.w / 2; // Force Mercator projection dimensions on rand functions
 
-		P = PerlinSimplex; // Set Perlin function to the Simplex object for texture
-		P.setRng(Math);
-        
-        myEarth.generate(UI,P,onComplete);
-	}
-
-	return {
-		init: init,
-		generateName: generateName,
-		data: {points: myEarth.data, countries: myEarth.countries},
-		getTexture: function() {
-			return myEarth.texture;
-		},
-		config: CONFIG,
-		endLoad: function() {
-			delete myEarth.texture; // Done drawing, can delete the texture now
-			UI.load.endGenerator();
+	P = PerlinSimplex; // Set Perlin function to the Simplex object for texture
+	P.setRng(Math);
+    
+    myEarth.generate(P,function () { // function to run after generation is complete
+		// Remove cyclic references for sending the data
+		//http://stackoverflow.com/questions/15560518/elegantly-reattach-methods-to-object-in-web-worker serialize each datapoint ?! Import common classes to all the files
+		for(i = 0, n = myEarth.data.length; i < n; i++) {
+			myEarth.data[i].adjacent[0] = myEarth.data[i].adjacent[0].id;
+			myEarth.data[i].adjacent[1] = myEarth.data[i].adjacent[1].id;
+			myEarth.data[i].adjacent[2] = myEarth.data[i].adjacent[2].id;
+			myEarth.data[i].adjacent[3] = myEarth.data[i].adjacent[3].id;
 		}
-	}
-}
+
+	 	self.postMessage({
+	 		cmd: 'ready',
+			config: CONFIG
+		});
+
+	 	self.postMessage({
+	 		cmd: 'data',
+			points: myEarth.data, 
+			countries: myEarth.countries,
+			generatedName: generateName('virus'),
+		});
+
+	 	self.postMessage({
+	 		cmd: 'texture',
+	 		texture: myEarth.texture
+		});
+
+	 	self.postMessage({
+	 		cmd: 'complete'
+		});
+    });
+
+}, false);

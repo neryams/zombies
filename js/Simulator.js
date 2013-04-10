@@ -159,7 +159,7 @@ gridPoint.prototype.equals = function(gridpoint) {
     return this.x == gridpoint.x && this.y == gridpoint.y;
 }
 
-function Simulator(modules, G, R, UI) {
+function Simulator(modules, R, UI) {
 	this.modules = {};
 	this.activeModules = {infect:[],spread:[],event:[]};
 	this.activePoints = [];
@@ -216,14 +216,13 @@ function Simulator(modules, G, R, UI) {
 	}
 
 	if(this.points == undefined) {
-		if(G != undefined && R != undefined) {
-			Simulator.prototype.points = G.data.points;
-			Simulator.prototype.countries = G.data.countries;
-			Simulator.prototype.config = G.config;
+		if(R != undefined) {
+			Simulator.prototype.points = gData.points;
+			Simulator.prototype.countries = gData.countries;
+			Simulator.prototype.config = gConfig;
 			Simulator.prototype.Renderer = R;
 			Simulator.prototype.UI = UI;
 			Simulator.prototype.populatedPoints = [];
-			this.properties.virus_name = G.generateName('virus');
 			Module.prototype.S = this;
 			Upgrade.prototype.S = this;
 
@@ -243,7 +242,10 @@ Simulator.prototype = {
 	division: 1,
 	iteration: 0,
 	paused: false,
-	properties: {}
+	properties: {},
+	setName: function (name) {
+		this.properties.virus_name = name;		
+	}
 }
 
 Simulator.prototype.start = function(strainId) {
@@ -276,8 +278,6 @@ Simulator.prototype.start = function(strainId) {
 			if(that.modules[id].onStart != undefined && that.modules[id].type != 'strain')
 				that.modules[id].onStart(startSq);
 
-
-		that.UI.load.end();
 		that.Renderer.lookAt(startSq);
 
 		that.tick()
@@ -555,8 +555,8 @@ Simulator.prototype.tick = function() {
 				this.activeModules.spread[j].process(current,strength);
 
 			if(current.infected > 0) {
-				size_pop = ((current.total_pop+10) / G.config.max_pop) * 60 + 200;
-				size_zom = ((current.infected+10) / G.config.max_pop) * 60 + size_pop + 0.5;
+				size_pop = ((current.total_pop+10) / gConfig.max_pop) * 60 + 200;
+				size_zom = ((current.infected+10) / gConfig.max_pop) * 60 + size_pop + 0.5;
 
 				this.Renderer.setData(current,size_pop);
 				if(size_zom > 0) {
@@ -581,8 +581,8 @@ Simulator.prototype.tick = function() {
 	return false;
 }
 Simulator.prototype.updateSquare = function(target) {
-	var	size_pop = ((target.total_pop+10) / G.config.max_pop) * 60 + 200,
-		size_zom = ((target.infected+10) / G.config.max_pop) * 60 + size_pop + 0.5;
+	var	size_pop = ((target.total_pop+10) / gConfig.max_pop) * 60 + 200,
+		size_zom = ((target.infected+10) / gConfig.max_pop) * 60 + size_pop + 0.5;
 	if(target.infected > 0) {
 		this.Renderer.setData(target,size_pop);
 		if(size_zom > 0) {
