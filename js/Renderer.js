@@ -4,7 +4,7 @@
 */
 var Renderer = function() {
     var container, camera, scene, renderer, earthMesh, group, mouseVector, point, point2, sphere2DRadius, windowX, windowY, 
-        visualLayer, visualLayerGeometry, visualLayerTexture, visualArc, config, climateGradient,visualizations={},visualization,
+        visualLayer, visualLayerGeometry, visualLayerTexture, visualArc, climateGradient,visualizations={},visualization,
         subgeo = new THREE.Geometry();
         rotation = { x: 0, y: 0, z: 0 },
         PI_HALF = Math.PI / 2,
@@ -74,7 +74,6 @@ var Renderer = function() {
     }
 
     var init = function(texture) {
-        //imgd,heights,gridData,configLoad
         /* Create Textures for Globe ----------- */
         var globeTexture = document.createElement( 'canvas' ); 
         globeTexture.width = gConfig.tx_w;
@@ -155,23 +154,23 @@ var Renderer = function() {
         sphere.add( visualArc );
 
         // Bars to show zombies and humans
-        geometry = new THREE.CubeGeometry(0.75, 0.75, 1, 1, 1, 1, null, false, { px: true,
+        geometry = new THREE.CubeGeometry(0.9, 0.9, 1, 1, 1, 1, null, false, { px: true,
               nx: true, py: true, ny: true, pz: false, nz: true});
         geometry.faces.length = 5 // remove bottom of cube (=4 to temove top as well)
-        for (var i = 0; i < geometry.vertices.length; i++) {
+        /*for (var i = 0; i < geometry.vertices.length; i++) {
             var vertex = geometry.vertices[i];
             vertex.z += 0.5;
-        }
-        point = new THREE.Mesh(geometry);
+        }*/
+        point = new THREE.Mesh(geometry); // humans
 
-        geometry = new THREE.CubeGeometry(0.75, 0.75, 1, 1, 1, 1, null, false, { px: true,
+        geometry = new THREE.CubeGeometry(0.8, 0.8, 1, 1, 1, 1, null, false, { px: true,
               nx: true, py: true, ny: true, pz: false, nz: true});
         geometry.faces.length = 5 // remove bottom of cube
-        for (var i = 0; i < geometry.vertices.length; i++) {
+        /*for (var i = 0; i < geometry.vertices.length; i++) {
             var vertex = geometry.vertices[i];
             vertex.z += 0.5;
-        }
-        point2 = new THREE.Mesh(geometry);
+        }*/
+        point2 = new THREE.Mesh(geometry); // zombies
 
         /*geometry = new THREE.PolyhedronGeometry([[1,1,0],[0,1,0],[1,0,0],[1,1,1]],[[2,1,0],[0,3,2],[1,3,0],[2,3,1]],0.76, 0);
         point2 = new THREE.Mesh(geometry);*/
@@ -195,17 +194,10 @@ var Renderer = function() {
 
     function addData() {
         var lat, lng, color, i, element;
-        var color = new THREE.Color();
-        var infectColor = new THREE.Color();
-        infectColor.setHSV( 0, 1.0, 0.9 );
 
         for (i = 0; i < gData.points.length; i++) {
-            element = gData.points[i].total_pop / gConfig.max_pop;
-            //element = (gData.points[i].temperature - 220) / 100;
-            if(gData.points[i].water) element = 0;
-            if(element > 0) {
-                color.setHSV( ( 0.6 - ( element * 0.3 ) ), 1.0, 1.0 );
-                addPoint(gData.points[i].lat, gData.points[i].lng, element * 60, color, infectColor, gData.points[i]);                
+            if(gData.points[i].total_pop > 0 && !gData.points[i].water) {
+                addPoint(gData.points[i].lat, gData.points[i].lng, gData.points[i]);
             }
         }
 
@@ -220,29 +212,39 @@ var Renderer = function() {
         sphere.add( points );
     };
 
-    function addPoint( lat, lng, size, color, color2, datapoint ) {
-        //point2 is zombies, point is people
-        var phi = (90 - lat) * Math.PI / 180;
-        var theta = (180 - lng) * Math.PI / 180;
+    function addPoint( lat, lng, datapoint ) {
+        var phi = (90 - lat) * Math.PI / 180,
+            theta = (180 - lng) * Math.PI / 180,
+            color = new THREE.Color(),
+            infectColor = new THREE.Color(),
+            element = datapoint.total_pop / gConfig.max_pop;
+            //element = (gData.points[i].temperature - 220) / 100;
+
+        color.setHSV( ( 0.6 - ( element * 0.3 ) ), 1.0, 1.0 );
+        infectColor.setHSV( 0, 1.0, 0.9 );
+        var size = element * 60;
 
         point.position.x = 200 * Math.sin(phi) * Math.cos(theta);
         point.position.y = 200 * Math.cos(phi);
         point.position.z = 200 * Math.sin(phi) * Math.sin(theta);
 
         point2.position.copy(point.position);
-        point2.position.multiplyScalar(0.9);
+        point2.position.multiplyScalar(0.99);
 
         point.lookAt(sphere.position);
         point2.lookAt(sphere.position);
 
-        point.scale.z = -size;
+        if(element > 0)
+            point.scale.z = -size;
+        else
+            point.scale.z = 0.1;
         point2.scale.z = 0.1;
 
         var i;
         for (i = 0; i < point.geometry.faces.length; i++) 
             point.geometry.faces[i].color = color;
         for (i = 0; i < point2.geometry.faces.length; i++) 
-            point2.geometry.faces[i].color = color2;
+            point2.geometry.faces[i].color = infectColor;
 
         THREE.GeometryUtils.merge(subgeo, point);
         // Last 8 points in merged geometry should be the vertices of the moving bar
@@ -250,7 +252,7 @@ var Renderer = function() {
 
         THREE.GeometryUtils.merge(subgeo, point2);
         // Last 8 points in merged geometry should be the vertices of the moving bar
-        datapoint.vertices_zom = subgeo.vertices.slice(-8); 
+        datapoint.vertices_zom = subgeo.vertices.slice(-8);
     }
 
     function render() {
@@ -457,9 +459,21 @@ var Renderer = function() {
             tween.start();
         },
         setData: function(dataPoint, popLength, zomLength) {
+            if(!dataPoint.vertices_pop) {
+                addPoint(dataPoint.lat, dataPoint.lng, dataPoint);
+                subgeo.verticesNeedUpdate = true;
+            }
+            popLength = popLength * 60 + 200;
+            if(zomLength * 60 < 0.5 && zomLength > 0)
+                zomLength = popLength + 0.5;
+            else if(zomLength > 0 && popLength <= 200) {
+                popLength = 200
+                zomLength = zomLength * 60 + popLength;
+            }
+            else if(zomLength > 0)
+                zomLength = zomLength * 60 + popLength;
+
             if(zomLength) {
-                if(Math.abs(zomLength - popLength) < 0.2)
-                    zomLength = popLength + 0.2;
                 dataPoint.vertices_zom[1].setLength(popLength);
                 dataPoint.vertices_zom[3].setLength(popLength);
                 dataPoint.vertices_zom[4].setLength(popLength);
@@ -468,11 +482,37 @@ var Renderer = function() {
                 dataPoint.vertices_zom[2].setLength(zomLength);
                 dataPoint.vertices_zom[5].setLength(zomLength);
                 dataPoint.vertices_zom[7].setLength(zomLength);
+            } else if(dataPoint.vertices_zom[0].length() >= 200) {
+                dataPoint.vertices_zom[1].setLength(100);
+                dataPoint.vertices_zom[3].setLength(100);
+                dataPoint.vertices_zom[4].setLength(100);
+                dataPoint.vertices_zom[6].setLength(100);
+                dataPoint.vertices_zom[0].setLength(101);
+                dataPoint.vertices_zom[2].setLength(101);
+                dataPoint.vertices_zom[5].setLength(101);
+                dataPoint.vertices_zom[7].setLength(101);
+            }
+
+            if(popLength <= 200) {
+                dataPoint.vertices_pop[1].setLength(100);
+                dataPoint.vertices_pop[3].setLength(100);
+                dataPoint.vertices_pop[4].setLength(100);
+                dataPoint.vertices_pop[6].setLength(100);
+                dataPoint.vertices_pop[0].setLength(101);
+                dataPoint.vertices_pop[2].setLength(101);
+                dataPoint.vertices_pop[5].setLength(101);
+                dataPoint.vertices_pop[7].setLength(101);
             } else {
+                /*if(dataPoint.vertices_pop[0].length() < 200) {
+                    dataPoint.vertices_pop[1].setLength(200);
+                    dataPoint.vertices_pop[3].setLength(200);
+                    dataPoint.vertices_pop[4].setLength(200);
+                    dataPoint.vertices_pop[6].setLength(200);                    
+                }*/
                 dataPoint.vertices_pop[0].setLength(popLength);
                 dataPoint.vertices_pop[2].setLength(popLength);
                 dataPoint.vertices_pop[5].setLength(popLength);
-                dataPoint.vertices_pop[7].setLength(popLength);                
+                dataPoint.vertices_pop[7].setLength(popLength);
             }
 
         },

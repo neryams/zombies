@@ -386,9 +386,10 @@ div.toolbox #tb_board>div {
 	vertical-align: middle;
 }
 div.toolbox #tb_board .grid {
-	background-image: url('../ui/grid2.gif');
+	background-image: url('../ui/grid.gif');
 	margin: 0 auto;
 	position: relative;
+	overflow: hidden;
 }
 div.toolbox #tb_gene {
 	display: none;
@@ -432,6 +433,12 @@ div.toolbox .geneBlock.active.used {
 div.toolbox div.grid .placed {
 	position: absolute;
 	z-index: 29;
+}
+div.toolbox div.grid .grid_overlay {
+	z-index: 28;
+	background: #99ffff;
+	position: absolute;
+	opacity: 0.4;
 }
 
 .tooltip {

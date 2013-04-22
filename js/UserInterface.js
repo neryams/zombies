@@ -1081,6 +1081,28 @@ var UserInterface = function UserInterface(Renderer) {
 				interfaceParts['news_ticker'].element.append($('<p>'+langStr+'</p>'));				
 			}
 		},
+		addMutationGridOverlay: function(x,y) {
+			var overlay = $('<div class="grid_overlay"></div>');
+			if(!x)
+				overlay.css('width', '100%');
+			else 
+				overlay.css('width', Evolution.prototype.SQUARE_SIZE);
+			if(!y)
+				overlay.css('height', '100%');
+			else 
+				overlay.css('height', Evolution.prototype.SQUARE_SIZE);
+
+			if(!x)
+				overlay.css('left', '0px');
+			else
+				overlay.css('left', Evolution.prototype.SQUARE_SIZE * x);
+			if(!y)
+				overlay.css('top', '0px');
+			else
+				overlay.css('top', Evolution.prototype.SQUARE_SIZE * y);
+			
+			$('.toolbox .grid').append(overlay);
+		},
 		alert: function(item) {
 			if(arguments.length == 0)
 				console.error('no language item id defined');

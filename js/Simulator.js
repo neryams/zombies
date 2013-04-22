@@ -468,7 +468,7 @@ Simulator.prototype.purchaseMutation = function(mutations) {
 			if(grid[mutations[i].placement.x + upgrade.gene.shape[j].x][mutations[i].placement.y + upgrade.gene.shape[j].y])
 				return false;
 			else
-				grid[mutations[i].placement.x + upgrade.gene.shape[j].x][mutations[i].placement.y + upgrade.gene.shape[j].y] = true;
+				grid[mutations[i].placement.x + upgrade.gene.shape[j].x][mutations[i].placement.y + upgrade.gene.shape[j].y] = upgrade.gene;
 		}
 	}
 	if(totalCost > this.properties.money)
@@ -493,6 +493,12 @@ Simulator.prototype.purchaseMutation = function(mutations) {
 		mutation = mutations.pop();
 		this.upgrades[mutation.upgrade].activateGene(mutation.placement.x,mutation.placement.y);
 	}
+
+	// Run any onMutationChange functions in the modules
+	for(var id in that.modules)
+		if (that.modules.hasOwnProperty(id)) 
+			if(that.modules[id].onMutationChange != undefined)
+				that.modules[id].onMutationChange(grid);
 
 	return true;
 }
@@ -554,17 +560,8 @@ Simulator.prototype.tick = function() {
 			for(j = 0; j < this.activeModules.spread.length; j++)
 				this.activeModules.spread[j].process(current,strength);
 
-			if(current.infected > 0) {
-				size_pop = ((current.total_pop+10) / gConfig.max_pop) * 60 + 200;
-				size_zom = ((current.infected+10) / gConfig.max_pop) * 60 + size_pop + 0.5;
-
-				this.Renderer.setData(current,size_pop);
-				if(size_zom > 0) {
-					this.Renderer.setData(current,size_zom,size_pop);			
-				}
-			} else if(beginInfected > 0) {
-				this.Renderer.setData(current,180,180);
-			}
+			this.updateSquare(current);
+			this.updateSquare(target);
 		}
 		for(j = 0; j < this.activeModules.event.length; j++)
 			this.activeModules.event[j].process();
@@ -576,18 +573,18 @@ Simulator.prototype.tick = function() {
 		this.UIData['iteration'] = this.iteration;
 		this.UI.updateUI(this.UIData);
 		this.iteration++;
-		return true;
 	}
-	return false;
 }
 Simulator.prototype.updateSquare = function(target) {
-	var	size_pop = ((target.total_pop+10) / gConfig.max_pop) * 60 + 200,
-		size_zom = ((target.infected+10) / gConfig.max_pop) * 60 + size_pop + 0.5;
-	if(target.infected > 0) {
-		this.Renderer.setData(target,size_pop);
-		if(size_zom > 0) {
-			this.Renderer.setData(target,size_zom,size_pop);			
-		}
+	var	size_pop = (target.total_pop) / gConfig.max_pop,
+		size_zom = (target.infected) / gConfig.max_pop;
+	if(!target.cache) {
+		this.Renderer.setData(target, size_pop, size_zom);
+		target.cache = { infected: target.infected, total_pop: target.total_pop }
+	} else if(target.cache.infected != target.infected || target.cache.total_pop != target.total_pop) {
+		this.Renderer.setData(target, size_pop, size_zom); 
+		target.cache.infected = target.infected;
+		target.cache.total_pop = target.total_pop;
 	}
 }
 
@@ -622,6 +619,8 @@ Simulator.prototype.updateSquare = function(target) {
 					Strain modules should end in CALLBACK(startSquareDataPoint)
 				onStart      -- function that runs after the simulation is started and strain.init has run
 				onActivate   -- function that runs every time a module is activated.
+				onDectivate   -- function that runs every time a module is deactivated.
+				onMutationChange   -- function that runs every time the player submits a new mutation. 1st parameter is the grid array with selected mutations.
 				reset        -- function that runs when a module is deactivated or the levels are reset.
 	
 	Properties of Data Points (CURRENT and TARGET)
@@ -722,7 +721,6 @@ SimulatorModules['main'] = function() {
 		var newInfection = false,
 			totalConverted = 0,
 			totalKilled = 0,
-			totalMoved = 0,
 			rand = Math.random();
 		if(target.total_pop > 0) {
 			// Kill people in self tile
@@ -744,8 +742,9 @@ SimulatorModules['main'] = function() {
 			if(strength.infect && target.infected == 0) {
 				if(rand < (strength.infect/600)) {
 					totalConverted = Math.round(rand * strength.infect/600);
-					if(totalConverted > 0) {
-						this.S.activePoints.push(target);				
+					if(totalConverted > 0 && !target.active) {
+						this.S.activePoints.push(target);
+						target.active = true;				
 					}
 				}
 			} else if(strength.infect) {
@@ -825,7 +824,7 @@ SimulatorModules['world_stats'] = function() {
 	return newModule;
 }
 
-/* 
+/*
 	Panic: module for activating various modules based on world panic
 */
 SimulatorModules['panic'] = function() {
@@ -901,7 +900,6 @@ SimulatorModules['population'] = function() {
 SimulatorModules['movement'] = function() {
 	var newModule = new Module('spread', function(current,strength) {
 		// Zombies walking around, distance probability distribution function based in strength. mobility being in km/h, and radius of planet being 6378.1 km
-		// Don't bother simulating zombies moving between squares with lots of zombies, this process is expensive and doesn't really do much for the simulation
 		if(strength.mobility > 0 && current.infected > 0) {
 			if(current.infectedMovement === undefined)
 				current.infectedMovement = 0;
@@ -910,56 +908,93 @@ SimulatorModules['movement'] = function() {
 		    var direction,target,normalRand,normalMean,cumChance,actualChance,
 		    	chances = this.cumChance(current.lat, (strength.mobility + current.infectedMovement));
 				rand = Math.random(),
-		    	totalMoved = 0;
-		    var cumChance = (chances[0]+chances[1]+chances[2]+chances[3]+chances[4]+chances[5]+chances[6]+chances[7])*current.infected;
-			if(cumChance > 1)
+		    	totalMoved = 0,
+		    	surroundPop = current.adjacent[0].total_pop + current.adjacent[1].total_pop + current.adjacent[2].total_pop + current.adjacent[3].total_pop;
+		    var cumChance = (chances[0]+chances[1])*current.infected;
+		    
+			if(cumChance > 1) {
 				rand *= cumChance;
+				actualChance = 1;
+			} else {
+				actualChance = cumChance;
+			}
 
-		    // TODO: vertical spread chance doesn't quite match up with horizontal spread chance near the poles. vertical chance astronomically tiny
+			// If random is less than the cumulative chance, we can assume a zombie will be transferring
+			if(rand < cumChance) {
+				totalMoved = 1;
+				// If one side has no people, always send zombies to the other side
+				if(!current.adjacent[0].total_pop && !current.adjacent[2].total_pop && (current.adjacent[1].total_pop || current.adjacent[3].total_pop))
+					direction = 1;
+				else if(!current.adjacent[1].total_pop && !current.adjacent[3].total_pop && (current.adjacent[0].total_pop || current.adjacent[2].total_pop))
+					direction = 0;
+				// If both sides have people or no sides have people, spread zombies in a random direction
+				else
+					for(direction = 0; direction < 2; direction++) {
+						chances[direction] *= current.infected;
+						// We want cumulative chance for the randomization
+						actualChance = chances[direction];
+						if(direction > 0) 
+							chances[direction] += chances[direction-1];
 
-			// save some processing if rand is way too high to catch the spreading
-			if(rand < cumChance)
-				for(direction = 0; direction < 8; direction++) {
-					chances[direction] *= current.infected;
-					// We want cumulative chance for the randomization
-					actualChance = chances[direction];
-					if(direction > 0)
-						chances[direction] += chances[direction-1];
-					// If at least one zombie makes it to the next square, calculate how many actually make it in
-					if(rand < chances[direction]) {
-						if(direction > 0)
-							normalRand = (rand - chances[direction-1])/(chances[direction]-chances[direction-1]);
-						else 
-							normalRand = rand/chances[direction];
-						// mean number of transfers is equal to the square root of the total possible.
-						normalMean = Math.ceil(Math.pow(current.infected,0.75)); 
-						// standard deviation of transfers is 1/3 of the mean, so that 99% of the number of transfers is within the mean.
-						totalMoved = Math.ceil((normalRand*2 + (normalRand*10%1)*2 + (normalRand*100%1)*2 - 3)*(normalMean/3) + normalMean);
-						if(totalMoved < 1)
-							totalMoved = 1;
+						// If at least one zombie makes it to the next square, calculate how many actually make it in
+						if(rand < chances[direction]) {
+							break;
+						}
+					}				
+			}
 
-						target = current.adjacent[direction];
-						break;
-					}
+			// If the zombie didn't make it, add a movement value for the next move (increases chances of movement).
+			current.infectedMovement += strength.mobility;
+			// If the zombie is actually moving, do the movement stuff
+			if(totalMoved > 0) {
+				if(cumChance > 1) {
+					totalMoved = Math.round(actualChance*current.infected);				
+				}
+				/*// mean number of transfers is equal to the square root of the total possible.
+				normalMean = Math.ceil(Math.pow(current.infected,0.85)); 
+				// standard deviation of transfers is 1/3 of the mean, so that 99% of the number of transfers is within the mean.
+				totalMoved = Math.ceil((normalRand*2 + (normalRand*10%1)*2 + (normalRand*100%1)*2 - 3)*(normalMean/3) + normalMean);
+				if(totalMoved < 1)
+					totalMoved = 1;
+				*/
+
+				// finally, determine which direction they moved in (direction of more healthy people is more likely)
+				rand = Math.random();
+				if(surroundPop > 0) {
+					if(rand > current.adjacent[direction].total_pop/(current.adjacent[direction].total_pop + current.adjacent[direction+2].total_pop))
+						direction += 2;
+				// If there are no people around, walk in the direction of less zombies (spread out)
+				} else {
+					if(rand < current.adjacent[direction].infected/(current.adjacent[direction].infected + current.adjacent[direction+2].infected))
+						direction += 2;					
 				}
 
-			// If the zombie didn't make it, add a movement value for the next move.
-			if(totalMoved == 0 || !target)
-		    	current.infectedMovement += strength.mobility;
-			// If the zombie is actually moving, do the movement stuff
-			else if(target.total_pop > 0 || target.infected > 0) {
-		    	current.infectedMovement *= (1 - actualChance/cumChance);
+				target = current.adjacent[direction];
 
+				// TODO: keep zombies walking when there are no people, add water traversing
+
+		    	// Move the zombies
 				if(current.infected < totalMoved)
 					totalMoved = current.infected;
 
-				if(totalMoved > 0 && target.infected == 0)
+				// Adjust infectedMovement based on the number of zombies moving
+		    	current.infectedMovement = Math.round((1 - actualChance/cumChance)*(1-totalMoved/current.infected));
+		    	if(target.infectedMovement)
+		    		target.infectedMovement = Math.round(target.infectedMovement * (1-totalMoved/(target.infected+totalMoved)));
+
+
+				// must remove the point from activepoints or something otherwise there will be multiple identical squares
+				if(totalMoved > 0 && !target.active) {
 					this.S.activePoints.push(target);
+					target.active = true;
+				}
 
 				target.infected += totalMoved;
 				current.infected -= totalMoved;
 				this.S.updateSquare(target);
 			}
+		    if(isNaN(current.infectedMovement))
+		    	console.log('whoah');
 		}
 	},{
 		init: function() {
@@ -971,19 +1006,20 @@ SimulatorModules['movement'] = function() {
 				if(!this.bakedMoveChance[lat])
 					this.bakedMoveChance[lat] = [];
 				if(!this.bakedMoveChance[lat][movement]) {
-					var result = [];
-					for(var direction = 0; direction < 8; direction++) {
+					var result = [],
+						meanMovement = Math.sqrt(24*movement),
+						sigma = meanMovement/3;
+					// only need to do two directions because the two horiz directions are the same and the two vert directions are the same
+					for(var direction = 0; direction < 2; direction++) {
 						distance = this.S.bakedValues.latDistances[lat][direction];
 						// A&S erf formula 7.1.26
-						var a = [0.254829592,-0.284496736,1.421413741,-1.453152027,1.061405429],
-					    	p  =  0.3275911,
-
 					    	// distance is the distance in kilometers needed to travel to be in the next square
 					    	// 24 "steps", or hours, in a day. Each step is the distance the zombie can travel in one hour, or kph.
-					    	x = distance*0.5/Math.sqrt(2*24*movement),
+					    	// basically get the distribution of zombies that make it past
+					    	x = (distance*0.5 - meanMovement)/(1.414213562*sigma),
 
-					    	t = 1.0/(1.0 + p*x);
-						result[direction] = (((((a[4]*t + a[3])*t) + a[2])*t + a[1])*t + a[0])*t*Math.pow(Math.E,-x*x);
+					    	t = 1.0/(1.0 + 0.3275911*x);
+						result[direction] = (((((1.061405429*t - 1.453152027)*t) + 1.421413741)*t - 0.284496736)*t + 0.254829592)*t*Math.pow(Math.E,-x*x);
 					}
 					this.bakedMoveChance[lat][movement] = result;
 				}
@@ -1256,19 +1292,38 @@ SimulatorModules['desertWalker'] = function() {
 
 /* 
 	Vaccine: Makes the world start vaccine research based on panic. If the vaccine is completed, you lose
+	Vaccine progress is applied to the upgrade colors on a specific row  
 */
 SimulatorModules['vaccine'] = function() {
 	var newModule = new Module('event', function() {
+		var addResearch = 0;
+		// get the total amount of research added this turn based on remaining actively researching country populations
 		for(var i = 1, n = this.S.countries.length; i < n; i++)
 			if(this.S.countries[i].research)
-				this.research += this.S.countries[i].capitol.total_pop * 5 / this.S.config.max_pop;
-		this.progressBar.val(this.research / this.requiredResearch);
-		if(this.research > this.requiredResearch)
-			this.S.end('lose'); 
+				addResearch += this.S.countries[i].capitol.total_pop * 5 / this.S.config.max_pop;
+
+		if(addResearch > 0) {
+			// add the research into each square and color association
+			this.research = 0;
+			for(var i = 0; i < this.currentColors.length; i++) {
+				this.progress[this.currentColors[i]+i] += addResearch/this.currentColors.length;
+	    		this.research += this.progress[this.currentColors[i]+i];
+			}
+
+	    	// If there is enough research, make the player lose
+			this.progressBar.val(this.research / this.requiredResearch);
+			if(this.research > this.requiredResearch)
+				this.S.end('lose'); 			
+		}
 	},{
 		init: function() {
 			this.research = 0;
 			this.requiredResearch = 5000;
+			this.progress = {};
+			this.currentColors = [];
+			this.hotRow = Math.floor(this.S.properties.gridSize/2); // row index of the grid that the vacciene progress will be cased on.
+			this.S.UI.addMutationGridOverlay(null,this.hotRow);
+
 			this.startResearch = function(country) {
 				var countryList = [];
 				if(!this.isActive()) {
@@ -1292,6 +1347,18 @@ SimulatorModules['vaccine'] = function() {
 		onActivate: function() {
 			var progressContainer = this.S.UI.addDataField('div',{ class: 'bottom_stats' });
 			this.progressBar = progressContainer.addDataField('progressBar',{title: 'Vaccine Progress', width: 300}).val(0);
+		},
+		onMutationChange: function(grid) {
+			this.currentColors.length = 0;
+			for(var i = 0; i < this.S.properties.gridSize; i++) {
+				if(grid[i][this.hotRow])
+					var color = grid[i][this.hotRow].color;
+				else 
+					var color = '_';
+				if(!this.progress[color+i])
+					this.progress[color+i] = 0;
+				this.currentColors.push(color);
+			}
 		}
 	});
 	return newModule;
@@ -1315,8 +1382,7 @@ SimulatorModules['seaports'] = function() {
 				strength.infect = 0;
 				for(j = 0; j < this.S.activeModules.infect.length; j++)
 					this.S.activeModules.infect[j].process(this.ships[i].from,this.ships[i].to,strength);
-				if(this.S.strain.process(this.ships[i].from,this.ships[i].to,strength,Math.random()))
-					this.S.activePoints.push(this.ships[i].to);
+				this.S.strain.process(this.ships[i].from,this.ships[i].to,strength,Math.random());
 				this.ships[i].progressBar.val(this.getShipDate(this.S.date,this.ships[i].interval));
 				this.ships[i].timeLeft = -1;
 				this.intervalSortInsert(this.ships[i],this.S.iteration);
@@ -1376,7 +1442,7 @@ SimulatorModules['seaports'] = function() {
 	    		// If the ship sails after every other ship, place it on the end.
 	    		if(!inserted) {
 					shipObject.order = this.intervalList.length;
-					this.S.UI.interfaceParts.shipping.element.append(shipObject.progressBar.element.parent());
+					this.shippingMenu.element.append(shipObject.progressBar.element.parent());
 					this.intervalList.push(shipObject);	  			
 	    		}
 			}
@@ -1386,13 +1452,13 @@ SimulatorModules['seaports'] = function() {
             }
 
 			// Shipping Schedule display button.
-            this.S.UI.interfaceParts.shipping = this.S.UI.interfaceParts.monitor_view.addDataField('div',{
+            this.shippingMenu = this.S.UI.interfaceParts.monitor_view.addDataField('div',{
             	title: 'Shipping Schedule',
             	class: 'shipping',
             	visible: false
             });
             var Renderer = this.S.Renderer;
-            this.S.UI.interfaceParts.monitor_shipping = this.S.UI.interfaceParts.monitor_control.addDataField('button',{ 
+            this.S.UI.interfaceParts.monitor_control.addDataField('button',{ 
             		onClick: function() {
             			if(!this.opens[0].visible) 
 	            			this.opens[0].display();             				
@@ -1401,7 +1467,7 @@ SimulatorModules['seaports'] = function() {
             				Renderer.hideArc();
             			}
             		},
-            		opens: [this.S.UI.interfaceParts.shipping] 
+            		opens: [this.shippingMenu] 
             	}).val('Shipping Schedule');
 
 			for(i = 1; i < this.S.countries.length; i++) {
@@ -1431,7 +1497,7 @@ SimulatorModules['seaports'] = function() {
 							distance = Math.round(2 * Math.atan2(Math.sqrt(hyp), Math.sqrt(1-hyp)) * 40); // ~40 days to get to the other side of the world?
 
 							// Make progress bad for shipping route and add it to the intervals object
-							progressBar = this.S.UI.interfaceParts.shipping.addDataField('progressBar',{title: this.S.countries[i].name+' to '+this.S.countries[j].name, width: 186});
+							progressBar = this.shippingMenu.addDataField('progressBar',{title: this.S.countries[i].name+' to '+this.S.countries[j].name, width: 186});
 							progressBar.element.parent().on('mouseover.showRoute',{R: this.S.Renderer, point1: a, point2: b}, this.displayArc);
 							progressBar.val(this.getShipDate(this.S.date,interval));
 							if(!this.intervals['int'+interval])
