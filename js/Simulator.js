@@ -948,7 +948,7 @@ SimulatorModules['movement'] = function() {
 			// If the zombie is actually moving, do the movement stuff
 			if(totalMoved > 0) {
 				if(cumChance > 1) {
-					totalMoved = Math.round(actualChance*current.infected);				
+					totalMoved = Math.round(cumChance * actualChance);
 				}
 				/*// mean number of transfers is equal to the square root of the total possible.
 				normalMean = Math.ceil(Math.pow(current.infected,0.85)); 
@@ -970,8 +970,6 @@ SimulatorModules['movement'] = function() {
 				}
 
 				target = current.adjacent[direction];
-
-				// TODO: keep zombies walking when there are no people, add water traversing
 
 		    	// Move the zombies
 				if(current.infected < totalMoved)
@@ -1008,19 +1006,31 @@ SimulatorModules['movement'] = function() {
 				if(!this.bakedMoveChance[lat][movement]) {
 					var result = [],
 						meanMovement = Math.sqrt(24*movement),
-						sigma = meanMovement/3;
-					// only need to do two directions because the two horiz directions are the same and the two vert directions are the same
+						sigma = meanMovement/3,
+						totalDistance = (this.S.bakedValues.latDistances[lat][0] + this.S.bakedValues.latDistances[lat][1] + 
+							this.S.bakedValues.latDistances[lat][4] + this.S.bakedValues.latDistances[lat][5]);
+					/* old formula... fucks up near the poles
 					for(var direction = 0; direction < 2; direction++) {
 						distance = this.S.bakedValues.latDistances[lat][direction];
-						// A&S erf formula 7.1.26
-					    	// distance is the distance in kilometers needed to travel to be in the next square
-					    	// 24 "steps", or hours, in a day. Each step is the distance the zombie can travel in one hour, or kph.
-					    	// basically get the distribution of zombies that make it past
-					    	x = (distance*0.5 - meanMovement)/(1.414213562*sigma),
-
-					    	t = 1.0/(1.0 + 0.3275911*x);
+				    	x = (distance*0.5 - meanMovement)/(1.414213562*sigma),
+				    	t = 1.0/(1.0 + 0.3275911*x);
 						result[direction] = (((((1.061405429*t - 1.453152027)*t) + 1.421413741)*t - 0.284496736)*t + 0.254829592)*t*Math.pow(Math.E,-x*x);
 					}
+					*/
+
+					// only need to do two directions because the two horiz directions are the same and the two vert directions are the same
+					// A&S erf formula 7.1.26
+				    	// distance is the distance in kilometers needed to travel to be in the next square
+				    	// 24 "steps", or hours, in a day. Each step is the distance the zombie can travel in one hour, or kph.
+				    	// basically get the distribution of zombies that make it past
+			    	x = (this.S.bakedValues.latDistances[lat][0]*0.5 - meanMovement)/(1.414213562*sigma),
+
+			    	t = 1.0/(1.0 + 0.3275911*x);
+					result[0] = (((((1.061405429*t - 1.453152027)*t) + 1.421413741)*t - 0.284496736)*t + 0.254829592)*t*Math.pow(Math.E,-x*x);
+					result[1] = result[0] * (this.S.bakedValues.latDistances[lat][1]/totalDistance) * 4;
+					result[4] = result[0] * (this.S.bakedValues.latDistances[lat][4]/totalDistance) * 4;
+					result[5] = result[0] * (this.S.bakedValues.latDistances[lat][5]/totalDistance) * 4;
+
 					this.bakedMoveChance[lat][movement] = result;
 				}
 				return this.bakedMoveChance[lat][movement].slice(0); // return a copy so the array can be freely modified

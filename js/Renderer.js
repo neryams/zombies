@@ -348,9 +348,11 @@ var Renderer = function() {
                 var save = true; break;
             case 'country': 
                 var setColor = function(i,val) {
+                    if(val > 0) {
                         pix[i*4] = gData.countries[val].color[0];
                         pix[i*4+1] = gData.countries[val].color[1];
-                        pix[i*4+2] = gData.countries[val].color[2];       
+                        pix[i*4+2] = gData.countries[val].color[2];
+                    }      
                 };
                 var organizeColor = function(i) {
                     if(pix[i*4] == 0 && pix[i*4+1] == 0 && pix[i*4+2] == 0)
@@ -374,7 +376,7 @@ var Renderer = function() {
             currentSq = gData.points[i];
             pix[i*4] = pix[i*4+1] = pix[i*4+2] = 0;
             pix[i*4+3] = 255;
-            if(currentSq.total_pop > 0) {
+            if(!currentSq.water && currentSq[layer] !== undefined) {
                 setColor(i,currentSq[layer]);
             }
         }
