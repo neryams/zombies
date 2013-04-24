@@ -1,6 +1,8 @@
-Set number of zombies moved for large numbers to cumulative normal function with mean at sqrt(max_distance based on speed) and x=distance to square. fuzz with another normal random number
+More reasearch speed as the panic rises. Base research output from countries on the highest panic level between the country and the world.
 
-Try to change the __proto__ to something a bit less hax
+At a certain panic level, stop research completely. (note: at this point send that country into "survivor mode")
+
+Try to change the __proto__ in the webworker copy to something a bit less hax
 
 Speed up the generator web worker by not copying a billion element array
 
