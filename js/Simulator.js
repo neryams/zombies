@@ -835,15 +835,19 @@ SimulatorModules['panic'] = function() {
 				switch(this.currPanicLevel) {
 					case 1:
 						this.S.modules['vaccine'].startResearch();
+						this.S.UI.addNews('world_research');
 						break;
 					case 2:
 						this.S.modules['vaccine'].researchRate(2);
+						this.S.UI.addNews('world_research2');
 						break;
 					case 3:
 						this.S.modules['vaccine'].researchRate(4);
+						this.S.UI.addNews('world_research3');
 						break;
 					case 4:
 						this.S.modules['vaccine'].researchRate(0);
+						this.S.UI.addNews('world_research_end');
 						break;
 				}
 				if(this.panicThresholds.length > this.currPanicLevel)
@@ -868,15 +872,19 @@ SimulatorModules['panic'] = function() {
 						switch(this.S.countries[i].currPanicLevel) {
 							case 1:
 								this.S.modules['vaccine'].startResearch(i);
+								this.S.UI.addNews('country_research',this.S.countries[i].name);
 								break;
 							case 2:
 								this.S.modules['vaccine'].researchRate(3,i);
+								this.S.UI.addNews('country_research2',this.S.countries[i].name);
 								break;
 							case 3:
 								this.S.modules['vaccine'].researchRate(6,i);
+								this.S.UI.addNews('country_research3',this.S.countries[i].name);
 								break;
 							case 4:
 								this.S.modules['vaccine'].researchRate(0,i);
+								this.S.UI.addNews('country_research_end',this.S.countries[i].name);
 								break;
 						}
 						// If the panic level is past the maximum, turn off the growth.
@@ -900,7 +908,7 @@ SimulatorModules['panic'] = function() {
 			}
 			this.panicThresholds = [0,1000,10000000,100000000,this.S.config.world_pop/2];
 			this.currPanicLevel = 1;
-			this.countryPanicThresholds = [0,200,2000,6000,12000];
+			this.countryPanicThresholds = [0,200,6000,10000,20000];
             this.worldPanic = this.S.UI.interfaceParts.stats.addDataField('progressBar',{
             	title: 'World Panic',
             	dynamic: 'world_panic',
@@ -1377,13 +1385,11 @@ SimulatorModules['vaccine'] = function() {
 				if(country) {
 					if(!this.S.countries[country].research) {
 						this.researchRate(1, country);
-						this.S.UI.addNews('country_research',this.S.countries[country].name);
 					}
 				}
 				else 
 				{
 					this.researchRate(1);
-					this.S.UI.addNews('world_research');
 				}
 			}
 

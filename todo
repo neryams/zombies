@@ -1,6 +1,4 @@
-More reasearch speed as the panic rises. Base research output from countries on the highest panic level between the country and the world.
-
-At a certain panic level, stop research completely. (note: at this point send that country into "survivor mode")
+Square or cube the random number, multiply by infected for number of active zombies, higher exponent and or divide for more climate damage, then divy up the affected between killed and infected
 
 Try to change the __proto__ in the webworker copy to something a bit less hax
 

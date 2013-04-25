@@ -555,9 +555,15 @@ var UserInterface = function UserInterface(Renderer) {
 		langOption = 'en';
 	lang['en'] = {};
 	lang['en']['country_research'] = '%r begins vaccine research!';
+	lang['en']['country_research2'] = '%r begins working feverishly on the cure.';
+	lang['en']['country_research3'] = '%r devotes economy to finding the cure in desparation.';
+	lang['en']['country_research_end'] = '%r is in anarchy. Research ceases.';
 	lang['en']['world_research'] = 'World cooperation begins on vaccine research!';
-	lang['en']['win_message'] = ['You Win!'];
-	lang['en']['lose_message'] = ['You Lose!'];
+	lang['en']['world_research2'] = 'International center for researching the cure opens.';
+	lang['en']['world_research3'] = 'World begins working feverishly on the cure';
+	lang['en']['world_research_end'] = 'World anarchy. Cure research ceases.';
+	lang['en']['win_message'] = 'You Win!';
+	lang['en']['lose_message'] = 'You Lose!';
 
 	alerts['win_message'] = '<p>%lang</p>';
 	alerts['lose_message'] = '<p>%lang</p>';
@@ -1081,6 +1087,30 @@ var UserInterface = function UserInterface(Renderer) {
 				interfaceParts['news_ticker'].element.append($('<p>'+langStr+'</p>'));				
 			}
 		},
+		alert: function(item) {
+			if(arguments.length == 0)
+				console.error('no language item id defined');
+			else {
+				var j = 1,
+					dom = alerts[item],
+					langStrs = lang[langOption][item];
+				if(!$.isArray(langStrs))
+					langStrs = [langStrs];
+
+				// Replace each text field in the alert DOM with the appropriate language string
+				for(var i = 0; i < langStrs.length; i++) {
+					// Replace each wildcard in each language string with value supplied
+					while(langStrs[i].indexOf('%r') >= 0 && arguments.length > j) {
+						langStrs[i] = langStrs[i].replace('%r',arguments[j]);
+						j++;
+					}
+					dom = dom.replace('%lang',langStrs[i]);
+				}
+
+				interfaceParts['alert'].element.append($(dom))
+				interfaceParts['alert'].display();
+			}
+		},
 		addMutationGridOverlay: function(x,y) {
 			var overlay = $('<div class="grid_overlay"></div>');
 			if(!x)
@@ -1102,27 +1132,6 @@ var UserInterface = function UserInterface(Renderer) {
 				overlay.css('top', Evolution.prototype.SQUARE_SIZE * y);
 			
 			$('.toolbox .grid').append(overlay);
-		},
-		alert: function(item) {
-			if(arguments.length == 0)
-				console.error('no language item id defined');
-			else {
-				var j = 1,
-					dom = alerts[item],
-					langStrs = lang[langOption][item];
-				// Replace each text field in the alert DOM with the appropriate language string
-				for(var i = 0; i < langStrs.length; i++) {
-					// Replace each wildcard in each language string with value supplied
-					while(langStrs[i].indexOf('%r') >= 0 && arguments.length > j) {
-						langStrs[i] = langStrs[i].replace('%r',arguments[j]);
-						j++;
-					}
-					dom = dom.replace('%lang',langStrs[i]);
-				}
-
-				interfaceParts['alert'].element.append($(dom))
-				interfaceParts['alert'].display();
-			}
 		}
 	};
 }
