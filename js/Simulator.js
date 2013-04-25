@@ -829,31 +829,62 @@ SimulatorModules['world_stats'] = function() {
 */
 SimulatorModules['panic'] = function() {
 	var newModule = new Module('event', function() {
-		this.S.properties.panic = Math.ceil(this.S.properties.panic * 0.95);
-		if(this.S.properties.panic > this.panicThresholds[this.currPanicLevel]) {
-			this.currPanicLevel++;
-			switch(this.currPanicLevel) {
-				case 2:
-					this.S.modules['vaccine'].startResearch();
-			}
-		}
-		if(this.S.properties.panic < this.panicThresholds[this.currPanicLevel - 1]) {
-			this.S.properties.panic = this.panicThresholds[this.currPanicLevel - 1];			
-		}
-		if(this.worldPanic.visible && this.currPanicLevel > this.panicThresholds.length - 1) {
-			this.worldPanic.hide();
-		}
-
-		for(var i = 1; i < this.S.countries.length; i++) {
-			this.S.countries[i].panic = Math.ceil(this.S.countries[i].panic * 0.95);
-			if(this.S.countries[i].panic < this.countryPanicThresholds[this.S.countries[i].currPanicLevel - 1]) {
-				this.S.countries[i].panic = this.countryPanicThresholds[this.S.countries[i].currPanicLevel - 1];			
-			}
-			if(this.S.countries[i].panic > this.countryPanicThresholds[this.S.countries[i].currPanicLevel]) {
-				this.S.countries[i].currPanicLevel++;
-				switch(this.S.countries[i].currPanicLevel) {
+		if(this.S.properties.panic > 0) {
+			this.S.properties.panic = Math.ceil(this.S.properties.panic * 0.95);
+			if(this.S.properties.panic > this.panicThresholds[this.currPanicLevel]) {
+				switch(this.currPanicLevel) {
+					case 1:
+						this.S.modules['vaccine'].startResearch();
+						break;
 					case 2:
-						this.S.modules['vaccine'].startResearch(i);
+						this.S.modules['vaccine'].researchRate(2);
+						break;
+					case 3:
+						this.S.modules['vaccine'].researchRate(4);
+						break;
+					case 4:
+						this.S.modules['vaccine'].researchRate(0);
+						break;
+				}
+				if(this.panicThresholds.length > this.currPanicLevel)
+					this.currPanicLevel++;
+				else
+					this.currPanicLevel = 0
+			}
+			if(this.S.properties.panic < this.panicThresholds[this.currPanicLevel - 1]) {
+				this.S.properties.panic = this.panicThresholds[this.currPanicLevel - 1];			
+			}
+			if(this.worldPanic.visible && this.currPanicLevel > this.panicThresholds.length - 1) {
+				this.worldPanic.hide();
+			}
+
+			for(var i = 1; i < this.S.countries.length; i++) {
+				if(this.S.countries[i].panic > 0) {
+					this.S.countries[i].panic = Math.ceil(this.S.countries[i].panic * 0.95);
+					if(this.S.countries[i].panic < this.countryPanicThresholds[this.S.countries[i].currPanicLevel - 1]) {
+						this.S.countries[i].panic = this.countryPanicThresholds[this.S.countries[i].currPanicLevel - 1];			
+					}
+					if(this.S.countries[i].panic > this.countryPanicThresholds[this.S.countries[i].currPanicLevel]) {
+						switch(this.S.countries[i].currPanicLevel) {
+							case 1:
+								this.S.modules['vaccine'].startResearch(i);
+								break;
+							case 2:
+								this.S.modules['vaccine'].researchRate(3,i);
+								break;
+							case 3:
+								this.S.modules['vaccine'].researchRate(6,i);
+								break;
+							case 4:
+								this.S.modules['vaccine'].researchRate(0,i);
+								break;
+						}
+						// If the panic level is past the maximum, turn off the growth.
+						if(this.countryPanicThresholds.length > this.S.countries[i].currPanicLevel)
+							this.S.countries[i].currPanicLevel++;
+						else
+							this.S.countries[i].currPanicLevel = 0
+					}				
 				}
 
 				// Panic to display is progress to next level, so (panic increase since last level up) / (difference between this level and next level)
@@ -867,9 +898,9 @@ SimulatorModules['panic'] = function() {
 			for(var i = 1; i < this.S.countries.length; i++) {
 				this.S.countries[i].currPanicLevel = 1;
 			}
-			this.panicThresholds = [0,10000,1000000,1000000000,this.S.config.world_pop/2];
+			this.panicThresholds = [0,1000,10000000,100000000,this.S.config.world_pop/2];
 			this.currPanicLevel = 1;
-			this.countryPanicThresholds = [0,200,2000];
+			this.countryPanicThresholds = [0,200,2000,6000,12000];
             this.worldPanic = this.S.UI.interfaceParts.stats.addDataField('progressBar',{
             	title: 'World Panic',
             	dynamic: 'world_panic',
@@ -1313,7 +1344,7 @@ SimulatorModules['vaccine'] = function() {
 		// get the total amount of research added this turn based on remaining actively researching country populations
 		for(var i = 1, n = this.S.countries.length; i < n; i++)
 			if(this.S.countries[i].research)
-				addResearch += this.S.countries[i].capitol.total_pop * 5 / this.S.config.max_pop;
+				addResearch += this.S.countries[i].research * this.S.countries[i].capitol.total_pop * 5 / this.S.config.max_pop;
 
 		if(addResearch > 0) {
 			// add the research into each square and color association
@@ -1331,7 +1362,8 @@ SimulatorModules['vaccine'] = function() {
 	},{
 		init: function() {
 			this.research = 0;
-			this.requiredResearch = 5000;
+			this.requiredResearch = 10000;
+			this.countryResearchStrength = [];
 			this.progress = {};
 			this.currentColors = [];
 			this.hotRow = Math.floor(this.S.properties.gridSize/2); // row index of the grid that the vacciene progress will be cased on.
@@ -1344,17 +1376,31 @@ SimulatorModules['vaccine'] = function() {
 				}
 				if(country) {
 					if(!this.S.countries[country].research) {
-						countryList = [null,this.S.countries[country]];
+						this.researchRate(1, country);
 						this.S.UI.addNews('country_research',this.S.countries[country].name);
 					}
 				}
-				else {
-					countryList = this.S.countries;
+				else 
+				{
+					this.researchRate(1);
 					this.S.UI.addNews('world_research');
 				}
+			}
 
-				for(var i = 1; i < countryList.length; i++)
-					countryList[i].research = true;
+			this.researchRate = function(val, country) {
+				if(country) {
+					if(val == 0 || this.S.countries[country].research < val) 
+						this.S.countries[country].research = val;
+				}
+				else 
+				{
+					for(var i = 1; i < this.S.countries.length; i++) {
+						if(!this.S.countries[i].research)
+							this.S.countries[i].research = 0;
+						if(val == 0 || this.S.countries[i].research < val)
+							this.S.countries[i].research = val;
+					}
+				}
 			}
 		},
 		onActivate: function() {
