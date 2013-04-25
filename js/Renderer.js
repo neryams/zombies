@@ -161,6 +161,7 @@ var Renderer = function() {
             var vertex = geometry.vertices[i];
             vertex.z += 0.5;
         }*/
+        geometry.applyMatrix( new THREE.Matrix4().translate( new THREE.Vector3(0, 0, 0.5)));
         point = new THREE.Mesh(geometry); // humans
 
         geometry = new THREE.CubeGeometry(0.8, 0.8, 1, 1, 1, 1, null, false, { px: true,
@@ -222,14 +223,13 @@ var Renderer = function() {
 
         color.setHSV( ( 0.6 - ( element * 0.3 ) ), 1.0, 1.0 );
         infectColor.setHSV( 0, 1.0, 0.9 );
-        var size = element * 60;
+        var size = element * 60 + 2;
 
-        point.position.x = 200 * Math.sin(phi) * Math.cos(theta);
-        point.position.y = 200 * Math.cos(phi);
-        point.position.z = 200 * Math.sin(phi) * Math.sin(theta);
+        point.position.x = 198 * Math.sin(phi) * Math.cos(theta);
+        point.position.y = 198 * Math.cos(phi);
+        point.position.z = 198 * Math.sin(phi) * Math.sin(theta);
 
         point2.position.copy(point.position);
-        point2.position.multiplyScalar(0.99);
 
         point.lookAt(sphere.position);
         point2.lookAt(sphere.position);
@@ -237,8 +237,8 @@ var Renderer = function() {
         if(element > 0)
             point.scale.z = -size;
         else
-            point.scale.z = 0.1;
-        point2.scale.z = 0.1;
+            point.scale.z = -1;
+        point2.scale.z = -1;
 
         var i;
         for (i = 0; i < point.geometry.faces.length; i++) 
@@ -248,7 +248,7 @@ var Renderer = function() {
 
         THREE.GeometryUtils.merge(subgeo, point);
         // Last 8 points in merged geometry should be the vertices of the moving bar
-        datapoint.vertices_pop = subgeo.vertices.slice(-8); 
+        datapoint.vertices_pop = subgeo.vertices.slice(-8);
 
         THREE.GeometryUtils.merge(subgeo, point2);
         // Last 8 points in merged geometry should be the vertices of the moving bar
@@ -485,32 +485,24 @@ var Renderer = function() {
                 dataPoint.vertices_zom[5].setLength(zomLength);
                 dataPoint.vertices_zom[7].setLength(zomLength);
             } else if(dataPoint.vertices_zom[0].length() >= 200) {
-                dataPoint.vertices_zom[1].setLength(100);
-                dataPoint.vertices_zom[3].setLength(100);
-                dataPoint.vertices_zom[4].setLength(100);
-                dataPoint.vertices_zom[6].setLength(100);
-                dataPoint.vertices_zom[0].setLength(101);
-                dataPoint.vertices_zom[2].setLength(101);
-                dataPoint.vertices_zom[5].setLength(101);
-                dataPoint.vertices_zom[7].setLength(101);
+                dataPoint.vertices_zom[1].setLength(198);
+                dataPoint.vertices_zom[3].setLength(198);
+                dataPoint.vertices_zom[4].setLength(198);
+                dataPoint.vertices_zom[6].setLength(198);
+                dataPoint.vertices_zom[0].setLength(199);
+                dataPoint.vertices_zom[2].setLength(199);
+                dataPoint.vertices_zom[5].setLength(199);
+                dataPoint.vertices_zom[7].setLength(199);
             }
 
             if(popLength <= 200) {
-                dataPoint.vertices_pop[1].setLength(100);
-                dataPoint.vertices_pop[3].setLength(100);
-                dataPoint.vertices_pop[4].setLength(100);
-                dataPoint.vertices_pop[6].setLength(100);
-                dataPoint.vertices_pop[0].setLength(101);
-                dataPoint.vertices_pop[2].setLength(101);
-                dataPoint.vertices_pop[5].setLength(101);
-                dataPoint.vertices_pop[7].setLength(101);
+                if(dataPoint.vertices_pop[0].length() >= 200) {
+                    dataPoint.vertices_pop[0].setLength(199);
+                    dataPoint.vertices_pop[2].setLength(199);
+                    dataPoint.vertices_pop[5].setLength(199);
+                    dataPoint.vertices_pop[7].setLength(199);                    
+                }
             } else {
-                /*if(dataPoint.vertices_pop[0].length() < 200) {
-                    dataPoint.vertices_pop[1].setLength(200);
-                    dataPoint.vertices_pop[3].setLength(200);
-                    dataPoint.vertices_pop[4].setLength(200);
-                    dataPoint.vertices_pop[6].setLength(200);                    
-                }*/
                 dataPoint.vertices_pop[0].setLength(popLength);
                 dataPoint.vertices_pop[2].setLength(popLength);
                 dataPoint.vertices_pop[5].setLength(popLength);
