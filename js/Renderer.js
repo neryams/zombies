@@ -495,18 +495,16 @@ var Renderer = function() {
                 dataPoint.vertices_zom[7].setLength(199);
             }
 
-            if(popLength <= 200) {
-                if(dataPoint.vertices_pop[0].length() >= 200) {
-                    dataPoint.vertices_pop[0].setLength(199);
-                    dataPoint.vertices_pop[2].setLength(199);
-                    dataPoint.vertices_pop[5].setLength(199);
-                    dataPoint.vertices_pop[7].setLength(199);                    
-                }
-            } else {
+            if(popLength > 200) {
                 dataPoint.vertices_pop[0].setLength(popLength);
                 dataPoint.vertices_pop[2].setLength(popLength);
                 dataPoint.vertices_pop[5].setLength(popLength);
                 dataPoint.vertices_pop[7].setLength(popLength);
+            } else if(dataPoint.vertices_pop[0].length() >= 200) {
+                dataPoint.vertices_pop[0].setLength(199);
+                dataPoint.vertices_pop[2].setLength(199);
+                dataPoint.vertices_pop[5].setLength(199);
+                dataPoint.vertices_pop[7].setLength(199);                    
             }
 
         },
