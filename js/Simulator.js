@@ -855,10 +855,13 @@ SimulatorModules['panic'] = function() {
 					case 2:
 						this.S.modules['vaccine'].startResearch(i);
 				}
-			}			
+
+				// Panic to display is progress to next level, so (panic increase since last level up) / (difference between this level and next level)
+				this.S.UIData['country_panic-'+i] = (this.S.countries[i].panic - this.countryPanicThresholds[this.S.countries[i].currPanicLevel - 1]) / (this.countryPanicThresholds[this.S.countries[i].currPanicLevel] - this.countryPanicThresholds[this.S.countries[i].currPanicLevel - 1]);
+			}
 		}
 
-		this.S.UIData['world_panic'] = (this.S.properties.panic - this.panicThresholds[this.currPanicLevel - 1]) / this.panicThresholds[this.currPanicLevel];
+		this.S.UIData['world_panic'] = (this.S.properties.panic - this.panicThresholds[this.currPanicLevel - 1]) / (this.panicThresholds[this.currPanicLevel] - this.panicThresholds[this.currPanicLevel - 1]);
 	},{
 		init: function () {
 			for(var i = 1; i < this.S.countries.length; i++) {
