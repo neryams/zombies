@@ -19,7 +19,16 @@
     <div id="ui"><div id="ui_mask"></div></div>
 
     <script>
-        var UI,R,S,seed,gData,gConfig;
+        var UI,R,S,seed,gData,gConfig, debug;
+
+        /* Debug Commands
+            debug.watchPoint : int, id of the point that you want to be printed to console when it is affected in the simulator
+            debug.mouseOverDebugData : set to true to display lots of data about a point when visualizations are enabled
+        */
+        debug = {
+            watchPoint: false,
+            mouseOverDebugData: false
+        };
 
         $(function() {
             R = Renderer();

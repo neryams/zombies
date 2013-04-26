@@ -517,6 +517,9 @@ Simulator.prototype.tick = function() {
 			current = this.activePoints[i];
 			chances = this.bakedValues.latCumChance[Math.floor(Math.abs(current.lat))];
 			beginInfected = current.infected;
+			if(debug.watchPoint == current.id) {
+				console.log(current);
+			}
 
 			rand = Math.random();
 			if(rand < chances[0]) {

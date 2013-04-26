@@ -737,8 +737,8 @@ var UserInterface = function UserInterface(Renderer) {
 	}
 
 	/* 
-		Parameter is a function that takes one paramater, the DataPoint, and returns a string that will be inserted in the tooltip.
-		Can also be an array of objects. (not implemented yet)
+		Parameter is a function that takes one paramater, a function that takes a dataPoint and returns a string.
+		You will call this function to set up a tooltip that returns a property of a point on the planet
 	*/ 
 	function activatePlanetTooltip(getPointInfo) {
 		$('#ui').off('mousemove.render_tooltip');
@@ -754,6 +754,15 @@ var UserInterface = function UserInterface(Renderer) {
 					if($('#render_tooltip').css('visibility') != 'visible')
 						$('#render_tooltip').css('visibility','visible');
 					$('#render_tooltip').html(event.data(point));
+					if(debug.mouseOverDebugData) {
+						$('#render_tooltip').html(JSON.stringify(point, 
+							function(key,value) {
+								if(key == 'adjacent' || key == 'vertices_pop' || key == 'vertices_zom') 
+									return undefined;
+								else
+									return value;
+							}, '&nbsp;').replace(/\n/g, '<br />'));						
+					}
 				}
 				else
 					if($('#render_tooltip').css('visibility') != 'hidden')
