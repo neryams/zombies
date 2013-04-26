@@ -993,7 +993,7 @@ SimulatorModules['movement'] = function() {
 			// If the zombie is actually moving, do the movement stuff
 			if(totalMoved > 0) {
 				if(cumChance > 1) {
-					totalMoved = Math.round(cumChance * actualChance);
+					totalMoved = Math.ceil(actualChance);
 				}
 				/*// mean number of transfers is equal to the square root of the total possible.
 				normalMean = Math.ceil(Math.pow(current.infected,0.85)); 
@@ -1021,12 +1021,10 @@ SimulatorModules['movement'] = function() {
 					totalMoved = current.infected;
 
 				// Adjust infectedMovement based on the number of zombies moving
-		    	current.infectedMovement = Math.round((1 - actualChance/cumChance)*(1-totalMoved/current.infected));
+		    	current.infectedMovement = Math.round(current.infectedMovement * (1 - (1 - actualChance/cumChance)*(totalMoved/current.infected)));
 		    	if(target.infectedMovement)
 		    		target.infectedMovement = Math.round(target.infectedMovement * (1-totalMoved/(target.infected+totalMoved)));
 
-
-				// must remove the point from activepoints or something otherwise there will be multiple identical squares
 				if(totalMoved > 0 && !target.active) {
 					this.S.activePoints.push(target);
 					target.active = true;
