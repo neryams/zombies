@@ -723,10 +723,10 @@ SimulatorModules['main'] = function() {
 	var newModule = new Module('strain', function(current,target,strength) {
 		var newInfection = false,
 			totalConverted = 0,
-			totalKilled = 0,
-			rand = Math.random();
+			totalKilled = 0;
 		if(target.total_pop > 0) {
-			// Kill people in self tile
+			var rand = Math.random();
+			// strength represents how many people are killed a day (50% chance 120 times a turn at 60 strength)
 			if(target.dead == undefined)
 				target.dead = 0;
 			if(current.infected == 0)
@@ -736,12 +736,7 @@ SimulatorModules['main'] = function() {
 				strength.infectSelf = 0;
 			}
 
-			// strength can represent how many people are killed per minute (50% chance 120 times a minute at 60 strength)
-			totalKilled = Math.round(Math.sqrt(rand * strength.kill/4));
-			if(target.total_pop - totalKilled < 0)
-				totalKilled = target.total_pop;
-
-			// Infect adjacent tiles and self
+			// Newly infect adjacent tiles
 			if(strength.infect && target.infected == 0) {
 				if(rand < (strength.infect/600)) {
 					totalConverted = Math.round(rand * strength.infect/600);
@@ -750,13 +745,19 @@ SimulatorModules['main'] = function() {
 						target.active = true;				
 					}
 				}
+			// Infect adjacent tiles with zombies already in them
 			} else if(strength.infect) {
-				// strength can represent how many zombies are created per minute (50% chance 120 times a minute at 60 strength)
 				totalConverted = Math.round(Math.sqrt(rand * strength.infect/4));
+			// Infect self tile
 			} else if(strength.infectSelf) {
-				// strength can represent how many zombies are created per minute (50% chance 120 times a minute at 60 strength)
-				totalConverted = Math.round(Math.sqrt(rand * strength.infectSelf/2));
+				var self_affected = ((rand*2 + (rand*10%1)*2 + (rand*100%1)*2 - 3)*(current.infected/3)) + strength.infectSelf + strength.kill;
+				if(self_affected < 0)
+					self_affected = self_affected*-1;
+				totalKilled = Math.round(self_affected * (strength.kill/(strength.infectSelf + strength.kill)));
+				totalConverted = Math.round(self_affected * (strength.infectSelf/(strength.infectSelf + strength.kill)));
 			}
+			if(target.total_pop - totalKilled < 0)
+				totalKilled = target.total_pop;
 			if(target.total_pop - totalConverted - totalKilled < 0)
 				totalConverted = target.total_pop - totalKilled;
 
@@ -928,7 +929,7 @@ SimulatorModules['panic'] = function() {
 */
 SimulatorModules['population'] = function() {
 	var newModule = new Module('infect', function(current,target,strength) {
-		var infect_strength = current.infected*(1+target.total_pop/this.S.config.max_pop);
+		var infect_strength = Math.sqrt(current.infected)*Math.sqrt(target.total_pop/this.S.config.max_pop);
 		strength.infectSelf *= infect_strength;
 		strength.infect *= infect_strength;
 	},{
@@ -1135,10 +1136,14 @@ SimulatorModules['movespeed'] = function() {
 */
 SimulatorModules['climate'] = function() {
 	var newModule = new Module('infect', function(current,target,strength) {
-		strength.infect *= 1.2 / (Math.pow((this.idealTemp - target.temperature)/(this.rangeTemp),2) + 1);
-		strength.infect *= 1.2 / (Math.pow((this.idealWet - target.precipitation)/(this.rangeWet),2) + 1);
-		strength.kill *= 1.2 / (Math.pow((this.idealTemp - target.temperature)/(this.rangeTemp),2) + 0.5);
-		strength.kill *= 1.2 / (Math.pow((this.idealWet - target.precipitation)/(this.rangeWet),2) + 0.5);
+		var tempAdjust = Math.pow((this.idealTemp - target.temperature)/(this.rangeTemp),2);
+		var precAdjust = Math.pow((this.idealWet - target.precipitation)/(this.rangeWet),2);
+		strength.infect *= 2.5 / (tempAdjust + 1);
+		strength.infect *= 2.5 / (precAdjust + 1);
+		strength.infectSelf *= 2.5 / (tempAdjust + 1);
+		strength.infectSelf *= 2.5 / (precAdjust + 1);
+		strength.kill *= 2.5 / (tempAdjust + 0.5);
+		strength.kill *= 2.5 / (precAdjust + 0.5);
 	},{
 		onStart: function(startSquare) {
 			this.idealTemp = startSquare.temperature;
@@ -1196,7 +1201,9 @@ SimulatorModules['bite'] = function() {
 			this.val('infectPower',1);
 		// Otherwise this is a standard run
 		} else {
-			strength.infectSelf = this.infectPower * current.infected * this.S.modules['aggression'].val('aggression') * (strength.mobility + this.S.modules['movespeed'].val('burstSpeed'));
+			var bite_power = this.S.modules['aggression'].val('aggression') * (strength.mobility + this.S.modules['movespeed'].val('burstSpeed'));
+			strength.infectSelf = this.infectPower * bite_power;
+			strength.kill = 1/this.infectPower * bite_power;
 			strength.panic += this.panic;
 		}
 	},{
