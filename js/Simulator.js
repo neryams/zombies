@@ -1450,12 +1450,25 @@ SimulatorModules['seaports'] = function() {
 			// If ship is still progressing, increment timers
 			if(this.ships[i].timeLeft > 0) {
 				this.ships[i].progressBar.val((this.ships[i].travelTime - this.ships[i].timeLeft)/this.ships[i].travelTime);
-			// If ship reached destination, clean up				
+			// If ship reached destination, try and add a zombie and then clean up
 			} else {
+				var rand = Math.random();
+				var transferCount = Math.floor(Math.abs((rand*2 + (rand*10%1)*2 + (rand*100%1)*2 - 3)*(current.infected/4)));
+				if(transferCount > 0 && !this.ships[i].to.active) {
+					this.S.activePoints.push(this.ships[i].to);
+					this.ships[i].to.active = true;
+				}
+				if(transferCount > this.ships[i].from.infected)
+					transferCount = this.ships[i].from.infected;
+				
+				this.ships[i].to.infected += transferCount;
+				this.ships[i].from.infected -= transferCount;
+				/*
 				strength.infect = 0;
 				for(j = 0; j < this.S.activeModules.infect.length; j++)
 					this.S.activeModules.infect[j].process(this.ships[i].from,this.ships[i].to,strength);
 				this.S.strain.process(this.ships[i].from,this.ships[i].to,strength,Math.random());
+				*/
 				this.ships[i].progressBar.val(this.getShipDate(this.S.date,this.ships[i].interval));
 				this.ships[i].timeLeft = -1;
 				this.intervalSortInsert(this.ships[i],this.S.iteration);
@@ -1556,7 +1569,7 @@ SimulatorModules['seaports'] = function() {
 								ab = a.total_pop*0.7 + b.total_pop*0.3;
 							else
 								ab = a.total_pop*0.3 + b.total_pop*0.7;
-							interval = Math.floor((300 - 280*(ab/this.S.config.max_pop))*(this.S.config.max_pop/a.total_pop)); // number of intervals between freighters ranges up from 20
+							interval = Math.floor(300 - 280*Math.log(ab)/Math.log(this.S.config.max_pop)); // number of intervals between freighters ranges up from 20
 							if(interval > 700) 
 								continue; // If ships sail less than once every two years, might as well not bother.
 							
