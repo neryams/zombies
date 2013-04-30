@@ -726,6 +726,8 @@ SimulatorModules['main'] = function() {
 			totalKilled = 0;
 		if(target.total_pop > 0) {
 			var rand = Math.random();
+			if(!current.infected && current.infected !== 0)
+				current.infected = 0;
 			// strength represents how many people are killed a day (50% chance 120 times a turn at 60 strength)
 			if(target.dead == undefined)
 				target.dead = 0;
@@ -947,7 +949,7 @@ SimulatorModules['movement'] = function() {
 	var newModule = new Module('spread', function(current,strength) {
 		// Zombies walking around, distance probability distribution function based in strength. mobility being in km/h, and radius of planet being 6378.1 km
 		if(strength.mobility > 0 && current.infected > 0) {
-			if(current.infectedMovement === undefined)
+			if(current.infectedMovement === undefined || current.infectedMovement === null)
 				current.infectedMovement = 0;
 
 			// error function approximation. No need to worry about sign, since x, or distance/maxDistance, will always be positive
@@ -1012,7 +1014,7 @@ SimulatorModules['movement'] = function() {
 				// If there are no people around, walk in the direction of less zombies (spread out)
 				} else {
 					if(rand < current.adjacent[direction].infected/(current.adjacent[direction].infected + current.adjacent[direction+2].infected))
-						direction += 2;					
+						direction += 2;
 				}
 
 				target = current.adjacent[direction];
@@ -1022,9 +1024,9 @@ SimulatorModules['movement'] = function() {
 					totalMoved = current.infected;
 
 				// Adjust infectedMovement based on the number of zombies moving
-		    	current.infectedMovement = Math.round(current.infectedMovement * (1 - (1 - actualChance/cumChance)*(totalMoved/current.infected)));
+		    	current.infectedMovement = Math.round(current.infectedMovement * (1 - totalMoved/current.infected));
 		    	if(target.infectedMovement)
-		    		target.infectedMovement = Math.round(target.infectedMovement * (1-totalMoved/(target.infected+totalMoved)));
+		    		target.infectedMovement = Math.round(target.infectedMovement * (1 - totalMoved/(target.infected+totalMoved)));
 
 				if(totalMoved > 0 && !target.active) {
 					this.S.activePoints.push(target);
@@ -1034,9 +1036,9 @@ SimulatorModules['movement'] = function() {
 				target.infected += totalMoved;
 				current.infected -= totalMoved;
 				this.S.updateSquare(target);
+			    if(!current.infected && !target.infected)
+			    	console.log('whoah');
 			}
-		    if(isNaN(current.infectedMovement))
-		    	console.log('whoah');
 		}
 	},{
 		init: function() {
@@ -1452,23 +1454,25 @@ SimulatorModules['seaports'] = function() {
 				this.ships[i].progressBar.val((this.ships[i].travelTime - this.ships[i].timeLeft)/this.ships[i].travelTime);
 			// If ship reached destination, try and add a zombie and then clean up
 			} else {
-				var rand = Math.random();
-				var transferCount = Math.floor(Math.abs((rand*2 + (rand*10%1)*2 + (rand*100%1)*2 - 3)*(current.infected/4)));
-				if(transferCount > 0 && !this.ships[i].to.active) {
-					this.S.activePoints.push(this.ships[i].to);
-					this.ships[i].to.active = true;
+				if(this.ships[i].from.infected) {
+					var rand = Math.random();
+					var transferCount = Math.floor(Math.abs((rand*2 + (rand*10%1)*2 + (rand*100%1)*2 - 3)*(current.infected/4)));
+					if(transferCount > 0 && !this.ships[i].to.active) {
+						this.S.activePoints.push(this.ships[i].to);
+						this.ships[i].to.active = true;
+					}
+					if(transferCount > this.ships[i].from.infected)
+						transferCount = this.ships[i].from.infected;
+					
+					this.ships[i].to.infected += transferCount;
+					this.ships[i].from.infected -= transferCount;
+					/*
+					strength.infect = 0;
+					for(j = 0; j < this.S.activeModules.infect.length; j++)
+						this.S.activeModules.infect[j].process(this.ships[i].from,this.ships[i].to,strength);
+					this.S.strain.process(this.ships[i].from,this.ships[i].to,strength,Math.random());
+					*/
 				}
-				if(transferCount > this.ships[i].from.infected)
-					transferCount = this.ships[i].from.infected;
-				
-				this.ships[i].to.infected += transferCount;
-				this.ships[i].from.infected -= transferCount;
-				/*
-				strength.infect = 0;
-				for(j = 0; j < this.S.activeModules.infect.length; j++)
-					this.S.activeModules.infect[j].process(this.ships[i].from,this.ships[i].to,strength);
-				this.S.strain.process(this.ships[i].from,this.ships[i].to,strength,Math.random());
-				*/
 				this.ships[i].progressBar.val(this.getShipDate(this.S.date,this.ships[i].interval));
 				this.ships[i].timeLeft = -1;
 				this.intervalSortInsert(this.ships[i],this.S.iteration);
