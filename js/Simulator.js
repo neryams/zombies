@@ -350,13 +350,11 @@ Simulator.prototype.removeActive = function(id) {
 	}
 }
 
-Simulator.prototype.togglePause = function(force) {
-	if(force)
-		this.paused = force;
-	else if(!force && this.paused)
-		this.paused = false;
-	else if(!force && !this.paused)
-		this.paused = true;
+Simulator.prototype.pause = function() {
+	this.paused = true;
+}
+Simulator.prototype.unPause = function() {
+	this.paused = false;
 }
 
 Simulator.prototype.addUpgrades = function(module) {

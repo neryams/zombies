@@ -134,6 +134,7 @@ DataField.prototype = {
 				that.hide();
 			});
 			this.UIStatus.pauseRenderer = true;
+			this.Simulator.pause();
 		}
 
 		this.element.css('display','');
@@ -153,6 +154,7 @@ DataField.prototype = {
 		if(this.overlay) {
 			$('#ui_mask').css('visibility','hidden').off('click.closeOverlay');
 			this.UIStatus.pauseRenderer = false;
+			this.Simulator.unPause();
 		}
 		this.hideTooltip();
 
