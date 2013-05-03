@@ -133,7 +133,7 @@ DataField.prototype = {
 			$('#ui_mask').css('visibility','visible').on('click.closeOverlay', function (event) {
 				that.hide();
 			});
-			this.UIStatus.pauseUI = true;
+			this.UIStatus.pauseRenderer = true;
 		}
 
 		this.element.css('display','');
@@ -152,7 +152,7 @@ DataField.prototype = {
 			this.opener.element.removeClass('selected');
 		if(this.overlay) {
 			$('#ui_mask').css('visibility','hidden').off('click.closeOverlay');
-			this.UIStatus.pauseUI = false;
+			this.UIStatus.pauseRenderer = false;
 		}
 		this.hideTooltip();
 
@@ -550,7 +550,7 @@ Evolution.prototype.buildWeb = function(upgrade,lastTheta,depth) {
 var UserInterface = function UserInterface(Renderer) {
 	var mouse = { x:0, y:0, lastx:0, lasty:0, spherelng:0, spherelat:0, down:false, movement:null },
 		sphere_coords,visualization = '', WorldData, Simulator, 
-		status = { pauseUI: false, showToolTip: false, toolTipMode: '', mutateGridSize: 0 },
+		status = { pauseRenderer: false, showToolTip: false, toolTipMode: '', mutateGridSize: 0 },
 		dataFieldsRoot = [], interfaceParts = {},lang = {},alerts = {},
 		langOption = 'en';
 	lang['en'] = {};
@@ -746,7 +746,7 @@ var UserInterface = function UserInterface(Renderer) {
 			mouse.x = event.clientX;
 			mouse.y = event.clientY;
 			sphere_coords = Renderer.getSphereCoords(mouse.x,mouse.y,205);
-			if(sphere_coords && !isNaN(sphere_coords[0]) && !isNaN(sphere_coords[1])) {
+			if(sphere_coords && !isNaN(sphere_coords[0]) && !isNaN(sphere_coords[1]) && !status.pauseRenderer) {
 				$('#render_tooltip').css('top',mouse.y+10).css('left',mouse.x+30);
 				//$('#tooltip').css('display','block').html('asf');
 				var point = gData.points[(Math.floor(90-sphere_coords[0])*gConfig.w + Math.floor(sphere_coords[1]))];
@@ -754,6 +754,8 @@ var UserInterface = function UserInterface(Renderer) {
 					if($('#render_tooltip').css('visibility') != 'visible')
 						$('#render_tooltip').css('visibility','visible');
 					$('#render_tooltip').html(event.data(point));
+
+					// Debug information to mouse over points
 					if(debug.mouseOverDebugData) {
 						$('#render_tooltip').html(JSON.stringify(point, 
 							function(key,value) {
@@ -842,7 +844,7 @@ var UserInterface = function UserInterface(Renderer) {
 		$('.draggable').on('mouseout.draggable', function (event) { $(this).trigger('mouseup'); });
 
 		$('#ui').on('mousedown.moveCamera', function (event) {
-			if(!status.pauseUI) {
+			if(!status.pauseRenderer) {
 				event.preventDefault();
 				mouse.down = true;
 				mouse.movement.set(0, 0);
@@ -980,7 +982,7 @@ var UserInterface = function UserInterface(Renderer) {
 
    	// Function that runs on every frame, sending mouse movement from UI as coordinates to the renderer to move 3-d elements around
 	Renderer.onRender(function() {
-		if(!status.pauseUI) {
+		if(!status.pauseRenderer) {
 			if(mouse.down) {
 				mouse.movement.set(mouse.lastx - mouse.x, mouse.lasty - mouse.y);
 				Renderer.mouseVector.multiplyScalar(0.5).add(mouse.movement);
