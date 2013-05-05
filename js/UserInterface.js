@@ -134,7 +134,8 @@ DataField.prototype = {
 				that.hide();
 			});
 			this.UIStatus.pauseRenderer = true;
-			this.Simulator.pause();
+			if(this.Simulator)
+				this.Simulator.pause();
 		}
 
 		this.element.css('display','');
@@ -154,7 +155,8 @@ DataField.prototype = {
 		if(this.overlay) {
 			$('#ui_mask').css('visibility','hidden').off('click.closeOverlay');
 			this.UIStatus.pauseRenderer = false;
-			this.Simulator.unPause();
+			if(this.Simulator)
+				this.Simulator.unPause();
 		}
 		this.hideTooltip();
 
@@ -705,13 +707,7 @@ var UserInterface = function UserInterface(Renderer) {
 				}).val('News Ticker');
 			uiMonitor_newsTicker.display();
 
-			addDataField('alert','div',{ overlay: true, 
-					onDisplay: function() {
-						this.Simulator.togglePause();
-					},
-					onHide: function() {
-						this.Simulator.togglePause();
-				}});
+			addDataField('alert','div',{ overlay: true });
 		},
 		end: function() {
 			Evolution.prototype.buildWeb();
