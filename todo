@@ -1,22 +1,44 @@
-Make shipping work with movement.
-
-Try to change the __proto__ in the webworker copy to something a bit less hax
-
-Speed up the generator web worker by not copying a billion element array
-
-Add a preview grid to evolution menu so player can see
-
-Add functionality to genes to affect other adjacent genes
-
-Add tutorial function that overlays graphics and removes them on triggers
+----- Priority 1
 
 
 
-Make values for defining land color smoothly shift from one data square to the other - i.e. as it moves left 1.00,0.00 0.75,0.25 0.50,0.50 0.25,0.75 for 4x4 texture pixels per data, same for down
 
-Fix land being at zero moisture for horse latitudes, no mixing or mixing of identically dry squares or something
+----- Priority 2
 
-WHEN MOVING TO SERVER:  make climate data image load from file, make UI html load from files, make simulator modules load from files
+	Make shipping work with movement. Related: Make zombies fully spreadable at the current stage of the game by adding resistances etc
+
+	Make function for adding icons and images to the 3-d view
+
+	Add human resistance. Army killing zombies, rural guns, martial law
+
+	Add human strongholds in later stages of panic.
+
+
+----- Priority 3
+	
+	Make floaty icons/text for when zombies are killed or perhaps for when humans are killed/converted!
+
+	Add functionality to genes to affect other adjacent genes
+
+	Add tutorial function that overlays graphics and removes them on triggers
+
+
+----- Priority 4
+
+	Try to change the __proto__ in the webworker copy to something a bit less ghetto
+
+	Speed up the generator web worker by not copying a billion element array
+
+	Add a preview grid to evolution menu so player can see
+
+
+----- Priority 5
+
+	Make values for defining land color smoothly shift from one data square to the other - i.e. as it moves left 1.00,0.00 0.75,0.25 0.50,0.50 0.25,0.75 for 4x4 texture pixels per data, same for down
+
+	Fix land being at zero moisture for horse latitudes, no mixing or mixing of identically dry squares or something
+
+	WHEN MOVING TO SERVER:  make climate data image load from file, make UI html load from files, make simulator modules load from files
 
 
 

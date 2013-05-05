@@ -949,99 +949,78 @@ SimulatorModules['movement'] = function() {
 		if(strength.mobility > 0 && current.infected > 0) {
 			if(current.infectedMovement === undefined || current.infectedMovement === null)
 				current.infectedMovement = 0;
+		    current.infectedMovement += strength.mobility;
 
 			// error function approximation. No need to worry about sign, since x, or distance/maxDistance, will always be positive
-		    var direction,target,normalRand,normalMean,cumChance,actualChance,
-		    	chances = this.cumChance(current.lat, (strength.mobility + current.infectedMovement));
-				rand = Math.random(),
-		    	totalMoved = 0,
-		    	surroundPop = current.adjacent[0].total_pop + current.adjacent[1].total_pop + current.adjacent[2].total_pop + current.adjacent[3].total_pop;
-		    var cumChance = (chances[0]+chances[1])*current.infected;
-		    
-			if(cumChance > 1) {
-				rand *= cumChance;
-				actualChance = 1;
-			} else {
-				actualChance = cumChance;
-			}
+		    var rand = Math.sqrt(Math.random()),
+				randAngle = Math.random()*8, // modify this to point towards more people
+		    	surroundPop = current.adjacent[0].total_pop + current.adjacent[1].total_pop + current.adjacent[2].total_pop + current.adjacent[3].total_pop + 
+		    		current.adjacent[1].adjacent[0].total_pop + current.adjacent[1].adjacent[2].total_pop + current.adjacent[3].adjacent[0].total_pop + current.adjacent[3].adjacent[2].total_pop,
+				chances = this.getChances(current.lat, current.infectedMovement);
+		    var ratioA = 1 - randAngle%1,
+		    	ratioB = randAngle%1,
+		    	targetA = Math.floor(randAngle),
+		    	targetB = Math.ceil(randAngle)%8;
+		    var chanceA = targetA%4,
+		    	chanceB = targetB%4;
+	    	if(targetA > 4)
+	    		chanceA = 4 - chanceA;
+	    	if(targetB > 4)
+	    		chanceB = 4 - chanceB;
 
-			// If random is less than the cumulative chance, we can assume a zombie will be transferring
-			if(rand < cumChance) {
-				totalMoved = 1;
-				// If one side has no people, always send zombies to the other side
-				if(!current.adjacent[0].total_pop && !current.adjacent[2].total_pop && (current.adjacent[1].total_pop || current.adjacent[3].total_pop))
-					direction = 1;
-				else if(!current.adjacent[1].total_pop && !current.adjacent[3].total_pop && (current.adjacent[0].total_pop || current.adjacent[2].total_pop))
-					direction = 0;
-				// If both sides have people or no sides have people, spread zombies in a random direction
-				else
-					for(direction = 0; direction < 2; direction++) {
-						chances[direction] *= current.infected;
-						// We want cumulative chance for the randomization
-						actualChance = chances[direction];
-						if(direction > 0) 
-							chances[direction] += chances[direction-1];
+		    var chance = chances[chanceA]*ratioA + chances[chanceB]*ratioB;
+		    var cumChance = (chances[0] + chances[1] + chances[2] + chances[3]) * 2;
 
-						// If at least one zombie makes it to the next square, calculate how many actually make it in
-						if(rand < chances[direction]) {
-							break;
-						}
-					}				
-			}
-
-			// If the zombie didn't make it, add a movement value for the next move (increases chances of movement).
-			current.infectedMovement += strength.mobility;
-			// If the zombie is actually moving, do the movement stuff
-			if(totalMoved > 0) {
-				if(cumChance > 1) {
-					totalMoved = Math.ceil(actualChance);
-				}
-				/*// mean number of transfers is equal to the square root of the total possible.
-				normalMean = Math.ceil(Math.pow(current.infected,0.85)); 
-				// standard deviation of transfers is 1/3 of the mean, so that 99% of the number of transfers is within the mean.
-				totalMoved = Math.ceil((normalRand*2 + (normalRand*10%1)*2 + (normalRand*100%1)*2 - 3)*(normalMean/3) + normalMean);
-				if(totalMoved < 1)
-					totalMoved = 1;
-				*/
-
-				// finally, determine which direction they moved in (direction of more healthy people is more likely)
-				rand = Math.random();
-				if(surroundPop > 0) {
-					if(rand > current.adjacent[direction].total_pop/(current.adjacent[direction].total_pop + current.adjacent[direction+2].total_pop))
-						direction += 2;
-				// If there are no people around, walk in the direction of less zombies (spread out)
-				} else {
-					if(rand < current.adjacent[direction].infected/(current.adjacent[direction].infected + current.adjacent[direction+2].infected))
-						direction += 2;
-				}
-
-				target = current.adjacent[direction];
+		    if(rand > 1 - chance*current.infected) {
+		    	var movedA = Math.round(chances[chanceA]*ratioA*current.infected);
+		    	var movedB = Math.round(chances[chanceB]*ratioB*current.infected);
+		    	if(movedA == 0 && movedB == 0) {
+		    		if(chances[chanceA]*ratioA > chances[chanceB]*ratioB)
+		    			movedA = 1;
+		    		else
+		    			movedB = 1;
+		    	}
 
 		    	// Move the zombies
-				if(current.infected < totalMoved)
-					totalMoved = current.infected;
+		    	if(targetA % 2 == 0) {
+		    		targetA = current.adjacent[targetA/2];
+		    	} else {
+		    		targetA = current.adjacent[Math.floor(targetA/2)].adjacent[Math.ceil(targetA/2)%4];
+		    	}
+		    	if(targetB % 2 == 0) {
+		    		targetB = current.adjacent[targetB/2];
+		    	} else {
+		    		targetB = current.adjacent[Math.floor(targetB/2)].adjacent[Math.ceil(targetB/2)%4];
+		    	}
+
 
 				// Adjust infectedMovement based on the number of zombies moving
-		    	current.infectedMovement = Math.round(current.infectedMovement * (1 - totalMoved/current.infected));
-		    	if(target.infectedMovement)
-		    		target.infectedMovement = Math.round(target.infectedMovement * (1 - totalMoved/(target.infected+totalMoved)));
+		    	current.infectedMovement = Math.round(current.infectedMovement * (1 - (movedA+movedB)/current.infected));
+		    	if(targetA.infectedMovement)
+		    		targetA.infectedMovement = Math.round(targetA.infectedMovement * (1 - movedA/(targetA.infected+movedA)));
+		    	if(targetB.infectedMovement)
+		    		targetB.infectedMovement = Math.round(targetB.infectedMovement * (1 - movedB/(targetB.infected+movedB)));
 
-				if(totalMoved > 0 && !target.active) {
-					this.S.activePoints.push(target);
-					target.active = true;
+				if(movedA > 0 && !targetA.active) {
+					this.S.activePoints.push(targetA);
+					targetA.active = true;
+				}
+				if(movedB > 0 && !targetB.active) {
+					this.S.activePoints.push(targetB);
+					targetB.active = true;
 				}
 
-				target.infected += totalMoved;
-				current.infected -= totalMoved;
-				this.S.updateSquare(target);
-			    if(!current.infected && !target.infected)
-			    	console.log('whoah');
-			}
+				targetA.infected += movedA;
+				targetB.infected += movedB;
+				current.infected -= movedA + movedB;
+				this.S.updateSquare(targetA);
+				this.S.updateSquare(targetB);
+		    }
 		}
 	},{
 		init: function() {
 			this.bakedMoveChance = [];
-			this.cumChance = function (lat,movement) {
+			this.getChances = function (lat,movement) {
 				var lat = Math.floor(Math.abs(lat)),
 					movement = Math.floor(movement);
 				var chances = this.S.bakedValues.latCumChance[lat];
@@ -1053,31 +1032,35 @@ SimulatorModules['movement'] = function() {
 						sigma = meanMovement/3,
 						totalDistance = (this.S.bakedValues.latDistances[lat][0] + this.S.bakedValues.latDistances[lat][1] + 
 							this.S.bakedValues.latDistances[lat][4] + this.S.bakedValues.latDistances[lat][5]);
-					/* old formula... fucks up near the poles
-					for(var direction = 0; direction < 2; direction++) {
-						distance = this.S.bakedValues.latDistances[lat][direction];
-				    	x = (distance*0.5 - meanMovement)/(1.414213562*sigma),
-				    	t = 1.0/(1.0 + 0.3275911*x);
+
+					/* Old change generation. Makes zombies never spread to lesser change squares*/
+					for(var direction = 0; direction < 4; direction++) {
+						if(direction%2 == 0)
+							var distance = this.S.bakedValues.latDistances[lat][direction/2];
+						else
+							var distance = this.S.bakedValues.latDistances[lat][Math.floor(direction/2)+4];
+				    	var x = (distance*0.5 - meanMovement)/(1.414213562*sigma),
+				    		t = 1.0/(1.0 + 0.3275911*x);
 						result[direction] = (((((1.061405429*t - 1.453152027)*t) + 1.421413741)*t - 0.284496736)*t + 0.254829592)*t*Math.pow(Math.E,-x*x);
 					}
-					*/
+					
 
 					// only need to do two directions because the two horiz directions are the same and the two vert directions are the same
 					// A&S erf formula 7.1.26
 				    	// distance is the distance in kilometers needed to travel to be in the next square
 				    	// 24 "steps", or hours, in a day. Each step is the distance the zombie can travel in one hour, or kph.
 				    	// basically get the distribution of zombies that make it past
-			    	x = (this.S.bakedValues.latDistances[lat][0]*0.5 - meanMovement)/(1.414213562*sigma),
-
+				    
+			    	/*x = (this.S.bakedValues.latDistances[lat][0]*0.5 - meanMovement)/(1.414213562*sigma),
 			    	t = 1.0/(1.0 + 0.3275911*x);
 					result[0] = (((((1.061405429*t - 1.453152027)*t) + 1.421413741)*t - 0.284496736)*t + 0.254829592)*t*Math.pow(Math.E,-x*x);
-					result[1] = result[0] * (this.S.bakedValues.latDistances[lat][1]/totalDistance) * 4;
-					result[4] = result[0] * (this.S.bakedValues.latDistances[lat][4]/totalDistance) * 4;
-					result[5] = result[0] * (this.S.bakedValues.latDistances[lat][5]/totalDistance) * 4;
+					result[2] = result[0]*(this.S.bakedValues.latDistances[lat][0]/this.S.bakedValues.latDistances[lat][1]);
+					result[1] = result[0]*(this.S.bakedValues.latDistances[lat][0]/this.S.bakedValues.latDistances[lat][4]);
+					result[3] = result[0]*(this.S.bakedValues.latDistances[lat][0]/this.S.bakedValues.latDistances[lat][5]);*/
 
 					this.bakedMoveChance[lat][movement] = result;
 				}
-				return this.bakedMoveChance[lat][movement].slice(0); // return a copy so the array can be freely modified
+				return this.bakedMoveChance[lat][movement].slice(0); // return a copy so the array can be manipulated without destroying the cache
 			}
 		},
 		alwaysActive: true,
