@@ -81,6 +81,12 @@ h3 {
 	opacity: 0.6;
 	visibility: hidden;
 }
+#setup {
+	color: white;
+	width: 400px;
+	margin: 200px auto;
+}
+
 
 div.dataField {
 	z-index: 11;

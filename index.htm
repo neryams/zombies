@@ -4,19 +4,33 @@
     <meta charset=utf-8 />
     <title>Pandemic</title>
     <link rel="stylesheet" type="text/css" media="screen" href="css/main.css" />
-    <script type="text/javascript" src="js/third-party/jquery-2.0.0.min.js"></script>
-    <script type="text/javascript" src="js/third-party/seedrandom.min.js"></script>
-    <script type="text/javascript" src="js/third-party/three.min.js"></script>
-    <script type="text/javascript" src="js/third-party/tween.min.js"></script>
-    <script type="text/javascript" src="js/third-party/hqx.min.js"></script>
-    <script type="text/javascript" src="js/DataPoint.js"></script>
-    <script type="text/javascript" src="js/Renderer.js"></script>
-    <script type="text/javascript" src="js/UserInterface.js"></script>
-    <script type="text/javascript" src="js/Simulator.js"></script>
+    <script src="js/third-party/jquery-2.0.0.min.js"></script>
+    <script src="js/third-party/seedrandom.min.js"></script>
+    <script src="js/third-party/three.min.js"></script>
+    <script src="js/third-party/tween.min.js"></script>
+    <script src="js/third-party/hqx.min.js"></script>
+    <script src="js/DataPoint.js"></script>
+    <script src="js/Renderer.js"></script>
+    <script src="js/UserInterface.js"></script>
+    <script src="js/Simulator.js"></script>
 </head>
 <body>
+    <div id="setup">
+        <h2>Zombies</h2>
+        <form action="#" method="GET">
+            Texture Size: <select name="texture_size" id="s_tx">
+                <option value="360">Low</option>
+                <option value="720" selected>Medium</option>
+                <option value="1440">High</option>
+                <option value="2160">Ultra</option>
+            </select><br />
+            Seed: <input name="seed" id="s_seed" /><br />
+            Modules: <input name="modules" id="s_modules" value="main" /><br />
+            <input type="submit" value="Start" />
+        </form>
+    </div>
     <div id="container" style="display: none;"></div>
-    <div id="ui"><div id="ui_mask"></div></div>
+    <div id="ui" style="display: none;"><div id="ui_mask"></div></div>
 
     <script>
         var UI,R,S,seed,gData,gConfig, debug;
@@ -30,20 +44,27 @@
             mouseOverDebugData: false
         };
 
-        $(function() {
-            R = Renderer();
-            UI = UserInterface(R);
+        $(function () {
+            $('form').on('submit', function (event) {
+                event.preventDefault();
 
-            var d = new Date();
-            seed = d.getTime();
+                var userConfig = {
+                    seed: $('#s_seed').val(),
+                    tx_w: $('#s_tx').val()
+                }
+                var url = 'js/loadModules.php?modules='+$('#s_modules').val();
+                $("#setup").remove();
+                
+                $.getScript(url, function () {
+                    R = Renderer();
+                    UI = UserInterface(R);
 
-
-            UI.init(function() {
-                UI.load.start();
-                tGenerator.postMessage({
-                    seed: seed,
-                    tx_w: 720
+                    UI.init(function() {
+                        UI.load.start();
+                        tGenerator.postMessage(userConfig);
+                    });
                 });
+                return false;
             });
         });
 

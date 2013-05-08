@@ -1056,7 +1056,7 @@ var UserInterface = function UserInterface(Renderer) {
 		},
 		init: function(onComplete) {
 			var preload_html = '<div id="progress"><div class="progressbar"><div></div></div><p></p></div>';
-			$("#ui").append($(preload_html));
+			$("#ui").css('display','block').append($(preload_html));
 			onComplete();
 			/*
 			$.ajax({
