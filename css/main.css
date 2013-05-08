@@ -18,6 +18,13 @@ time, mark, audio, video {
 	font: inherit;
 	vertical-align: baseline;
 }
+select,input,textarea {
+	margin: 0 0 4px 0;
+	padding: 0;
+	font-size: 100%;
+	font: inherit;
+	vertical-align: baseline;
+}
 /* HTML5 display-role reset for older browsers */
 article, aside, details, figcaption, figure, 
 footer, header, hgroup, menu, nav, section {
@@ -83,8 +90,20 @@ h3 {
 }
 #setup {
 	color: white;
-	width: 400px;
+	width: 300px;
 	margin: 200px auto;
+}
+#setup h2 {
+	margin-bottom: 0.5em;
+	border-bottom: 3px solid #cc0000;
+	padding-bottom: 0.15em;
+}
+#setup span {
+	display: inline-block;
+	width: 120px;
+}
+#setup input[type='text'] {
+	width: 160px;
 }
 
 
