@@ -66,6 +66,5 @@ new Module('strain', function(current,target,strength) {
 		);
 
 		callback(this.S.countries[randCountry].capitol);
-	},
-	children: ['panic','worldStats','gridBoost','population','climate','seaports','vaccine','bite','viralInfect','movement']
+	}
 })
