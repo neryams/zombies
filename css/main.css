@@ -20,8 +20,7 @@ time, mark, audio, video {
 }
 select,input,textarea {
 	margin: 0 0 4px 0;
-	padding: 0;
-	font-size: 100%;
+	vertical-align: baseline;
 }
 /* HTML5 display-role reset for older browsers */
 article, aside, details, figcaption, figure, 

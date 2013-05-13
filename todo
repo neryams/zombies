@@ -1,6 +1,6 @@
 ----- Priority 1
 
-
+	Make zombies smell humans. Give every square a radius to add up - several different sizes - 3, 5, 7, 9. just go in straight lines for the direction calculations, using the blob radii amounts
 
 
 ----- Priority 2
