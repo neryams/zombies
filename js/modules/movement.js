@@ -1,23 +1,64 @@
 /*
 	Movement: causes zombies to wander around.
+	Zombies walking around, distance probability distribution function based in movement strength (Speed). mobility being in km/h, and radius of planet being 6378.1 km
 */
 new Module('spread', function(current,strength) {
-	// Zombies walking around, distance probability distribution function based in strength. mobility being in km/h, and radius of planet being 6378.1 km
 	if(strength.mobility > 0 && current.infected > 0) {
 		if(current.infectedMovement === undefined || current.infectedMovement === null)
 			current.infectedMovement = 0;
 	    current.infectedMovement += strength.mobility;
 
-		// error function approximation. No need to worry about sign, since x, or distance/maxDistance, will always be positive
+		// If zombies can smell humans, get the movement weighting values in an array
+		//if(this.humanSense > 0) {
+		if(true) { this.humanSense = 10;
+			var direction = this.S.iteration%4;
+			if(!current.smellCache) {
+				current.smellCache = [0,0,0,0,0,0,0,0];				
+			}
+			// If humans in this direction have never been calculated, do this direction and the opposing one (for symmetry)
+			// Go around the square once doing the opposing directions
+			if(!this.smellCache[this.S.iteration%4]) {
+				var direction = this.S.iteration%4;
+				this.smellCache[direction]   = this.getSmells(current, direction, this.humanSense) + 1;
+				this.smellCache[direction+4] = this.getSmells(current, direction+4, this.humanSense) + 1;				
+			// If this direction has been calculated, only update squares once every 2 turns and only one direction at a time. TODO: raise this if it seems OK for speed
+			} else if(this.S.iteration%2 == current.id%2) {
+				var direction = Math.floor(this.S.iteration/2)%8;
+				this.smellCache[direction]   = this.getSmells(current, direction, this.humanSense) + 1;
+			}
+			delete direction;
+		}
+
+		// Get the random numbers for the movement.
+		// randAngle is the randomly picked direction, where 0-7 are adjacent squares clockwise from top
 	    var rand = Math.sqrt(Math.random()),
 			randAngle = Math.random()*8, // modify this to point towards more people
-	    	surroundPop = current.adjacent[0].total_pop + current.adjacent[1].total_pop + current.adjacent[2].total_pop + current.adjacent[3].total_pop + 
-	    		current.adjacent[1].adjacent[0].total_pop + current.adjacent[1].adjacent[2].total_pop + current.adjacent[3].adjacent[0].total_pop + current.adjacent[3].adjacent[2].total_pop,
 			chances = this.getChances(current.lat, current.infectedMovement);
-	    var ratioA = 1 - randAngle%1,
-	    	ratioB = randAngle%1,
-	    	targetA = Math.floor(randAngle),
-	    	targetB = Math.ceil(randAngle)%8;
+
+		// Weight randAngle based on the weighting values calculated earler
+		var topStrength;
+		var newRandAngle;
+		// go up to 8 so the random direction weighting wraps around
+		for(var i = 0; i <= 8; i++) {
+			if(current.smellCache[i%8] > 1) {
+				var thisStrength = (randAngle - i)/this.smellCache[i%8];
+			}
+			else {
+				var thisStrength = randAngle - i;				
+			}
+
+			// Keep track of which grid square is strongest after weighting
+			if(!topStrength || topStrength > Math.abs(thisStrength)) {
+				topStrength = Math.abs(thisStrength);
+				currId = i;
+				newRandAngle = thisStrength + i;
+			}
+		}
+
+	    var ratioA = 1 - newRandAngle%1,
+	    	ratioB = newRandAngle%1,
+	    	targetA = Math.floor(newRandAngle),
+	    	targetB = Math.ceil(newRandAngle)%8;
 	    var chanceA = targetA%4,
 	    	chanceB = targetB%4;
     	if(targetA > 4)
@@ -77,6 +118,8 @@ new Module('spread', function(current,strength) {
 },{
 	init: function() {
 		this.bakedMoveChance = [];
+		this.smellCache = [];
+		this.smellSense = 0;
 		this.getChances = function (lat,movement) {
 			var lat = Math.floor(Math.abs(lat)),
 				movement = Math.floor(movement);
@@ -118,6 +161,30 @@ new Module('spread', function(current,strength) {
 				this.bakedMoveChance[lat][movement] = result;
 			}
 			return this.bakedMoveChance[lat][movement].slice(0); // return a copy so the array can be manipulated without destroying the cache
+		}
+		this.getSmells = function (dataPoint,direction,maxDistance) {
+	    	/*var surroundPop = current.adjacent[0].total_pop + current.adjacent[1].total_pop + current.adjacent[2].total_pop + current.adjacent[3].total_pop + 
+	    		current.adjacent[1].adjacent[0].total_pop + current.adjacent[1].adjacent[2].total_pop + current.adjacent[3].adjacent[0].total_pop + current.adjacent[3].adjacent[2].total_pop;*/
+	    	var returnAmount = 0;
+	    	var totalDistance = 0;
+	    	for(var i = 1; i <= maxDistance; i++) {
+		    	if(direction % 2 == 0) { // horizontal and vertical
+		    		totalDistance += this.S.bakedValues.latDistances[Math.floor(Math.abs(dataPoint.lat))][direction/2];
+	    			dataPoint = dataPoint.adjacent[direction/2];
+
+		    	} else { // diagonal
+		    		totalDistance += this.S.bakedValues.latDistances[Math.floor(Math.abs(dataPoint.lat))][Math.floor(direction/2)+4];
+	    			dataPoint = dataPoint.adjacent[Math.floor(direction/2)].adjacent[Math.ceil(direction/2)%4];		    		
+		    	}
+
+		    	if(dataPoint.nearby_pop)
+		    		if(dataPoint.nearby_pop[i]) {
+		    			returnAmount += dataPoint.nearby_pop[i] / (totalDistance*totalDistance);
+		    		} else {
+		    			returnAmount += dataPoint.nearby_pop[dataPoint.nearby_pop.length - 1] / (totalDistance*totalDistance);		    			
+		    		}
+	    	}
+	    	return returnAmount;
 		}
 	},
 	alwaysActive: true,
