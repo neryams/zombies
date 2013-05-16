@@ -7,8 +7,6 @@ new Module('strain', function(current,target,strength) {
 		totalKilled = 0;
 	if(target.total_pop > 0) {
 		var rand = Math.random();
-		if(!current.infected && current.infected !== 0)
-			current.infected = 0;
 		// strength represents how many people are killed a day (50% chance 120 times a turn at 60 strength)
 		if(target.dead == undefined)
 			target.dead = 0;
@@ -53,6 +51,10 @@ new Module('strain', function(current,target,strength) {
 		strength.panic = Math.round((totalConverted*1.5+totalKilled) * (target.total_pop/this.S.config.max_pop + 0.5) * strength.panic / 10);
 		this.S.properties.panic += strength.panic;
 		this.S.countries[target.country].panic += strength.panic;
+
+		// Update world pop numbers
+		this.S.modules['worldStats'].val('world_pop',totalConverted+totalKilled,'-');
+		this.S.modules['worldStats'].val('world_infected',totalConverted,'+');
 	}
 
 	return newInfection;
