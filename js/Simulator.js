@@ -515,6 +515,7 @@ Simulator.prototype.tick = function() {
 
 		for(i = 0, n = this.activePoints.length; i < n; i++) {
 			current = this.activePoints[i];
+
 			chances = this.bakedValues.latCumChance[Math.floor(Math.abs(current.lat))];
 			beginInfected = current.infected;
 			if(debug.watchPoint == current.id) {
@@ -554,20 +555,42 @@ Simulator.prototype.tick = function() {
 			strength.mobility = 0;
 			strength.panic = 0;
 
-			for(j = 0; j < this.activeModules.infect.length; j++)
+			for(j = 0; j < this.activeModules.infect.length; j++) {
 				this.activeModules.infect[j].process(current,target,strength);
+			}
 			
 			this.strain.process(current,current,strength);
 			this.strain.process(current,target,strength);
 
-			for(j = 0; j < this.activeModules.spread.length; j++)
-				this.activeModules.spread[j].process(current,strength);
+			for(j = 0; j < this.activeModules.spread.length; j++) {
+				this.activeModules.spread[j].process(current,strength);		
+			}
+
+			// Update nearby square populations
+			if(this.iteration%10 == current.id%10) {
+				current.updateNearbyPop();				
+			}
 
 			this.updateSquare(current);
 			this.updateSquare(target);
+			/*
+			if(current.infected == 0) {
+				// If square has no zombies, remove it from the active points
+				var search = this.activePoints.length - 1;
+				do {
+					if(this.activePoints[search].id == current.id) {
+						this.activePoints.splice(search,1);
+						current.active = false;
+						break;
+					}
+				} while(search--);
+				n--;
+				i--;
+			}*/
 		}
-		for(j = 0; j < this.activeModules.event.length; j++)
+		for(j = 0; j < this.activeModules.event.length; j++) {
 			this.activeModules.event[j].process();
+		}
 
 		this.Renderer.updateMatrix();
 

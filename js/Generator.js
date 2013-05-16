@@ -184,7 +184,7 @@ Planet.prototype.generatePop = function(heightmap,borderNoise,progressShare) {
 	}
 	self.postMessage({cmd: 'progress',share: progressShare,progress: 0.5});
 
-	// Remove countries without capitols (meaning countries with no population), set capitol names
+	// Remove countries without capitols (meaning countries with no population), set capitol names?
 	for(i = 1; i < this.countries.length; i++) {
 		if(this.countries[i].capitol == null) {
 			this.countries.splice(i,1);
@@ -201,47 +201,10 @@ Planet.prototype.generatePop = function(heightmap,borderNoise,progressShare) {
 	self.postMessage({cmd: 'progress',share: progressShare,progress: 0.6});
 
 	var target,steps,total_pop;
-	for(i = 0, n = this.data.length; i < n; i++) {		
-		current = this.data[i];
-		current.nearby_pop = [current.total_pop];
-		target = current;
-		// Calculate the averaged populations of squares for finding groups of people etc
-		if(current.total_pop > 0) {
-			if(i % 1000 == 0)
-				self.postMessage({cmd: 'progress',share: progressShare,progress: 0.6 + 0.4*i/this.data.length});
-
-			var total_pop = 0;
-			for (j = 1; j <= 15; j++) {
-				target = target.adjacent[0];
-				steps = j;
-				do {
-					target = target.adjacent[1];
-					total_pop += target.total_pop;
-				} while (--steps)
-				steps = j*2;
-				do {
-					target = target.adjacent[2];
-					total_pop += target.total_pop;
-				} while (--steps)
-				steps = j*2;
-				do {
-					target = target.adjacent[3];
-					total_pop += target.total_pop;
-				} while (--steps)
-				steps = j*2;
-				do {
-					target = target.adjacent[0];
-					total_pop += target.total_pop;
-				} while (--steps)
-				steps = j;
-				do {
-					target = target.adjacent[1];
-					total_pop += target.total_pop;
-				} while (--steps)
-
-				current.nearby_pop[j] = total_pop;
-			}
-		}
+	for(i = 0, n = this.data.length; i < n; i++) {
+		this.data[i].updateNearbyPop();
+		if(i % 10000 == 0)
+			self.postMessage({cmd: 'progress',share: progressShare,progress: 0.6 + 0.4*i/this.data.length});
 	}
 	self.postMessage({cmd: 'progress',share: progressShare,progress: 1});
 }

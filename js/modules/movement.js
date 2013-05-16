@@ -13,18 +13,18 @@ new Module('spread', function(current,strength) {
 		if(true) { this.humanSense = 10;
 			var direction = this.S.iteration%4;
 			if(!current.smellCache) {
-				current.smellCache = [0,0,0,0,0,0,0,0];				
+				current.smellCache = [-1,-1,-1,-1,-1,-1,-1,-1];				
 			}
 			// If humans in this direction have never been calculated, do this direction and the opposing one (for symmetry)
 			// Go around the square once doing the opposing directions
-			if(!this.smellCache[this.S.iteration%4]) {
+			if(current.smellCache[this.S.iteration%4 < 0]) {
 				var direction = this.S.iteration%4;
-				this.smellCache[direction]   = this.getSmells(current, direction, this.humanSense) + 1;
-				this.smellCache[direction+4] = this.getSmells(current, direction+4, this.humanSense) + 1;				
+				current.smellCache[direction]   = this.getSmells(current, direction, this.humanSense);
+				current.smellCache[direction+4] = this.getSmells(current, direction+4, this.humanSense);				
 			// If this direction has been calculated, only update squares once every 2 turns and only one direction at a time. TODO: raise this if it seems OK for speed
 			} else if(this.S.iteration%2 == current.id%2) {
 				var direction = Math.floor(this.S.iteration/2)%8;
-				this.smellCache[direction]   = this.getSmells(current, direction, this.humanSense) + 1;
+				current.smellCache[direction]   = this.getSmells(current, direction, this.humanSense);
 			}
 			delete direction;
 		}
@@ -35,30 +35,32 @@ new Module('spread', function(current,strength) {
 			randAngle = Math.random()*8, // modify this to point towards more people
 			chances = this.getChances(current.lat, current.infectedMovement);
 
-		// Weight randAngle based on the weighting values calculated earler
-		var topStrength;
-		var newRandAngle;
-		// go up to 8 so the random direction weighting wraps around
-		for(var i = 0; i <= 8; i++) {
-			if(current.smellCache[i%8] > 1) {
-				var thisStrength = (randAngle - i)/this.smellCache[i%8];
-			}
-			else {
-				var thisStrength = randAngle - i;				
-			}
+		if(current.smellCache) {
+			// Weight randAngle based on the weighting values calculated earler
+			var topStrength;
+			var newRandAngle;
+			// go up to 8 so the random direction weighting wraps around
+			for(var i = 0; i <= 8; i++) {
+				if(current.smellCache[i%8] > 1) {
+					var thisStrength = (randAngle - i)/current.smellCache[i%8];
+				}
+				else {
+					var thisStrength = randAngle - i;				
+				}
 
-			// Keep track of which grid square is strongest after weighting
-			if(!topStrength || topStrength > Math.abs(thisStrength)) {
-				topStrength = Math.abs(thisStrength);
-				currId = i;
-				newRandAngle = thisStrength + i;
+				// Keep track of which grid square is strongest after weighting
+				if(!topStrength || topStrength > Math.abs(thisStrength)) {
+					topStrength = Math.abs(thisStrength);
+					newRandAngle = thisStrength + i;
+				}
 			}
+			randAngle = newRandAngle;
 		}
 
-	    var ratioA = 1 - newRandAngle%1,
-	    	ratioB = newRandAngle%1,
-	    	targetA = Math.floor(newRandAngle),
-	    	targetB = Math.ceil(newRandAngle)%8;
+	    var ratioA = 1 - randAngle%1,
+	    	ratioB = randAngle%1,
+	    	targetA = Math.floor(randAngle),
+	    	targetB = Math.ceil(randAngle)%8;
 	    var chanceA = targetA%4,
 	    	chanceB = targetB%4;
     	if(targetA > 4)
@@ -91,28 +93,48 @@ new Module('spread', function(current,strength) {
 	    		targetB = current.adjacent[Math.floor(targetB/2)].adjacent[Math.ceil(targetB/2)%4];
 	    	}
 
-
-			// Adjust infectedMovement based on the number of zombies moving
-	    	current.infectedMovement = Math.round(current.infectedMovement * (1 - (movedA+movedB)/current.infected));
-	    	if(targetA.infectedMovement)
-	    		targetA.infectedMovement = Math.round(targetA.infectedMovement * (1 - movedA/(targetA.infected+movedA)));
-	    	if(targetB.infectedMovement)
-	    		targetB.infectedMovement = Math.round(targetB.infectedMovement * (1 - movedB/(targetB.infected+movedB)));
-
-			if(movedA > 0 && !targetA.active) {
-				this.S.activePoints.push(targetA);
-				targetA.active = true;
+			// if the zombies don't swim, don't send them in that direction
+			if(!this.swimming) {
+				if(targetA.water && !targetB.water) {
+					movedB = movedA+movedB;
+					movedA = 0;
+				}
+				else if(!targetA.water && targetB.water) {
+					movedA = movedA+movedB;
+					movedB = 0;					
+				}
+				else if(targetA.water && targetB.water) {
+					movedA = 0;
+					movedB = 0;
+					this.smellCache[Math.floor(randAngle)] = 0;
+					this.smellCache[Math.ceil(randAngle)] = 0;
+				}
 			}
-			if(movedB > 0 && !targetB.active) {
-				this.S.activePoints.push(targetB);
-				targetB.active = true;
-			}
 
-			targetA.infected += movedA;
-			targetB.infected += movedB;
-			current.infected -= movedA + movedB;
-			this.S.updateSquare(targetA);
-			this.S.updateSquare(targetB);
+			if(movedA > 0 || movedB > 0) {
+
+				// Adjust infectedMovement based on the number of zombies moving
+		    	current.infectedMovement = Math.round(current.infectedMovement * (1 - (movedA+movedB)/current.infected));
+		    	if(targetA.infectedMovement && movedA > 0)
+		    		targetA.infectedMovement = Math.round(targetA.infectedMovement * (1 - movedA/(targetA.infected+movedA)));
+		    	if(targetB.infectedMovement && movedB > 0)
+		    		targetB.infectedMovement = Math.round(targetB.infectedMovement * (1 - movedB/(targetB.infected+movedB)));
+
+				if(movedA > 0 && !targetA.active) {
+					this.S.activePoints.push(targetA);
+					targetA.active = true;
+				}
+				if(movedB > 0 && !targetB.active) {
+					this.S.activePoints.push(targetB);
+					targetB.active = true;
+				}
+
+				targetA.infected += movedA;
+				targetB.infected += movedB;
+				current.infected -= movedA + movedB;
+				this.S.updateSquare(targetA);
+				this.S.updateSquare(targetB);
+			}
 	    }
 	}
 },{
@@ -120,6 +142,7 @@ new Module('spread', function(current,strength) {
 		this.bakedMoveChance = [];
 		this.smellCache = [];
 		this.smellSense = 0;
+		this.swimming = false;
 		this.getChances = function (lat,movement) {
 			var lat = Math.floor(Math.abs(lat)),
 				movement = Math.floor(movement);
@@ -167,7 +190,7 @@ new Module('spread', function(current,strength) {
 	    		current.adjacent[1].adjacent[0].total_pop + current.adjacent[1].adjacent[2].total_pop + current.adjacent[3].adjacent[0].total_pop + current.adjacent[3].adjacent[2].total_pop;*/
 	    	var returnAmount = 0;
 	    	var totalDistance = 0;
-	    	for(var i = 1; i <= maxDistance; i++) {
+	    	for(var i = 0; i <= maxDistance; i++) {
 		    	if(direction % 2 == 0) { // horizontal and vertical
 		    		totalDistance += this.S.bakedValues.latDistances[Math.floor(Math.abs(dataPoint.lat))][direction/2];
 	    			dataPoint = dataPoint.adjacent[direction/2];
