@@ -14,7 +14,7 @@ new Module('event', function() {
 		} else {
 			if(this.ships[i].from.infected) {
 				var rand = Math.random();
-				var transferCount = Math.floor(Math.abs((rand*2 + (rand*10%1)*2 + (rand*100%1)*2 - 3)*(current.infected/4)));
+				var transferCount = Math.floor(Math.abs((rand*2 + (rand*10%1)*2 + (rand*100%1)*2 - 3)*(this.ships[i].from.infected/4)));
 				if(transferCount > 0 && !this.ships[i].to.active) {
 					this.S.activePoints.push(this.ships[i].to);
 					this.ships[i].to.active = true;
