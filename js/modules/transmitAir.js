@@ -2,22 +2,22 @@
 	Transmit Air: Allows zombie virus to infect people over the air.
 */
 new Module('event', function(upgrade) {
-	if(!this.S.modules['viral_infect'].isActive())
-		this.S.addActive('viral_infect');
+	if(!this.S.modules['viralInfect'].isActive())
+		this.S.addActive('viralInfect');
 
 	if(upgrade.level == 0)
 	{
-		this.S.modules['viral_infect'].val('infectPower',2,'+');
+		this.S.modules['viralInfect'].val('infectPower',2,'+');
 	}
 	else if(upgrade.level == 1)
 	{
-		this.S.modules['viral_infect'].val('panic',0.5,'+');
-		this.S.modules['viral_infect'].val('infectPower',8,'+');
+		this.S.modules['viralInfect'].val('panic',0.5,'+');
+		this.S.modules['viralInfect'].val('infectPower',8,'+');
 	}
 	else if(upgrade.level == 2)
 	{
-		this.S.modules['viral_infect'].val('panic',0.5,'+');
-		this.S.modules['viral_infect'].val('infectPower',12,'+');
+		this.S.modules['viralInfect'].val('panic',0.5,'+');
+		this.S.modules['viralInfect'].val('infectPower',12,'+');
 	}
 },{
 	init: function() {
