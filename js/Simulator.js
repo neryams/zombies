@@ -520,6 +520,7 @@ Simulator.prototype.tick = function() {
 			beginInfected = current.infected;
 			if(debug.watchPoint == current.id) {
 				console.log(current);
+				debugger;
 			}
 
 			rand = Math.random();
@@ -555,14 +556,41 @@ Simulator.prototype.tick = function() {
 			strength.mobility = 0;
 			strength.panic = 0;
 
+			if(debug.logModules)
+				console.log(strength);
+
 			for(j = 0; j < this.activeModules.infect.length; j++) {
 				this.activeModules.infect[j].process(current,target,strength);
+				if(debug.logModules) {
+					console.log('\\/ \\/ \\/ \\/ \\/ \\/ \\/ \\/ \\/ ');
+					console.log(this.activeModules.infect[j].id);
+					console.log(this.activeModules.infect[j]);
+					console.log('\\/ \\/ \\/ \\/ \\/ \\/ \\/ \\/ \\/ ');
+					console.log(strength);
+				}
+
+				if(isNaN(current.infected))
+					debugger;
+				if(isNaN(target.infected))
+					debugger;
 			}
 			
 			this.strain.process(current,current,strength);
 			this.strain.process(current,target,strength);
 
+			if(debug.logModules) {
+				console.log('\\/ \\/ \\/ \\/ \\/ \\/ \\/ \\/ \\/ ');
+				console.log(this.strain.id);
+				console.log(this.strain);
+			}
+
 			for(j = 0; j < this.activeModules.spread.length; j++) {
+				if(debug.logModules) {
+					console.log('\\/ \\/ \\/ \\/ \\/ \\/ \\/ \\/ \\/ ');
+					console.log(this.activeModules.spread[j].id);
+					console.log(this.activeModules.spread[j]);
+				}
+
 				this.activeModules.spread[j].process(current,strength);		
 			}
 
@@ -588,9 +616,20 @@ Simulator.prototype.tick = function() {
 				i--;
 			}*/
 		}
+		if(debug.logModules)
+			console.log('[above x'+this.activePoints.length+']');
+
 		for(j = 0; j < this.activeModules.event.length; j++) {
+			if(debug.logModules) {
+				console.log('\\/ \\/ \\/ \\/ \\/ \\/ \\/ \\/ \\/ ');
+				console.log(this.activeModules.event[j].id);
+				console.log(this.activeModules.event[j]);
+			}
+
 			this.activeModules.event[j].process();
 		}
+		if(debug.logModules)
+			debug.logModules = false;
 
 		this.Renderer.updateMatrix();
 
