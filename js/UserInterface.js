@@ -748,7 +748,7 @@ var UserInterface = function UserInterface(Renderer) {
 				$('#render_tooltip').css('top',mouse.y+10).css('left',mouse.x+30);
 				//$('#tooltip').css('display','block').html('asf');
 				var point = gData.points[(Math.floor(90-sphere_coords[0])*gConfig.w + Math.floor(sphere_coords[1]))];
-				if(point != undefined && point.total_pop > 0) {
+				if(point != undefined && (!point.water || point.total_pop > 0)) {
 					if($('#render_tooltip').css('visibility') != 'visible')
 						$('#render_tooltip').css('visibility','visible');
 					$('#render_tooltip').html(event.data(point));

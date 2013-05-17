@@ -10,20 +10,20 @@ new Module('spread', function(current,strength) {
 
 		// If zombies can smell humans, get the movement weighting values in an array
 		//if(this.humanSense > 0) {
-		if(true) { this.humanSense = 3000;
+		if(true) { this.humanSense = 1500;
 			var direction = this.S.iteration%4;
 			if(!current.smellCache) {
 				current.smellCache = [-1,-1,-1,-1,-1,-1,-1,-1];				
 			}
 			// If humans in this direction have never been calculated, do this direction and the opposing one (for symmetry)
 			// Go around the square once doing the opposing directions
-			if(current.smellCache[this.S.iteration%4 < 0]) {
+			if(current.smellCache[this.S.iteration%4] < 0) {
 				var direction = this.S.iteration%4;
 				current.smellCache[direction]   = this.getSmells(current, direction, this.humanSense);
 				current.smellCache[direction+4] = this.getSmells(current, direction+4, this.humanSense);				
 			// If this direction has been calculated, only update squares once every 2 turns and only one direction at a time. TODO: raise this if it seems OK for speed
-			} else if(this.S.iteration%2 == current.id%2) {
-				var direction = Math.floor(this.S.iteration/2)%8;
+			} else if(this.S.iteration%4 == current.id%4) {
+				var direction = Math.floor(this.S.iteration/4)%8;
 				current.smellCache[direction]   = this.getSmells(current, direction, this.humanSense);
 			}
 			delete direction;

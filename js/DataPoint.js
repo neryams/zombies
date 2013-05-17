@@ -32,7 +32,7 @@ DataPoint.prototype.updateNearbyPop = function () {
 		this.nearby_pop[0] = this.total_pop;
 
 	// Calculate the averaged populations of squares for finding groups of people etc
-	if(this.total_pop > 0) {
+	if(this.nearby_pop[this.nearby_pop.length-1] > 0) {
 		target = this;
 
 		var total_pop = this.total_pop;
