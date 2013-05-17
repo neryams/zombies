@@ -22,8 +22,8 @@ new Module('spread', function(current,strength) {
 				current.smellCache[direction]   = this.getSmells(current, direction, this.humanSense);
 				current.smellCache[direction+4] = this.getSmells(current, direction+4, this.humanSense);				
 			// If this direction has been calculated, only update squares once every 2 turns and only one direction at a time. TODO: raise this if it seems OK for speed
-			} else if(this.S.iteration%4 == current.id%4) {
-				var direction = Math.floor(this.S.iteration/4)%8;
+			} else {
+				var direction = this.S.iteration%8;
 				current.smellCache[direction]   = this.getSmells(current, direction, this.humanSense);
 			}
 			delete direction;
@@ -188,9 +188,10 @@ new Module('spread', function(current,strength) {
 		this.getSmells = function (dataPoint,direction,maxDistance) {
 	    	/*var surroundPop = current.adjacent[0].total_pop + current.adjacent[1].total_pop + current.adjacent[2].total_pop + current.adjacent[3].total_pop + 
 	    		current.adjacent[1].adjacent[0].total_pop + current.adjacent[1].adjacent[2].total_pop + current.adjacent[3].adjacent[0].total_pop + current.adjacent[3].adjacent[2].total_pop;*/
-	    	var returnAmount = 0;
-	    	var totalDistance = 0;
-	    	for(var i = 0; i <= maxDistance; i++) {
+	    	var returnAmount = 0,
+	    		totalDistance = 0,
+	    		i = 0;
+	    	while(totalDistance < maxDistance) {
 		    	if(direction % 2 == 0) { // horizontal and vertical
 		    		totalDistance += this.S.bakedValues.latDistances[Math.floor(Math.abs(dataPoint.lat))][direction/2];
 	    			dataPoint = dataPoint.adjacent[direction/2];
@@ -201,11 +202,12 @@ new Module('spread', function(current,strength) {
 		    	}
 
 		    	if(dataPoint.nearby_pop)
-		    		if(dataPoint.nearby_pop[i]) {
+		    		if(i < dataPoint.nearby_pop.length) {
 		    			returnAmount += dataPoint.nearby_pop[i] / (totalDistance*totalDistance);
 		    		} else {
 		    			returnAmount += dataPoint.nearby_pop[dataPoint.nearby_pop.length - 1] / (totalDistance*totalDistance);		    			
 		    		}
+		    	i++;
 	    	}
 	    	return returnAmount;
 		}
