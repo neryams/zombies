@@ -10,7 +10,7 @@ new Module('spread', function(current,strength) {
 
 		// If zombies can smell humans, get the movement weighting values in an array
 		//if(this.humanSense > 0) {
-		if(true) { this.humanSense = 10;
+		if(true) { this.humanSense = 3000;
 			var direction = this.S.iteration%4;
 			if(!current.smellCache) {
 				current.smellCache = [-1,-1,-1,-1,-1,-1,-1,-1];				
