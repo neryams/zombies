@@ -127,33 +127,30 @@ new Module('event', function() {
 					// For each country capitol, link it to every other capitol that is coastal
 					if(a.id != b.id && b.coast_distance == 1) {
 						// Calculate how the time between ships based on city size
-						if(a.total_pop < b.total_pop)
-							ab = a.total_pop*0.7 + b.total_pop*0.3;
-						else
-							ab = a.total_pop*0.3 + b.total_pop*0.7;
-						interval = Math.floor(300 - 280*Math.log(ab)/Math.log(this.S.config.max_pop)); // number of intervals between freighters ranges up from 20
-						if(interval > 700) 
-							continue; // If ships sail less than once every two years, might as well not bother.
-						
-						// get distance between the two ports to estimate the ship sailing time
-						phi = (a.lat - b.lat)/180*Math.PI;
-						theta = (a.lng - b.lng)/180*Math.PI;
-						phix = a.lat/180*Math.PI;
-						phiy = b.lat/180*Math.PI;
-						hyp = (Math.sin(phi/2) * Math.sin(phi/2) +
-						    Math.sin(theta/2) * Math.sin(theta/2) * Math.cos(phix) * Math.cos(phiy)); 
-						distance = Math.round(2 * Math.atan2(Math.sqrt(hyp), Math.sqrt(1-hyp)) * 40); // ~40 days to get to the other side of the world?
+						ab = b.total_pop*0.7 + a.total_pop*0.3;
 
-						// Make progress bad for shipping route and add it to the intervals object
-						progressBar = this.shippingMenu.addDataField('progressBar',{title: this.S.countries[i].name+' to '+this.S.countries[j].name, width: 186});
-						progressBar.element.parent().on('mouseover.showRoute',{R: this.S.Renderer, point1: a, point2: b}, this.displayArc);
-						progressBar.val(this.getShipDate(this.S.date,interval));
-						if(!this.intervals['int'+interval])
-							this.intervals['int'+interval] = [];
-						this.intervals['int'+interval].unshift({from:a,to:b,progressBar:progressBar,travelTime:distance,interval:interval,timeLeft:-1});
+						interval = Math.floor(2000 - 1960*(Math.log(ab)/Math.log(this.S.config.max_pop))); // number of intervals between freighters ranges up from 40 days
+						if(interval < 700) { // If ships sail less than once every two years, might as well not bother.
+							// get distance between the two ports to estimate the ship sailing time
+							phi = (a.lat - b.lat)/180*Math.PI;
+							theta = (a.lng - b.lng)/180*Math.PI;
+							phix = a.lat/180*Math.PI;
+							phiy = b.lat/180*Math.PI;
+							hyp = (Math.sin(phi/2) * Math.sin(phi/2) +
+							    Math.sin(theta/2) * Math.sin(theta/2) * Math.cos(phix) * Math.cos(phiy)); 
+							distance = Math.round(2 * Math.atan2(Math.sqrt(hyp), Math.sqrt(1-hyp)) * 40); // ~40 days to get to the other side of the world?
 
-						// Sort the progress bars based on how soon the ships will depart and arrive
-						this.intervalSortInsert(this.intervals['int'+interval][0],1);
+							// Make progress bar for shipping route and add it to the intervals object
+							progressBar = this.shippingMenu.addDataField('progressBar',{title: this.S.countries[i].name+' to '+this.S.countries[j].name, width: 186});
+							progressBar.element.parent().on('mouseover.showRoute',{R: this.S.Renderer, point1: a, point2: b}, this.displayArc);
+							progressBar.val(this.getShipDate(this.S.date,interval));
+							if(!this.intervals['int'+interval])
+								this.intervals['int'+interval] = [];
+							this.intervals['int'+interval].unshift({from:a,to:b,progressBar:progressBar,travelTime:distance,interval:interval,timeLeft:-1});
+
+							// Sort the progress bars based on how soon the ships will depart and arrive
+							this.intervalSortInsert(this.intervals['int'+interval][0],1);
+						}
 					}
 				}
 		}
