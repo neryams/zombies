@@ -1,11 +1,9 @@
 ----- Priority 1
 
-	Make zombies smell humans. Give every square a radius to add up - several different sizes - 3, 5, 7, 9. just go in straight lines for the direction calculations, using the blob radii amounts
-
 
 ----- Priority 2
 
-	Make shipping work with movement. Related: Make zombies fully spreadable at the current stage of the game by adding resistances etc
+	Make globe zoomable
 
 	Make function for adding icons and images to the 3-d view
 

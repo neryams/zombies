@@ -552,7 +552,7 @@ Evolution.prototype.buildWeb = function(upgrade,lastTheta,depth) {
 }
 
 var UserInterface = function UserInterface(Renderer) {
-	var mouse = { x:0, y:0, lastx:0, lasty:0, spherelng:0, spherelat:0, down:false, movement:null },
+	var mouse = { x:0, y:0, lastx:0, lasty:0, down:false, scroll: 0 },
 		sphere_coords,visualization = '', WorldData, Simulator, 
 		status = { pauseRenderer: false, showToolTip: false, toolTipMode: '', mutateGridSize: 0 },
 		dataFieldsRoot = [], interfaceParts = {},lang = {},alerts = {},
@@ -743,7 +743,7 @@ var UserInterface = function UserInterface(Renderer) {
 		$('#ui').on('mousemove.render_tooltip', null, getPointInfo, function(event) {
 			mouse.x = event.clientX;
 			mouse.y = event.clientY;
-			sphere_coords = Renderer.getSphereCoords(mouse.x,mouse.y,205);
+			sphere_coords = Renderer.getSphereCoords(mouse.x,mouse.y,200);
 			if(sphere_coords && !isNaN(sphere_coords[0]) && !isNaN(sphere_coords[1]) && !status.pauseRenderer) {
 				$('#render_tooltip').css('top',mouse.y+10).css('left',mouse.x+30);
 				//$('#tooltip').css('display','block').html('asf');
@@ -845,22 +845,28 @@ var UserInterface = function UserInterface(Renderer) {
 			if(!status.pauseRenderer) {
 				event.preventDefault();
 				mouse.down = true;
-				mouse.movement.set(0, 0);
 				mouse.x = mouse.lastx = event.clientX;
-				mouse.y = mouse.lasty = event.clientY;	
-				Renderer.mouseVector.set(0, 0);	
-				Renderer.getSphereCoords();	
+				mouse.y = mouse.lasty = event.clientY;
+				Renderer.stopCameraMovement();
 				$(this).on('mousemove.moveCamera', function (event) {
 					mouse.x = event.clientX;
 					mouse.y = event.clientY;				
 				});
-			} else {
-				Renderer.mouseVector.set(0, 0);
 			}
 		});
 		$('#ui').on('mouseup.moveCamera', function (event) {
 			$(this).off('mousemove.moveCamera');
+			mouse.x = mouse.lastx = mouse.y = mouse.lasty = mouse.scroll = 0;
 			mouse.down = false;
+		});
+		$('#ui').on('mousewheel.zoomCamera DOMMouseScroll.zoomCamera', function(event) {
+		    event.preventDefault();
+		    if (event.type == 'mousewheel') {
+		        mouse.scroll += parseInt(event.originalEvent.wheelDelta);
+		    }
+		    else if (event.type == 'DOMMouseScroll') {
+		        mouse.scroll += parseInt(event.originalEvent.detail);
+		    }
 		});
 
 		// Making the gene pieces interactive, gradding them onto the grid. etc
@@ -982,19 +988,18 @@ var UserInterface = function UserInterface(Renderer) {
 	Renderer.onRender(function() {
 		if(!status.pauseRenderer) {
 			if(mouse.down) {
-				mouse.movement.set(mouse.lastx - mouse.x, mouse.lasty - mouse.y);
-				Renderer.mouseVector.multiplyScalar(0.5).add(mouse.movement);
+				Renderer.moveCamera(mouse.lastx - mouse.x, mouse.lasty - mouse.y);
 				mouse.lastx = mouse.x;
 				mouse.lasty = mouse.y;
 			}
-			else
-				Renderer.mouseVector.multiplyScalar(0.95);
+			if(mouse.scroll) {
+				Renderer.zoomCamera(-mouse.scroll);
+				mouse.scroll = 0;
+			}
 		} 
 		else
-			Renderer.mouseVector.set(0, 0);
+			Renderer.stopCameraMovement();
 	});
-	
-	mouse.movement = new THREE.Vector2(0,0);
 
 	function addDataField(id,type,options) {
 		if(arguments.length == 1) {
@@ -1093,7 +1098,7 @@ var UserInterface = function UserInterface(Renderer) {
 					for(var i = 1; i < arguments.length; i++) {
 						langStr = langStr.replace('%r',arguments[i]);
 					}
-				interfaceParts['news_ticker'].element.append($('<p>'+langStr+'</p>'));				
+				interfaceParts['news_ticker'].element.prepend($('<p>'+langStr+'</p>'));				
 			}
 		},
 		alert: function(item) {

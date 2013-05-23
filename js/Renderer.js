@@ -3,13 +3,13 @@
     Dependencies: Three.js
 */
 var Renderer = function() {
-    var container, camera, scene, renderer, earthMesh, group, mouseVector, point, point2, sphere2DRadius, windowX, windowY, 
+    var container, camera, scene, renderer, earthMesh, group, mouseVector, point, point2, windowX, windowY, 
         visualLayer, visualLayerGeometry, visualLayerTexture, visualArc, climateGradient,visualizations={},visualization,
         subgeo = new THREE.Geometry();
         rotation = { x: 0, y: 0, z: 0 },
         PI_HALF = Math.PI / 2,
         onRender = function() {}, ready = false;
-    mouseVector = new THREE.Vector2(0,0);
+    mouseVector = new THREE.Vector3(0,0,0);
 
     climateGradient = document.createElement( 'canvas' ); 
     var climateBg = new Image();
@@ -104,7 +104,7 @@ var Renderer = function() {
         container = document.getElementById( 'container' );
 
         camera = new THREE.PerspectiveCamera( 60, windowX / windowY, 1, 10000 );
-        camera.position.z = 500;
+        camera.position.z = 450;
 
         scene = new THREE.Scene();
 
@@ -139,7 +139,7 @@ var Renderer = function() {
         sphere.add( earthMesh );
 
         // Visualization layer floating above the earth
-        visualLayerGeometry = new THREE.SphereGeometry( 205, 40, 30 );
+        visualLayerGeometry = new THREE.SphereGeometry( 202, 40, 30 );
         visualLayerTexture = new THREE.Texture( visualization );
         visualLayer = new THREE.Mesh(visualLayerGeometry, new THREE.MeshLambertMaterial({ map: visualLayerTexture, opacity: 0.8, transparent: true }));
         visualLayer.visible = false;
@@ -177,10 +177,6 @@ var Renderer = function() {
         point2 = new THREE.Mesh(geometry);*/
 
         camera.lookAt( scene.position );
-
-        // set visible sphere height
-
-        sphere2DRadius = getSphereScreenSize(500);
 
         /*renderer = new THREE.CanvasRenderer();
         renderer.setSize( window.innerWidth, window.innerHeight );*/
@@ -256,9 +252,20 @@ var Renderer = function() {
     }
 
     function render() {
-        rotation.x += mouseVector.x * 0.002;
-        if(Math.abs(rotation.y - mouseVector.y * 0.002) < PI_HALF)
-            rotation.y -= mouseVector.y * 0.002;
+        if(mouseVector.length() < 0.5)
+            mouseVector.set(0,0,0);
+        else {
+            mouseVector.multiplyScalar(0.95);
+            rotation.x += mouseVector.x * 0.002;
+            if(Math.abs(rotation.y - mouseVector.y * 0.002) < PI_HALF)
+                rotation.y -= mouseVector.y * 0.002;
+
+            camera.position.z += mouseVector.z * 0.05;
+            if(camera.position.z < 250)
+                camera.position.z = 250;
+            else if(camera.position.z > 500)
+                camera.position.z = 500;
+        }
 
         TWEEN.update();
         sphere.rotation.y = -rotation.x;
@@ -426,7 +433,7 @@ var Renderer = function() {
         getSphereCoords: function(mouseX,mouseY) {
             var distX = mouseX - windowX/2;
             var distY = mouseY - windowY/2;
-            if(Math.sqrt(distX*distX + distY*distY) < sphere2DRadius/2) {
+            if(Math.sqrt(distX*distX + distY*distY) < getSphereScreenSize(camera.position.z)/2) {
                 var intersect = checkIntersection( event.clientX, event.clientY );
 
                 var phi = Math.acos(intersect.y/205) - rotation.y;
@@ -443,6 +450,15 @@ var Renderer = function() {
         },
         updateMatrix: function() {
             subgeo.verticesNeedUpdate = true;
+        },
+        moveCamera: function(x,y) {
+            mouseVector.multiplyScalar(0.5).addScalars(x,y,0);
+        },
+        stopCameraMovement: function() {
+            mouseVector.set(0,0,0);
+        },
+        zoomCamera: function(z) {
+            mouseVector.addScalars(0,0,z);
         },
         resize: function(newWidth, newHeight) {
             if(camera != undefined) {
@@ -529,7 +545,6 @@ var Renderer = function() {
         displayArc: function (point1, point2) {
             var phi,theta,x,y,z,i,j,
                 position, index, n_sub = 36;
-            var ratio = 1/n_sub;
 
             phi = (90 - point1.lat) * Math.PI / 180;
             theta = (180 - point1.lng) * Math.PI / 180;
@@ -553,7 +568,12 @@ var Renderer = function() {
                     midpoint.add(start);
                 for (j = 0; j < i + 1; j++)
                     midpoint.add(end);
-                midpoint.setLength(200 + 2*(n_sub/2 - Math.abs(n_sub/2 - i - 0.5)));
+
+                if(2*(n_sub/2 - Math.abs(n_sub/2 - i - 0.5)) < 30)
+                    midpoint.setLength(200 + 2*(n_sub/2 - Math.abs(n_sub/2 - i - 0.5)));
+                else
+                    midpoint.setLength(230);
+
                 points.push(new THREE.Vector3(0,0,0));
                 points[points.length - 1].copy(midpoint);
             }
@@ -574,7 +594,14 @@ var Renderer = function() {
         hideArc: function () {
             visualArc.visible = false;
         },
-        mouseVector: mouseVector,
         init: init
     };
+}
+
+THREE.Vector3.prototype.addScalars = function(x,y,z) {
+    this.x += x;
+    this.y += y;
+    this.z += z;
+
+    return this;
 }
