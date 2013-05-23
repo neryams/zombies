@@ -552,7 +552,7 @@ Evolution.prototype.buildWeb = function(upgrade,lastTheta,depth) {
 }
 
 var UserInterface = function UserInterface(Renderer) {
-	var mouse = { x:0, y:0, lastx:0, lasty:0, down:false, scroll: 0 },
+	var mouse = { x:0, y:0, lastx:0, lasty:0, down:false, click: false, scroll: 0 },
 		sphere_coords,visualization = '', WorldData, Simulator, 
 		status = { pauseRenderer: false, showToolTip: false, toolTipMode: '', mutateGridSize: 0 },
 		dataFieldsRoot = [], interfaceParts = {},lang = {},alerts = {},
@@ -847,17 +847,24 @@ var UserInterface = function UserInterface(Renderer) {
 				mouse.down = true;
 				mouse.x = mouse.lastx = event.clientX;
 				mouse.y = mouse.lasty = event.clientY;
+				mouse.click = true;
 				Renderer.stopCameraMovement();
 				$(this).on('mousemove.moveCamera', function (event) {
 					mouse.x = event.clientX;
-					mouse.y = event.clientY;				
+					mouse.y = event.clientY;
+					// If user moves the mouse enough, declare this mousedown as NOT a click.
+					if(Math.abs(mouse.lastx - mouse.x) + Math.abs(mouse.lasty - mouse.y) > 3)
+						mouse.click = false;
 				});
 			}
 		});
 		$('#ui').on('mouseup.moveCamera', function (event) {
 			$(this).off('mousemove.moveCamera');
+			// If mouse didn't move, do the click
+			if(mouse.click)
+				Renderer.clickSphere(mouse.x,mouse.y);
 			mouse.x = mouse.lastx = mouse.y = mouse.lasty = mouse.scroll = 0;
-			mouse.down = false;
+			mouse.click = mouse.down = false;
 		});
 		$('#ui').on('mousewheel.zoomCamera DOMMouseScroll.zoomCamera', function(event) {
 		    event.preventDefault();
