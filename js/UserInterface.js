@@ -612,7 +612,7 @@ var UserInterface = function UserInterface(Renderer) {
 					opens: [uiMenuDataviews] 
 				}).val('Data Views').element.position();
 			uiMenuDataviews.addDataField('button',{ class: 'close', onClick: function() { this.parent.hide(); } }).val('Close');
-			uiMenuDataviews.addDataField('button',{ onClick: function() { Renderer.setVisualization('country'); this.parent.hide(); activatePlanetTooltip(function(point){ return '<strong>' + gData.countries[point.country].name + '</strong>'; });}}).val('Political');
+			uiMenuDataviews.addDataField('button',{ onClick: function() { Renderer.setVisualization('country'); this.parent.hide(); activatePlanetTooltip(function(point){ if(point.country) { return '<strong>' + gData.countries[point.country].name + '</strong>'; }});}}).val('Political');
 			uiMenuDataviews.addDataField('button',{ onClick: function() { Renderer.setVisualization('precipitation'); this.parent.hide(); activatePlanetTooltip(function(point){ return Math.round(point.precipitation*10)/10 + 'mm'; });}}).val('Precipitation');
 			uiMenuDataviews.addDataField('button',{ onClick: function() { Renderer.setVisualization('temperature'); this.parent.hide(); activatePlanetTooltip(function(point){ return Math.round((point.temperature - 273)*10)/10 + 'C'; });}}).val('Temperature');
 			uiMenuDataviews.addDataField('button',{ onClick: function() { Renderer.closeVisualization(); this.parent.hide(); deactivatePlanetTooltip(); } }).val('Disable All');

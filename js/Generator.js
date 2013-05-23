@@ -140,7 +140,7 @@ Planet.prototype.generatePop = function(heightmap,borderNoise,progressShare) {
 					this.config.max_pop = current.total_pop;
 			}
 		}
-		if(current.total_pop > 0) {
+		if((!current.water && !current.polar) || current.total_pop > 0) {
 			centroids.sort(function(x, y) {
 				return planet.getDistance(i,x) - planet.getDistance(i,y);
 			});
@@ -154,7 +154,7 @@ Planet.prototype.generatePop = function(heightmap,borderNoise,progressShare) {
 	for(j = 0; j < 10; j++) {
 		for(i = 0, n = this.data.length; i < n; i++) {
 			current = this.data[i];
-			if(current.total_pop > 0) {
+			if((!current.water && !current.polar) || current.total_pop > 0) {
 				for(k = 0; k < 4; k++) {
 					if(borderNoise[current.adjacent[k].id] < borderNoise[current.id])
 						current.adjacent[k].country = current.country;

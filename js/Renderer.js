@@ -177,6 +177,7 @@ var Renderer = function() {
         point2 = new THREE.Mesh(geometry);*/
 
         camera.lookAt( scene.position );
+        //camera.position.x = -100;
 
         /*renderer = new THREE.CanvasRenderer();
         renderer.setSize( window.innerWidth, window.innerHeight );*/
