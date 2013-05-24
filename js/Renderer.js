@@ -3,7 +3,7 @@
     Dependencies: Three.js
 */
 var Renderer = function() {
-    var camera, scene, renderer, point, point2, visualLayer, visualLayerTexture, visualArc,
+    var camera, scene, sphere, renderer, dataBars, point, point2, visualLayer, visualLayerTexture, visualArc,
         climateGradient,visualizations={},visualization,
         mouseVector, windowX, windowY, 
         subgeo = new THREE.Geometry();
@@ -202,13 +202,13 @@ var Renderer = function() {
 
         subgeo.dynamic = true;
 
-        points = new THREE.Mesh(subgeo, new THREE.MeshBasicMaterial({
+        dataBars = new THREE.Mesh(subgeo, new THREE.MeshBasicMaterial({
             color: 0xffffff,
             vertexColors: THREE.FaceColors,
             morphTargets: false,
             side: THREE.BackSide
         }));
-        sphere.add( points );
+        sphere.add( dataBars );
     };
 
     function addPoint( lat, lng, datapoint ) {
@@ -556,6 +556,21 @@ var Renderer = function() {
                 return visualLayer.visible;
             else
                 return false;
+        },
+        togglePopDisplay: function (square) {
+            if(dataBars.visible) {
+                var tween = new TWEEN.Tween(dataBars.scale).to({x:0, y: 0, z: 0}, 1000);
+                tween.onComplete(function(){
+                    dataBars.visible = false;
+                });
+                tween.easing(TWEEN.Easing.Circular.In);
+            }
+            else {
+                dataBars.visible = true;
+                var tween = new TWEEN.Tween(dataBars.scale).to({x: 1, y: 1, z: 1}, 1000);
+                tween.easing(TWEEN.Easing.Circular.Out);
+            }
+            tween.start();
         },
         displayArc: function (point1, point2) {
             var phi,theta,x,y,z,i,j,

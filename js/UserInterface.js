@@ -618,6 +618,12 @@ var UserInterface = function UserInterface(Renderer) {
 			uiMenuDataviews.addDataField('button',{ onClick: function() { Renderer.closeVisualization(); this.parent.hide(); deactivatePlanetTooltip(); } }).val('Disable All');
 			uiMenuDataviews.element.css('top',uiMenuDataviewsPos.top - uiMenuDataviews.element.height()).css('left',uiMenuDataviewsPos.left);
 
+			uiMenu.addDataField('button',{
+					onClick: function() {
+						Renderer.togglePopDisplay();
+					}
+				}).val('Toggle Population');
+
 			var evolveMenuOuter = addDataField('evolveMenu','div',{ class: 'evolution', title: 'Evolution', overlay: true, onHide: function() {
 				Evolution.prototype.buyEvolutions();
 			} });
