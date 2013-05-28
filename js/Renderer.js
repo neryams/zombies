@@ -39,10 +39,12 @@ var Renderer = function() {
         var data_ratio = gConfig.tx_w / gConfig.w;
         for(i = 0, j = 0, n = texture.length; i < n; i++) {
             current = Math.floor(texture[i]);
+
+            // Figure out the current square in the data map (as opposed to the texture map)
             dtI = Math.floor(i/gConfig.tx_w/data_ratio)*gConfig.w + Math.floor(i%gConfig.tx_w / data_ratio);
             currentConditions = gData.points[dtI];
-            //current = Math.floor(gData[dtI].height);
 
+            // Get the x/y coordinates in the climate coloring texture
             gradY = Math.round((1 - (312.5 - currentConditions.temperature)/60)*255);
             if(gradY < 0)
                 gradY = 0;
@@ -52,14 +54,18 @@ var Renderer = function() {
             if(gradX < 0)
                 gradX = 0; 
             gradI = gradY*climateGradient.width+gradX;
+
+            // Get the color of the gorund at this point
             color = [grdC[gradI*4],grdC[gradI*4+1],grdC[gradI*4+2]];
+
+            // Generate height texture (greyscale map of elevation) and earth texture (color map using climate info)
             if(current > gConfig.waterLevel) {
-                pixH[i*4+2] = pixH[i*4+1] = pixH[i*4] = Math.floor((current - gConfig.waterLevel)/10);
-                pixT[i*4+0] = color[0];
+                pixH[i*4] = pixH[i*4+2] = pixH[i*4+1] = Math.floor((current - gConfig.waterLevel)/10);
+                pixT[i*4] = color[0];
                 pixT[i*4+1] = color[1];
                 pixT[i*4+2] = color[2];
             } else {
-                pixH[i*4+2] = pixH[i*4+1] = pixH[i*4] = 0;
+                pixH[i*4] = pixH[i*4+2] = pixH[i*4+1] = 0;
                 pixT[i*4] = 0;
                 pixT[i*4+1] = Math.floor(gConfig.waterLevel/2) - (gConfig.waterLevel - current)*3;
                 pixT[i*4+2] = current*2+10;
@@ -368,10 +374,17 @@ var Renderer = function() {
                     }      
                 };
                 var organizeColor = function(i) {
-                    if(pix[i*4] == 0 && pix[i*4+1] == 0 && pix[i*4+2] == 0)
+                    if(pix[i*4] != 255 && pix[i*4+1] == 0 && pix[i*4+2] == 0)
                         pix[i*4+3] = 0;
-                    else
-                        pix[i*4+3] = Math.floor((pix[i*4] + pix[i*4+1] + pix[i*4+2])*0.6);
+                    else {
+                        if(pix[i*4] > pix[i*4+1] && pix[i*4] > pix[i*4+2])
+                            pix[i*4+3] = pix[i*4];
+                        else if(pix[i*4+1] > pix[i*4] && pix[i*4+1] > pix[i*4+2])
+                            pix[i*4+3] = pix[i*4+1];
+                        else
+                            pix[i*4+3] = pix[i*4+2]
+                        pix[i*4+3] *= 0.5;
+                    }
                 }; 
                 var save = true; break;
             case 'perlinTest':

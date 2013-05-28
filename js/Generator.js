@@ -14,6 +14,12 @@ function Country(i,center){
 	this.centroid = center;
 	this.panic = 0;
 	this.color = [Math.floor(Math.random()*256),Math.floor(Math.random()*256),Math.floor(Math.random()*256)];
+	if(this.color[0] > this.color[1] && this.color[0] > this.color[2])
+		this.color[0] = 255;
+	else if(this.color[1] > this.color[0] && this.color[1] > this.color[2])
+		this.color[1] = 255;
+	else
+		this.color[2] = 255;
 	this.name = this.generateName('country');
 }
 Country.prototype = {
