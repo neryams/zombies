@@ -21,6 +21,8 @@
 
 ----- Priority 4
 
+	Adjust population based on latitude (points closer to poles have less area per point)
+
 	Try to change the __proto__ in the webworker copy to something a bit less ghetto
 
 	Speed up the generator web worker by not copying a billion element array
@@ -34,7 +36,9 @@
 
 	Fix land being at zero moisture for horse latitudes, no mixing or mixing of identically dry squares or something
 
-	WHEN MOVING TO SERVER:  make climate data image load from file, make UI html load from files, make simulator modules load from files
+	Combine bars near the poles so that bars are approximately evenly distributed
+
+	WHEN MOVING TO SERVER: make UI html load from files
 
 
 

@@ -120,12 +120,6 @@ Planet.prototype.generatePop = function(heightmap,borderNoise,progressShare) {
 				centroids[centroids.length] = current.id;
 			}
 		}
-		/*
-		Clean up unneeded stuff from all the previous steps
-		*/
-		delete current.coast_direction;
-		delete current.wind;
-		delete current.blend;
 	}
 	self.postMessage({cmd: 'progress',share: progressShare,progress: 0.1});
 
@@ -204,10 +198,50 @@ Planet.prototype.generatePop = function(heightmap,borderNoise,progressShare) {
 		}*/
 	}
 
+	// Calculate distances to country borders
+	var borderDistRing = this.data.slice(0);
+	var target,dir,dist;
+	while(borderDistRing.length > 0) {
+		current = borderDistRing.shift();
+		if(!current.water && current.country) {
+			// New border tiles detected on first pass through
+			if(current.border_direction == undefined) {
+				if(current.coast_distance == 1 || current.adjacent[0].country != current.country || current.adjacent[1].country != current.country || current.adjacent[2].country != current.country || current.adjacent[3].country != current.country) {
+					current.border_direction = [2,1,3,0];
+					current.border_distance = 1;
+					borderDistRing.push(current);
+				}
+			// Second passthrough, start spreading tiles
+			} else {
+				for(j=0;j<current.border_direction.length;j++) {
+					dir = current.border_direction[j];
+					target = current.adjacent[dir];
+					// If the target to check is the same country and has not been calculated yet, do it
+					if(target.country == current.country) {
+						if(dir == 3 || dir == 1)
+							dist = Math.abs(Math.sin((90 - current.lat) * Math.PI / 180));
+						else
+							dist = 1;
+						if(target.border_distance == 0 || target.border_distance > current.border_distance + dist) {
+							target.border_distance = current.border_distance + dist;
+							target.border_direction = [2,1,3,0];
+							borderDistRing.push(target);
+						}
+					}
+				}
+			}
+		}
+	}
+
 	self.postMessage({cmd: 'progress',share: progressShare,progress: 0.6});
 
-	var target,steps,total_pop;
 	for(i = 0, n = this.data.length; i < n; i++) {
+		// Clean up unneeded stuff from all the previous steps
+		delete this.data[i].border_direction;
+		delete this.data[i].coast_direction;
+		delete this.data[i].wind;
+		delete this.data[i].blend;
+
 		this.data[i].updateNearbyPop();
 		if(i % 10000 == 0)
 			self.postMessage({cmd: 'progress',share: progressShare,progress: 0.6 + 0.4*i/this.data.length});
@@ -217,17 +251,12 @@ Planet.prototype.generatePop = function(heightmap,borderNoise,progressShare) {
 
 // Figure out how far each tile is from the coast
 Planet.prototype.calculateCoastLine = function(onComplete) {
-	var coastDistRing = [];
-	coastDistRing = this.data.slice(0);
-	var n = this.data.length;
-	var planet = this;
+	var coastDistRing = this.data.slice(0);
 	var i,j,target,dir,dist;
 	var adj = {n:0,w:0,e:0,s:0};
-	var lat_distance;
 
 	while(coastDistRing.length > 0) {
 		current = coastDistRing.shift();
-		lat_distance = Math.abs(Math.sin((90 - current.lat) * Math.PI / 180));
 		i = current.id;
 		// Get the adjacent tile IDs
 		if(!current.adjacent.length) {
@@ -254,7 +283,7 @@ Planet.prototype.calculateCoastLine = function(onComplete) {
 					// If the target to check is not water and has not been calculated yet, do it
 					if(!target.water) {
 						if(dir == 3 || dir == 1)
-							dist = lat_distance;
+							dist = Math.abs(Math.sin((90 - current.lat) * Math.PI / 180));
 						else
 							dist = 1;
 						if(target.coast_distance == 0 || target.coast_distance > current.coast_distance + dist) {

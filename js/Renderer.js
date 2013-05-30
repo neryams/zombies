@@ -329,6 +329,7 @@ var Renderer = function() {
             imgd = ctx.getImageData(0,0,gConfig.w,gConfig.h),
             pix = imgd.data,
             data_ratio = gConfig.tx_w / gConfig.w,
+            discrete = false,
             i,n;
         switch(layer) {
             case 'precipitation': 
@@ -366,26 +367,27 @@ var Renderer = function() {
                 }; 
                 var save = true; break;
             case 'country': 
-                var setColor = function(i,val) {
+                var setColor = function(i,val,opacity) {
                     if(val > 0) {
-                        pix[i*4] = gData.countries[val].color[0];
-                        pix[i*4+1] = gData.countries[val].color[1];
-                        pix[i*4+2] = gData.countries[val].color[2];
+                        pix[i*4] = gData.countries[val].color[0]*opacity;
+                        pix[i*4+1] = gData.countries[val].color[1]*opacity;
+                        pix[i*4+2] = gData.countries[val].color[2]*opacity;
                     }      
                 };
                 var organizeColor = function(i) {
                     if(pix[i*4] != 255 && pix[i*4+1] == 0 && pix[i*4+2] == 0)
                         pix[i*4+3] = 0;
                     else {
+                        // Opacity of the country color is determined by the strongest RGB color.
                         if(pix[i*4] > pix[i*4+1] && pix[i*4] > pix[i*4+2])
                             pix[i*4+3] = pix[i*4];
                         else if(pix[i*4+1] > pix[i*4] && pix[i*4+1] > pix[i*4+2])
                             pix[i*4+3] = pix[i*4+1];
                         else
-                            pix[i*4+3] = pix[i*4+2]
-                        pix[i*4+3] *= 0.5;
+                            pix[i*4+3] = pix[i*4+2];
                     }
                 }; 
+                var discrete = true;
                 var save = true; break;
             case 'perlinTest':
                 var setColor = function(i,val) {
@@ -403,7 +405,13 @@ var Renderer = function() {
             pix[i*4] = pix[i*4+1] = pix[i*4+2] = 0;
             pix[i*4+3] = 255;
             if(!currentSq.water && currentSq[layer] !== undefined) {
-                setColor(i,currentSq[layer]);
+                if(discrete) {
+                    var opacity = 1-(currentSq.border_distance-1)/3;
+                    if(opacity < 0) opacity = 0;
+                    setColor(i,currentSq[layer],opacity);
+                }
+                else
+                    setColor(i,currentSq[layer],1);
             }
         }
         ctx.putImageData(imgd, 0, 0);
