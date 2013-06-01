@@ -8,19 +8,19 @@ new Module('event', function() {
 			switch(this.currPanicLevel) {
 				case 1:
 					this.S.modules['vaccine'].startResearch();
-					this.S.UI.addNews('world_research');
+					this.S.UI.addNews('world_research.0');
 					break;
 				case 2:
 					this.S.modules['vaccine'].researchRate(2);
-					this.S.UI.addNews('world_research2');
+					this.S.UI.addNews('world_research.1');
 					break;
 				case 3:
 					this.S.modules['vaccine'].researchRate(4);
-					this.S.UI.addNews('world_research3');
+					this.S.UI.addNews('world_research.2');
 					break;
 				case 4:
 					this.S.modules['vaccine'].researchRate(0);
-					this.S.UI.addNews('world_research_end');
+					this.S.UI.addNews('world_research.end');
 					break;
 			}
 			if(this.panicThresholds.length > this.currPanicLevel)
@@ -45,19 +45,19 @@ new Module('event', function() {
 					switch(this.S.countries[i].currPanicLevel) {
 						case 1:
 							this.S.modules['vaccine'].startResearch(i);
-							this.S.UI.addNews('country_research',this.S.countries[i].name);
+							this.S.UI.addNews('country_military.0',this.S.countries[i].name);
 							break;
 						case 2:
 							this.S.modules['vaccine'].researchRate(3,i);
-							this.S.UI.addNews('country_research2',this.S.countries[i].name);
+							this.S.UI.addNews('country_military.1',this.S.countries[i].name);
 							break;
 						case 3:
 							this.S.modules['vaccine'].researchRate(6,i);
-							this.S.UI.addNews('country_research3',this.S.countries[i].name);
+							this.S.UI.addNews('country_military.2',this.S.countries[i].name);
 							break;
 						case 4:
 							this.S.modules['vaccine'].researchRate(0,i);
-							this.S.UI.addNews('country_research_end',this.S.countries[i].name);
+							this.S.UI.addNews('country_military.end',this.S.countries[i].name);
 							break;
 					}
 					// If the panic level is past the maximum, turn off the growth.
@@ -79,11 +79,11 @@ new Module('event', function() {
 		for(var i = 1; i < this.S.countries.length; i++) {
 			this.S.countries[i].currPanicLevel = 1;
 		}
-		this.panicThresholds = [0,1000,10000000,100000000,this.S.config.world_pop/2];
+		this.panicThresholds = [0,1000,1000000,30000000];
 		this.currPanicLevel = 1;
 		this.countryPanicThresholds = [0,200,6000,10000,20000];
         this.worldPanic = this.S.UI.interfaceParts.stats.addDataField('progressBar',{
-        	title: 'World Panic',
+        	title: 'ui:labels.world_panic',
         	dynamic: 'world_panic',
         	width: 186
         });

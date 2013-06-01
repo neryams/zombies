@@ -1,0 +1,16 @@
+{
+	"country_military": {
+		"0": "%s がゾンビ見つけ次第撃つと命令を出す",
+		"1": "%s mobilizes army to kill zombies.",
+		"2": "%s is under martial law.",
+		"end": "%s is in anarchy. Research ceases."
+	},
+	"world_research": {
+		"0": "ワクチン開発に世界協力が始まる",
+		"1": "International center for researching the cure opens.",
+		"2": "World begins working feverishly on the cure",
+		"end": "World anarchy. Cure research ceases."
+	},
+	"win_message": "You Win!",
+	"lose_message": "あなたの負けです"
+}

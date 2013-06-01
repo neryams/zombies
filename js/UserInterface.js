@@ -70,8 +70,10 @@ function DataField(id,type,options,parent) {
 					this[key] = options[key];
 			}
 
-	if(this.title)
-		fullElement.prepend($('<h3>'+this.title+'</h3>'));
+	if(this.title) {
+		fullElement.prepend($('<h3 data-i18n="'+this.title+'"></h3>'));
+		fullElement.i18n();
+	}
 	if(this.class)
 		newElement.addClass(this.class);
 	if(this.outerClass)
@@ -160,6 +162,11 @@ DataField.prototype = {
 		}
 		this.hideTooltip();
 
+		return this;
+	},
+	label: function(value) {
+		this.element.attr('data-i18n',value);
+		this.element.i18n();
 		return this;
 	},
 	val: function(value) {
@@ -551,26 +558,11 @@ Evolution.prototype.buildWeb = function(upgrade,lastTheta,depth) {
 	}
 }
 
-var UserInterface = function UserInterface(Renderer) {
+var UserInterface = function UserInterface(Renderer,language) {
 	var mouse = { x:0, y:0, lastx:0, lasty:0, down:false, click: false, scroll: 0 },
 		sphere_coords,visualization = '', WorldData, Simulator, 
 		status = { pauseRenderer: false, showToolTip: false, toolTipMode: '', mutateGridSize: 0 },
-		dataFieldsRoot = [], interfaceParts = {},lang = {},alerts = {},
-		langOption = 'en';
-	lang['en'] = {};
-	lang['en']['country_research'] = '%r begins vaccine research!';
-	lang['en']['country_research2'] = '%r begins working feverishly on the cure.';
-	lang['en']['country_research3'] = '%r devotes economy to finding the cure in desparation.';
-	lang['en']['country_research_end'] = '%r is in anarchy. Research ceases.';
-	lang['en']['world_research'] = 'World cooperation begins on vaccine research!';
-	lang['en']['world_research2'] = 'International center for researching the cure opens.';
-	lang['en']['world_research3'] = 'World begins working feverishly on the cure';
-	lang['en']['world_research_end'] = 'World anarchy. Cure research ceases.';
-	lang['en']['win_message'] = 'You Win!';
-	lang['en']['lose_message'] = 'You Lose!';
-
-	alerts['win_message'] = '<p>%lang</p>';
-	alerts['lose_message'] = '<p>%lang</p>';
+		dataFieldsRoot = [], interfaceParts = {},alerts = {};
 
 	DataField.prototype.interfaceParts = interfaceParts;
 	DataField.prototype.UIStatus = status;
@@ -584,16 +576,15 @@ var UserInterface = function UserInterface(Renderer) {
 	*/
 	var load = {
 		loading: {
-			done: 0, curProg: 0, curShare: 0, curStep: 0, 
-			steps: ['loading resources','generating textures','setting height','calculating coastline','generating heat','simulating climate','populating world','playing the game of thrones','curing cancer','reticulating splines']
+			done: 0, curProg: 0, curShare: 0, curStep: 0
 		},
 		start: function() {
 			$('#setup').css('display','none');
 			$('#progress').css('display','block');
-			$('#progress p').html(this.loading.steps[0]);
+			$('#progress p').html(i18n.t("setup:loading.0"));
 		},
 		endGenerator: function() {
-			addDataField('stats','div',{ class: 'stats' }).addDataField('h1').element.html('Terra Morbis 0.0.1');
+			addDataField('stats','div',{ class: 'stats' }).addDataField('h1').label('ui:title');
 			var uiMenu = addDataField('menu','div',{ class: 'main_menu' });
 			addDataField('money','text',{
 				title: 'Evolution Points',
@@ -610,19 +601,19 @@ var UserInterface = function UserInterface(Renderer) {
 							this.opens[0].hide();
 					}, 
 					opens: [uiMenuDataviews] 
-				}).val('Data Views').element.position();
-			uiMenuDataviews.addDataField('button',{ class: 'close', onClick: function() { this.parent.hide(); } }).val('Close');
-			uiMenuDataviews.addDataField('button',{ onClick: function() { Renderer.setVisualization('country'); this.parent.hide(); activatePlanetTooltip(function(point){ if(point.country) { return '<strong>' + gData.countries[point.country].name + '</strong>'; }});}}).val('Political');
-			uiMenuDataviews.addDataField('button',{ onClick: function() { Renderer.setVisualization('precipitation'); this.parent.hide(); activatePlanetTooltip(function(point){ return Math.round(point.precipitation*10)/10 + 'mm'; });}}).val('Precipitation');
-			uiMenuDataviews.addDataField('button',{ onClick: function() { Renderer.setVisualization('temperature'); this.parent.hide(); activatePlanetTooltip(function(point){ return Math.round((point.temperature - 273)*10)/10 + 'C'; });}}).val('Temperature');
-			uiMenuDataviews.addDataField('button',{ onClick: function() { Renderer.closeVisualization(); this.parent.hide(); deactivatePlanetTooltip(); } }).val('Disable All');
+				}).label('ui:buttons.dataviews').element.position();
+			uiMenuDataviews.addDataField('button',{ class: 'close', onClick: function() { this.parent.hide(); } }).label('ui:buttons.close');
+			uiMenuDataviews.addDataField('button',{ onClick: function() { Renderer.setVisualization('country'); this.parent.hide(); activatePlanetTooltip(function(point){ if(point.country) { return '<strong>' + gData.countries[point.country].name + '</strong>'; }});}}).label('ui:buttons.dataviews_inner.political');
+			uiMenuDataviews.addDataField('button',{ onClick: function() { Renderer.setVisualization('precipitation'); this.parent.hide(); activatePlanetTooltip(function(point){ return Math.round(point.precipitation*10)/10 + 'mm'; });}}).label('ui:buttons.dataviews_inner.rain');
+			uiMenuDataviews.addDataField('button',{ onClick: function() { Renderer.setVisualization('temperature'); this.parent.hide(); activatePlanetTooltip(function(point){ return Math.round((point.temperature - 273)*10)/10 + 'C'; });}}).label('ui:buttons.dataviews_inner.temperature');
+			uiMenuDataviews.addDataField('button',{ onClick: function() { Renderer.closeVisualization(); this.parent.hide(); deactivatePlanetTooltip(); } }).label('ui:buttons.dataviews_inner.disable');
 			uiMenuDataviews.element.css('top',uiMenuDataviewsPos.top - uiMenuDataviews.element.height()).css('left',uiMenuDataviewsPos.left);
 
 			uiMenu.addDataField('button',{
 					onClick: function() {
 						Renderer.togglePopDisplay();
 					}
-				}).val('Toggle Population');
+				}).label('ui:buttons.population');
 
 			var evolveMenuOuter = addDataField('evolveMenu','div',{ class: 'evolution', title: 'Evolution', overlay: true, onHide: function() {
 				Evolution.prototype.buyEvolutions();
@@ -640,7 +631,7 @@ var UserInterface = function UserInterface(Renderer) {
 							this.opens[0].hide();
 					}, 
 					opens: [evolveMenuOuter]
-				}).val('Evolution');
+				}).label('ui:buttons.evolution');
 
 			Evolution.prototype.mutationMenu = addDataField('mutationMenu','div',{ class: 'toolbox', title: 'Mutation', overlay: true, onHide: function() {
 				Evolution.prototype.clearGrid();
@@ -657,7 +648,7 @@ var UserInterface = function UserInterface(Renderer) {
 							this.opens[0].hide();
 					}, 
 					opens: [Evolution.prototype.mutationMenu]
-				}).val('Mutation');
+				}).label('ui:buttons.mutation');
 			var mutationMenu_controls = Evolution.prototype.mutationMenu.addDataField('div',{ class: 'menu' });
 			mutationMenu_controls.addDataField('mutationMenu_clear','button',{
 					class: 'icon',
@@ -698,7 +689,7 @@ var UserInterface = function UserInterface(Renderer) {
 			var uiMonitorView = uiMonitor.addDataField('monitor_view','div',{ class: 'monitorView', singleChild: true });
 
 			var uiMonitor_newsTicker = uiMonitorView.addDataField('news_ticker','div',{
-				title: 'News Ticker',
+				title: 'ui:buttons.news',
 				class: 'news',
 				visible: false
 			});
@@ -710,7 +701,7 @@ var UserInterface = function UserInterface(Renderer) {
 							this.opens[0].hide();
 					},
 					opens: [uiMonitor_newsTicker]
-				}).val('News Ticker');
+				}).label('ui:buttons.news');
 			uiMonitor_newsTicker.display();
 
 			addDataField('alert','div',{ overlay: true });
@@ -733,7 +724,7 @@ var UserInterface = function UserInterface(Renderer) {
 				this.loading.done += this.loading.curShare;
 				this.loading.curShare = share;
 				this.loading.curStep++;
-				$('#progress p').html(this.loading.steps[this.loading.curStep]);
+				$('#progress p').html(i18n.t("setup:loading."+this.loading.curStep));
 			}
 			this.loading.curProg = ratio*share;
 			$('#progress .progressbar div').css('width', ((this.loading.done+this.loading.curProg) * 100) + '%');
@@ -1106,35 +1097,25 @@ var UserInterface = function UserInterface(Renderer) {
 			if(arguments.length == 0)
 				console.error('no language item id defined');
 			else {
-				var langStr = lang[langOption][item];
 				if(arguments.length > 1) 
-					for(var i = 1; i < arguments.length; i++) {
-						langStr = langStr.replace('%r',arguments[i]);
-					}
+					var langStr = i18n.t('messages:'+item, { postProcess: "sprintf", sprintf: Array.prototype.slice.call(arguments,1) });
+				else
+					var langStr = i18n.t('messages:'+item);
+
 				interfaceParts['news_ticker'].element.prepend($('<p>'+langStr+'</p>'));				
 			}
 		},
+		// Call with alert id followed by the data to fill the alert with, any number of parameters.
 		alert: function(item) {
 			if(arguments.length == 0)
 				console.error('no language item id defined');
 			else {
-				var j = 1,
-					dom = alerts[item],
-					langStrs = lang[langOption][item];
-				if(!$.isArray(langStrs))
-					langStrs = [langStrs];
+				if(arguments.length > 1) 
+					var dom = $(i18n.t('dom:alerts.'+item, { postProcess: "sprintf", sprintf: Array.prototype.slice.call(arguments,1) }));
+				else
+					var dom = $(i18n.t('dom:alerts.'+item));
 
-				// Replace each text field in the alert DOM with the appropriate language string
-				for(var i = 0; i < langStrs.length; i++) {
-					// Replace each wildcard in each language string with value supplied
-					while(langStrs[i].indexOf('%r') >= 0 && arguments.length > j) {
-						langStrs[i] = langStrs[i].replace('%r',arguments[j]);
-						j++;
-					}
-					dom = dom.replace('%lang',langStrs[i]);
-				}
-
-				interfaceParts['alert'].element.append($(dom))
+				interfaceParts['alert'].element.append(dom)
 				interfaceParts['alert'].display();
 			}
 		},

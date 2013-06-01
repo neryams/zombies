@@ -1,0 +1,24 @@
+{
+	"title": "Terra Morbis",
+	"buttons": {
+		"close": "Close",
+		"dataviews": "Data Views",
+		"dataviews_inner": {
+			"temperature": "Temperature",
+			"rain": "Precipication",
+			"political": "Political",
+			"disable": "Disable"
+		},
+		"population": "Toggle Population",
+		"evolution": "Evolution",
+		"mutation": "Mutation",
+		"news": "News Ticker",
+		"shipping": "Shipping Schedule"
+	},
+	"labels": {
+		"world_panic": "World Panic",
+		"population_world": "World Population",
+		"population_zombies": "Zombie Population",
+		"virus_name": "Virus Name"
+	}
+}

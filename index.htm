@@ -5,6 +5,7 @@
     <title>Pandemic</title>
     <link rel="stylesheet" type="text/css" media="screen" href="css/main.css" />
     <script src="js/third-party/jquery-2.0.0.min.js"></script>
+    <script src="js/third-party/i18next-1.6.3.min.js"></script>
     <script src="js/third-party/seedrandom.min.js"></script>
     <script src="js/third-party/three.min.js"></script>
     <script src="js/third-party/tween.min.js"></script>
@@ -18,22 +19,26 @@
     <div id="setup">
         <h2>Zombies</h2>
         <form action="#" method="GET">
-            <span>Texture Size: </span><select name="texture_size" id="s_tx">
-                <option value="360">Low</option>
-                <option value="720" selected>Medium</option>
-                <option value="1440">High</option>
-                <option value="2160">Ultra</option>
+            <span data-i18n="labels.texturesize"></span><select name="texture_size" id="s_tx">
+                <option data-i18n="texturesizes.low" value="360"></option>
+                <option data-i18n="texturesizes.medium" value="720" selected></option>
+                <option data-i18n="texturesizes.high" value="1440"></option>
+                <option data-i18n="texturesizes.ultra" value="2160"></option>
             </select><br />
-            <span>Seed: </span><input type="text" name="seed" id="s_seed" /><br />
-            <span>Modules: </span><input type="text" name="modules" id="s_modules" value="main,panic,worldStats,gridBoost,population,climate,seaports,vaccine,bite,viralInfect,movement" /><br />
-            <input type="submit" value="Start" />
+            <span data-i18n="labels.seed"></span><input type="text" name="seed" id="s_seed" /><br />
+            <span data-i18n="labels.models">Modules: </span><input type="text" name="modules" id="s_modules" value="main,panic,worldStats,gridBoost,population,climate,seaports,vaccine,bite,viralInfect,movement" /><br />
+            <span data-i18n="labels.language">Language: </span><select name="language" id="s_lng">
+                <option value="en">English</option>
+                <option value="jp">日本語</option>
+            </select><br />
+            <input data-i18n="[value]labels.start" type="submit" value="" />
         </form>
     </div>
     <div id="container" style="display: none;"></div>
     <div id="ui" style="display: none;"><div id="ui_mask"></div></div>
 
     <script>
-        var UI,R,S,seed,gData,gConfig, debug;
+        var UI,R,S,seed,gData,gConfig,debug;
 
         /* Debug Commands
             debug.watchPoint : int, id of the point that you want to be printed to console when it is affected in the simulator
@@ -46,17 +51,35 @@
         };
 
         $(function () {
+            $.i18n.init({ resGetPath: 'locales/__lng__/__ns__.json', lng: 'en', load: 'unspecific', ns: 'setup', fallbackLng: 'en', debug: true, useCookie: false }, function() {
+                $("#setup").i18n();
+            });
+
+            $('#s_lng').change(function () {
+                $("form :input").attr("disabled", true);
+                $.i18n.setLng( $(this).val(), function() {
+                    $("#setup").i18n();
+                    $("form :input").attr("disabled", false);
+                });
+            });
+
             $('form').on('submit', function (event) {
                 event.preventDefault();
 
                 var userConfig = {
                     seed: $('#s_seed').val(),
-                    tx_w: $('#s_tx').val()
+                    tx_w: $('#s_tx').val(),
+                    language: $('#s_lng').val()
                 }
-                var url = 'js/loadModules.php?modules='+$('#s_modules').val();
-                $("#setup").remove();
 
-                $.getScript(url, function () {
+                $.i18n.loadNamespaces(['ui', 'messages', 'dom'], function() { 
+                    $.i18n.setDefaultNamespace('messages');
+                    var ns_loaded = true;
+                });
+
+                $.getScript('js/loadModules.php?modules='+$('#s_modules').val(), function () {
+                    $("#setup").remove();
+
                     R = Renderer();
                     UI = UserInterface(R);
 

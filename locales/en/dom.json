@@ -1,0 +1,6 @@
+{
+	"alerts": {
+		"win_message": "<p>$t(messages:win_message)</p>",
+		"lose_message": "<p>$t(messages:lose_message)</p>"
+	}
+}

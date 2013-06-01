@@ -1,0 +1,16 @@
+{
+	"country_military": {
+		"0": "%s issues kill-on-sight order for carriers of advanced necrosis.",
+		"1": "%s mobilizes army to kill zombies.",
+		"2": "%s is under martial law.",
+		"end": "%s is in anarchy. Research ceases."
+	},
+	"world_research": {
+		"0": "World cooperation begins on vaccine research!",
+		"1": "International center for researching the cure opens.",
+		"2": "World begins working feverishly on the cure",
+		"end": "World anarchy. Cure research ceases."
+	},
+	"win_message": "You Win!",
+	"lose_message": "You Lose!"
+}

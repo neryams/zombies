@@ -19,14 +19,14 @@ new Module('event', function() {
         this.S.UI.interfaceParts.stats.addDataField('text',{
         	dynamic: 'cur_date'
         });
-        this.S.UI.interfaceParts.stats.addDataField('text',{title: 'Disease Name'}).val(this.S.properties.virus_name);
+        this.S.UI.interfaceParts.stats.addDataField('text',{title: 'ui:labels.virus_name'}).val(this.S.properties.virus_name);
         this.S.UI.interfaceParts.stats.addDataField('text',{
-        	title: 'World Population',
+        	title: 'ui:labels.population_world',
         	dynamic: 'world_pop',
         	value: this.world_pop
         });
         this.S.UI.interfaceParts.stats.addDataField('text',{
-        	title: 'Zombie Population',
+        	title: 'ui:labels.population_zombies',
         	dynamic: 'world_infected', 
         	value: this.world_infected
         });

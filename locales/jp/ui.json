@@ -1,0 +1,24 @@
+{
+	"title": "ゾンビゲーム",
+	"buttons": {
+		"close": "閉じる",
+		"dataviews": "デーダをみる",
+		"dataviews_inner": {
+			"temperature": "温度",
+			"rain": "降水量",
+			"political": "国境",
+			"disable": "すべて消す"
+		},
+		"population": "人口データ",
+		"evolution": "化育",
+		"mutation": "染色体突然変異",
+		"news": "二ユース",
+		"shipping": "運送行事予定"
+	},
+	"labels": {
+		"world_panic": "世界混乱",
+		"population_world": "世界人口",
+		"population_zombies": "ゾンビ人口",
+		"virus_name": "ウィルス名"
+	}
+}

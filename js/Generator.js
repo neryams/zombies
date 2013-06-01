@@ -559,7 +559,6 @@ Planet.prototype.generatePerlinSphere = function(P,w,scale,octaves,progressShare
 		modifier = this.config.waterLevel/256;
 	P.noiseDetail(octaves,.50);
 
-	// This construct runs the progress bar updater in between sets of calculations, so the script doesn't lock up the progress bar
 	for(i=0;i<n;i++) {
 		radx = (((i%w+0.5)/multiplier)/180)*Math.PI // we want to use the centers of the lat and long grid squares to avoid calculating with the poles
 		rady = (((Math.floor(i/w+0.5))/multiplier)/180)*Math.PI;

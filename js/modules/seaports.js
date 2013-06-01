@@ -101,7 +101,7 @@ new Module('event', function() {
 
 		// Shipping Schedule display button.
         this.shippingMenu = this.S.UI.interfaceParts.monitor_view.addDataField('div',{
-        	title: 'Shipping Schedule',
+        	title: 'ui:buttons.shipping',
         	class: 'shipping',
         	visible: false
         });
@@ -116,7 +116,7 @@ new Module('event', function() {
         			}
         		},
         		opens: [this.shippingMenu] 
-        	}).val('Shipping Schedule');
+        	}).label('ui:buttons.shipping');
 
 		for(i = 1; i < this.S.countries.length; i++) {
 			//run once for every square, if the square is a capitol, then calculate frequency between it and all other cities

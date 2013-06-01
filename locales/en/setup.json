@@ -1,0 +1,28 @@
+{
+	"labels": {
+		"texturesize": "Texture Size",
+		"seed": "Seed",
+		"models": "Models",
+		"language": "Language",
+		"start": "Start"
+	},
+	"texturesizes": {
+		"low": "Low",
+		"medium": "Medium",
+		"high": "High",
+		"ultra": "Ultra"
+	},
+	"loading": {
+		"0":"loading resources",
+		"1":"generating textures",
+		"2":"setting height",
+		"3":"calculating coastline",
+		"4":"generating heat",
+		"5":"simulating climate",
+		"6":"populating world",
+		"7":"playing the game of thrones",
+		"8":"curing cancer",
+		"9":"calculating caches",
+		"10":"reticulating splines"
+	}
+}
