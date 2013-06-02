@@ -4,7 +4,7 @@
 */
 var Renderer = function() {
     var camera, scene, sphere, renderer, dataBars, point, point2, visualLayer, visualLayerTexture, visualArc,
-        climateGradient,visualizations={},visualization,
+        climateGradient,visualizations={},visualization,uiTextures={},
         mouseVector, windowX, windowY, 
         subgeo = new THREE.Geometry();
         rotation = { x: 0, y: 0, z: 0 },
@@ -22,6 +22,8 @@ var Renderer = function() {
         var ctx = climateGradient.getContext("2d");
         ctx.drawImage(climateBg,0,0);
     }
+
+    uiTextures['gun'] = new THREE.ImageUtils.loadTexture( 'ui/gun.png' );
 
     // Function for filling the canvases with the data generated previously
     function buildImage(globeTexture,globeHeightmap,texture) {
@@ -164,24 +166,15 @@ var Renderer = function() {
         geometry = new THREE.CubeGeometry(0.9, 0.9, 1, 1, 1, 1, null, false, { px: true,
               nx: true, py: true, ny: true, pz: false, nz: true});
         geometry.faces.length = 5 // remove bottom of cube (=4 to temove top as well)
-        /*for (var i = 0; i < geometry.vertices.length; i++) {
-            var vertex = geometry.vertices[i];
-            vertex.z += 0.5;
-        }*/
+        // Move the "position point" of the cube to the bottom so it sits on the surface of the globe.
         geometry.applyMatrix( new THREE.Matrix4().translate( new THREE.Vector3(0, 0, 0.5)));
         point = new THREE.Mesh(geometry); // humans
 
         geometry = new THREE.CubeGeometry(0.9, 0.8, 1, 1, 1, 1, null, false, { px: true,
               nx: true, py: true, ny: true, pz: false, nz: true});
+        geometry.applyMatrix( new THREE.Matrix4().translate( new THREE.Vector3(0, 0, 0.5)));
         geometry.faces.length = 5 // remove bottom of cube
-        /*for (var i = 0; i < geometry.vertices.length; i++) {
-            var vertex = geometry.vertices[i];
-            vertex.z += 0.5;
-        }*/
         point2 = new THREE.Mesh(geometry); // zombies
-
-        /*geometry = new THREE.PolyhedronGeometry([[1,1,0],[0,1,0],[1,0,0],[1,1,1]],[[2,1,0],[0,3,2],[1,3,0],[2,3,1]],0.76, 0);
-        point2 = new THREE.Mesh(geometry);*/
 
         camera.lookAt( scene.position );
         //camera.position.x = -100;
@@ -460,14 +453,23 @@ var Renderer = function() {
         if(Math.sqrt(distX*distX + distY*distY) < getSphereScreenSize(camera.position.z)/2) {
             var intersect = checkIntersection( event.clientX, event.clientY );
 
-            var phi = Math.acos(intersect.y/205) - rotation.y;
-            var theta = Math.asin(intersect.x/Math.sin(phi)/205) + rotation.x;
+            var phi = Math.acos(intersect.y/200) - rotation.y;
+            var theta = Math.asin(intersect.x/Math.sin(phi)/200) + rotation.x;
             if(theta*180/Math.PI + 90 > 0)
                 return [(90 - Math.abs(phi*180/Math.PI)),(theta*180/Math.PI + 90)%360,intersect];
             else
                 return [(90 - Math.abs(phi*180/Math.PI)),360 + (theta*180/Math.PI + 90)%360,intersect];
         }
         return false;
+    }
+
+    function coordToCartesian(lat,lng) {
+        phi = (90 - lat) * Math.PI / 180;
+        theta = (180 - lng) * Math.PI / 180;
+        x = 200 * Math.sin(phi) * Math.cos(theta);
+        y = 200 * Math.cos(phi);
+        z = 200 * Math.sin(phi) * Math.sin(theta);
+        return new THREE.Vector3(x,y,z);
     }
 
     // Return functions
@@ -491,8 +493,20 @@ var Renderer = function() {
         },
         clickSphere: function(x,y) {
             var sphereCoords = getSphereCoords(x,y);
+            var dimensionalSpot = sphereCoords[2]; // Sphere intersection point
             if(sphereCoords) {
                 console.log(sphereCoords);
+
+                var target = coordToCartesian(sphereCoords[0],sphereCoords[1]);
+
+                var geometry = new THREE.PlaneGeometry(10, 10, 1, 1);
+                var mesh = new THREE.MeshBasicMaterial({map: uiTextures['gun'], side: THREE.DoubleSide, transparent: true, opacity: 1});
+                var graphic = new THREE.Mesh(geometry, mesh);
+
+                graphic.position = target;
+                graphic.lookAt(sphere.position);
+                sphere.add(graphic);
+
             } else
                 return false;
         },
@@ -597,20 +611,8 @@ var Renderer = function() {
             var phi,theta,x,y,z,i,j,
                 position, index, n_sub = 36;
 
-            phi = (90 - point1.lat) * Math.PI / 180;
-            theta = (180 - point1.lng) * Math.PI / 180;
-            x = 200 * Math.sin(phi) * Math.cos(theta);
-            y = 200 * Math.cos(phi);
-            z = 200 * Math.sin(phi) * Math.sin(theta);
-            var start = new THREE.Vector3(x,y,z);
-
-            phi = (90 - point2.lat) * Math.PI / 180;
-            theta = (180 - point2.lng) * Math.PI / 180;
-            x = 200 * Math.sin(phi) * Math.cos(theta);
-            y = 200 * Math.cos(phi);
-            z = 200 * Math.sin(phi) * Math.sin(theta);
-            var end = new THREE.Vector3(x,y,z);
-
+            var start = coordToCartesian(point1.lat,point1.lng);
+            var end = coordToCartesian(point2.lat,point2.lng);
             var points = [start];
             var midpoint = new THREE.Vector3(0,0,0);
             for ( i = 0; i < n_sub; i++ ) {
