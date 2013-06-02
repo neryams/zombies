@@ -44,20 +44,20 @@ new Module('event', function() {
 				if(this.S.countries[i].panic > this.countryPanicThresholds[this.S.countries[i].currPanicLevel]) {
 					switch(this.S.countries[i].currPanicLevel) {
 						case 1:
-							this.S.modules['vaccine'].startResearch(i);
-							this.S.UI.addNews('country_military.0',this.S.countries[i].name);
+							if(this.S.modules['vaccine'].startResearch(i))
+								this.S.UI.addNews('country_military.0',this.S.countries[i].name);
 							break;
 						case 2:
-							this.S.modules['vaccine'].researchRate(3,i);
-							this.S.UI.addNews('country_military.1',this.S.countries[i].name);
+							if(this.S.modules['vaccine'].researchRate(3,i))
+								this.S.UI.addNews('country_military.1',this.S.countries[i].name);
 							break;
 						case 3:
-							this.S.modules['vaccine'].researchRate(6,i);
-							this.S.UI.addNews('country_military.2',this.S.countries[i].name);
+							if(this.S.modules['vaccine'].researchRate(6,i))
+								this.S.UI.addNews('country_military.2',this.S.countries[i].name);
 							break;
 						case 4:
-							this.S.modules['vaccine'].researchRate(0,i);
-							this.S.UI.addNews('country_military.end',this.S.countries[i].name);
+							if(this.S.modules['vaccine'].researchRate(0,i))
+								this.S.UI.addNews('country_military.end',this.S.countries[i].name);
 							break;
 					}
 					// If the panic level is past the maximum, turn off the growth.

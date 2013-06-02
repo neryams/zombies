@@ -40,28 +40,34 @@ new Module('event', function() {
 			if(country) {
 				if(!this.S.countries[country].research) {
 					this.researchRate(1, country);
+					return true;
 				}
 			}
 			else 
 			{
-				this.researchRate(1);
+				return this.researchRate(1);
 			}
 		}
 
 		this.researchRate = function(val, country) {
 			if(country) {
-				if(val == 0 || this.S.countries[country].research < val) 
+				if(val == 0 || this.S.countries[country].research < val) {
 					this.S.countries[country].research = val;
+					return true;
+				}
 			}
 			else 
 			{
 				for(var i = 1; i < this.S.countries.length; i++) {
 					if(!this.S.countries[i].research)
 						this.S.countries[i].research = 0;
-					if(val == 0 || this.S.countries[i].research < val)
+					if(val == 0 || this.S.countries[i].research < val) {
 						this.S.countries[i].research = val;
+					}
 				}
+				return true;
 			}
+			return false;
 		}
 	},
 	onActivate: function() {
