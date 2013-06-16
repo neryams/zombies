@@ -20,6 +20,7 @@ DataPoint.prototype = {
 	polar: false,
 	coast_distance: 0,
 	border_distance: 0,
+	human_strength: 0,
 	precipitation: -1,
 	temperature: -1,
 	height: 0,

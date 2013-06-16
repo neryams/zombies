@@ -756,9 +756,11 @@ var UserInterface = function UserInterface(Renderer,language) {
 							function(key,value) {
 								if(key == 'adjacent' || key == 'vertices_pop' || key == 'vertices_zom') 
 									return undefined;
+								else if(key == 'army') 
+									return {size: value.size, experience: value.experience, nationality: value.nationality};
 								else
 									return value;
-							}, '&nbsp;').replace(/\n/g, '<br />'));						
+							}, '&nbsp;').replace(/\n/g, '<br />')).css('font-size', '8pt');
 					}
 				}
 				else
@@ -772,7 +774,7 @@ var UserInterface = function UserInterface(Renderer,language) {
 	}
 	function deactivatePlanetTooltip() {
 		hideTooltip();
-		$('#ui').off('mousemove.tooltip');
+		$('#ui').off('mousemove.render_tooltip');
 	}
 
 	DataField.prototype.showToolTip = function (text,element,width) {

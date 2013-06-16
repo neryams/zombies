@@ -44,19 +44,19 @@ new Module('event', function() {
 				if(this.S.countries[i].panic > this.countryPanicThresholds[this.S.countries[i].currPanicLevel]) {
 					switch(this.S.countries[i].currPanicLevel) {
 						case 1:
-							if(this.S.modules['resistance'].startResistance(i))
+							if(this.S.modules['armies'].createArmy(i))
 								this.S.UI.addNews('country_military.0',this.S.countries[i].name);
 							break;
 						case 2:
-							if(this.S.modules['resistance'].boostResistance(2,i))
+							if(this.S.modules['armies'].boostArmy(2,i))
 								this.S.UI.addNews('country_military.1',this.S.countries[i].name);
 							break;
 						case 3:
-							if(this.S.modules['resistance'].boostResistance(2,i))
+							if(this.S.modules['armies'].boostArmy(2,i))
 								this.S.UI.addNews('country_military.2',this.S.countries[i].name);
 							break;
 						case 4:
-							if(this.S.modules['resistance'].researchRate(0,i))
+							if(this.S.modules['vaccine'].researchRate(0,i))
 								this.S.UI.addNews('country_military.end',this.S.countries[i].name);
 							break;
 					}
@@ -81,12 +81,13 @@ new Module('event', function() {
 		}
 		this.panicThresholds = [0,1000,1000000,30000000];
 		this.currPanicLevel = 1;
-		this.countryPanicThresholds = [0,200,6000,10000,20000];
+		this.countryPanicThresholds = [0,200,80000,160000,320000];
         this.worldPanic = this.S.UI.interfaceParts.stats.addDataField('progressBar',{
         	title: 'ui:labels.world_panic',
         	dynamic: 'world_panic',
         	width: 186
         });
 	},
-	alwaysActive: true
+	alwaysActive: true,
+	children: ['vaccine','resistance']
 })

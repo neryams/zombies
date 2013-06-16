@@ -2,80 +2,85 @@
     3d renderer module. 
     Dependencies: Three.js
 */
-var Renderer = function() {
+var Renderer = function () {
     var camera, scene, sphere, renderer, dataBars, point, point2, visualLayer, visualLayerTexture, visualArc,
-        climateGradient,visualizations={},visualization,uiTextures={},
-        mouseVector, windowX, windowY, 
-        subgeo = new THREE.Geometry();
+        visualization, visualizations = {}, uiTextures = {}, decals = {},
+        mouseVector, windowX, windowY,
+
+        climateGradient = document.createElement('canvas'),
+        climateBg = new Image(),
+
+        subgeo = new THREE.Geometry(),
         rotation = { x: 0, y: 0, z: 0 },
         PI_HALF = Math.PI / 2,
-        onRender = function() {}, 
+        onRender = function () {},
         ready = false;
-    mouseVector = new THREE.Vector3(0,0,0);
 
-    climateGradient = document.createElement( 'canvas' ); 
-    var climateBg = new Image();
-    climateBg.src = 'ui/climateGradient.jpg';
-    climateBg.onload = function(){
+    mouseVector = new THREE.Vector3(0, 0, 0);
+
+    climateBg.onload = function () {
         climateGradient.width = climateBg.width;
         climateGradient.height = climateBg.height;
         var ctx = climateGradient.getContext("2d");
-        ctx.drawImage(climateBg,0,0);
-    }
+        ctx.drawImage(climateBg, 0, 0);
+    };
+    climateBg.src = 'ui/climateGradient.jpg';
 
-    uiTextures['gun'] = new THREE.ImageUtils.loadTexture( 'ui/gun.png' );
+    uiTextures['gun'] = new THREE.ImageUtils.loadTexture('ui/gun.png');
 
     // Function for filling the canvases with the data generated previously
-    function buildImage(globeTexture,globeHeightmap,texture) {
-        var ctxT = globeTexture.getContext("2d");
-        var ctxH = globeHeightmap.getContext("2d");
-        var ctxC = climateGradient.getContext("2d");
-        var imgdT = ctxT.getImageData(0,0,gConfig.tx_w,gConfig.tx_h);
-        var imgdH = ctxH.getImageData(0,0,gConfig.tx_w,gConfig.tx_h);
-        var imgdC = ctxC.getImageData(0,0,climateGradient.width,climateGradient.height);
-        var pixT = imgdT.data;
-        var pixH = imgdH.data;
-        var grdC = imgdC.data;
-        var current,dtI,gradX,gradY,gradI,color,color_ratio;
+    function buildImage(globeTexture, globeHeightmap, texture) {
+        var current, dtI, gradX, gradY, gradI, color, color_ratio,
+            ctxT = globeTexture.getContext("2d"),
+            ctxH = globeHeightmap.getContext("2d"),
+            ctxC = climateGradient.getContext("2d"),
+            imgdT = ctxT.getImageData(0, 0, gConfig.tx_w, gConfig.tx_h),
+            imgdH = ctxH.getImageData(0, 0, gConfig.tx_w, gConfig.tx_h),
+            imgdC = ctxC.getImageData(0, 0, climateGradient.width, climateGradient.height),
+            pixT = imgdT.data,
+            pixH = imgdH.data,
+            grdC = imgdC.data,
 
-        var data_ratio = gConfig.tx_w / gConfig.w;
-        for(i = 0, j = 0, n = texture.length; i < n; i++) {
+            data_ratio = gConfig.tx_w / gConfig.w,
+            i, j, k;
+
+        for (i = 0, j = 0, n = texture.length; i < n; i++) {
             current = Math.floor(texture[i]);
 
             // Figure out the current square in the data map (as opposed to the texture map)
-            dtI = Math.floor(i/gConfig.tx_w/data_ratio)*gConfig.w + Math.floor(i%gConfig.tx_w / data_ratio);
+            dtI = Math.floor(i / gConfig.tx_w / data_ratio) * gConfig.w + Math.floor(i % gConfig.tx_w / data_ratio);
             currentConditions = gData.points[dtI];
 
             // Get the x/y coordinates in the climate coloring texture
-            gradY = Math.round((1 - (312.5 - currentConditions.temperature)/60)*255);
-            if(gradY < 0)
+            gradY = Math.round((1 - (312.5 - currentConditions.temperature) / 60) * 255);
+            if (gradY < 0)
                 gradY = 0;
-            if(currentConditions.precipitation < 0)
+            if (currentConditions.precipitation < 0)
                 currentConditions.precipitation = 0;
             gradX = Math.round((1 - currentConditions.precipitation/20)*255);
-            if(gradX < 0)
+            if (gradX < 0)
                 gradX = 0; 
-            gradI = gradY*climateGradient.width+gradX;
+            gradI = gradY * climateGradient.width + gradX;
 
             // Get the color of the gorund at this point
-            color = [grdC[gradI*4],grdC[gradI*4+1],grdC[gradI*4+2]];
+            color = [grdC[gradI * 4],grdC[gradI * 4 + 1],grdC[gradI * 4 + 2]];
 
             // Generate height texture (greyscale map of elevation) and earth texture (color map using climate info)
-            if(current > gConfig.waterLevel) {
-                pixH[i*4] = pixH[i*4+2] = pixH[i*4+1] = Math.floor((current - gConfig.waterLevel)/10);
-                pixT[i*4] = color[0];
-                pixT[i*4+1] = color[1];
-                pixT[i*4+2] = color[2];
+            if (current > gConfig.waterLevel) {
+                pixH[i * 4] = pixH[i * 4 + 2] = pixH[i * 4 + 1] = Math.floor((current - gConfig.waterLevel) / 10);
+                pixT[i * 4] = color[0];
+                pixT[i * 4 + 1] = color[1];
+                pixT[i * 4 + 2] = color[2];
             } else {
-                pixH[i*4] = pixH[i*4+2] = pixH[i*4+1] = 0;
-                pixT[i*4] = 0;
-                pixT[i*4+1] = Math.floor(gConfig.waterLevel/2) - (gConfig.waterLevel - current)*3;
-                pixT[i*4+2] = current*2+10;
+                pixH[i * 4] = pixH[i * 4 + 2] = pixH[i * 4 + 1] = 0;
+                pixT[i * 4] = 0;
+                pixT[i * 4 + 1] = Math.floor(gConfig.waterLevel / 2) - (gConfig.waterLevel - current) * 3;
+                pixT[i * 4 + 2] = current * 2 + 10;
 
-                if(currentConditions.temperature < 252.5) {
-                    pixT[i*4+0] = color[0];
-                    pixT[i*4+1] = color[1];
-                    pixT[i*4+2] = color[2];         
+                if (currentConditions.temperature < 252.5) {
+                    pixT[i * 4 + 0] = color[0];
+                    pixT[i * 4 + 1] = color[1];
+                    pixT[i * 4 + 2] = color[2];         
                 }
             }
         }
@@ -463,12 +468,14 @@ var Renderer = function() {
         return false;
     }
 
-    function coordToCartesian(lat,lng) {
+    function coordToCartesian(lat,lng,dist) {
+        if(!dist)
+            dist = 200;
         phi = (90 - lat) * Math.PI / 180;
         theta = (180 - lng) * Math.PI / 180;
-        x = 200 * Math.sin(phi) * Math.cos(theta);
-        y = 200 * Math.cos(phi);
-        z = 200 * Math.sin(phi) * Math.sin(theta);
+        x = dist * Math.sin(phi) * Math.cos(theta);
+        y = dist * Math.cos(phi);
+        z = dist * Math.sin(phi) * Math.sin(theta);
         return new THREE.Vector3(x,y,z);
     }
 
@@ -496,19 +503,25 @@ var Renderer = function() {
             var dimensionalSpot = sphereCoords[2]; // Sphere intersection point
             if(sphereCoords) {
                 console.log(sphereCoords);
-
-                var target = coordToCartesian(sphereCoords[0],sphereCoords[1]);
-
-                var geometry = new THREE.PlaneGeometry(10, 10, 1, 1);
-                var mesh = new THREE.MeshBasicMaterial({map: uiTextures['gun'], side: THREE.DoubleSide, transparent: true, opacity: 1});
-                var graphic = new THREE.Mesh(geometry, mesh);
-
-                graphic.position = target;
-                graphic.lookAt(sphere.position);
-                sphere.add(graphic);
-
             } else
                 return false;
+        },
+        decal: function(id, lat, lng, size, texture) {
+            if(decals[id] === undefined) {
+                var geometry = new THREE.PlaneGeometry(1, 1, 1, 1);
+                var material = new THREE.MeshBasicMaterial({map: uiTextures[texture], side: THREE.DoubleSide, transparent: true, opacity: 1});
+                decals[id] = new THREE.Mesh(geometry, material);
+
+                decals[id].material.textureId = texture;
+                decals[id].scale.x = size;
+                decals[id].scale.y = size;
+                decals[id].position = coordToCartesian(lat,lng,205);
+                decals[id].lookAt(sphere.position);
+
+                sphere.add(decals[id]);
+            } else {
+                // If the decal already exists, animate it
+            }
         },
         resize: function(newWidth, newHeight) {
             if(camera != undefined) {
