@@ -4,7 +4,7 @@
     <meta charset=utf-8 />
     <title>Pandemic</title>
     <link rel="stylesheet" type="text/css" media="screen" href="css/main.css" />
-    <script src="js/third-party/jquery-2.0.0.min.js"></script>
+    <script src="js/third-party/jquery-2.0.2.min.js"></script>
     <script src="js/third-party/i18next-1.6.3.min.js"></script>
     <script src="js/third-party/seedrandom.min.js"></script>
     <script src="js/third-party/three.min.js"></script>
@@ -14,6 +14,41 @@
     <script src="js/Renderer.js"></script>
     <script src="js/UserInterface.js"></script>
     <script src="js/Simulator.js"></script>
+    <script>
+        // Replace the normal jQuery getScript function with one that supports
+        // debugging and which references the script files as external resources
+        // rather than inline.
+        $.extend({
+           getScript: function(url, callback) {
+              var head = document.getElementsByTagName("head")[0];
+              var script = document.createElement("script");
+              script.src = url;
+
+              // Handle Script loading
+              {
+                 var done = false;
+
+                 // Attach handlers for all browsers
+                 script.onload = script.onreadystatechange = function(){
+                    if ( !done && (!this.readyState ||
+                          this.readyState == "loaded" || this.readyState == "complete") ) {
+                       done = true;
+                       if (callback)
+                          callback();
+
+                       // Handle memory leak in IE
+                       script.onload = script.onreadystatechange = null;
+                    }
+                 };
+              }
+
+              head.appendChild(script);
+
+              // We handle everything using the script element injection
+              return undefined;
+           },
+        });
+    </script>
 </head>
 <body>
     <div id="setup">
@@ -26,7 +61,7 @@
                 <option data-i18n="texturesizes.ultra" value="2160"></option>
             </select><br />
             <span data-i18n="labels.seed"></span><input type="text" name="seed" id="s_seed" /><br />
-            <span data-i18n="labels.models">Modules: </span><input type="text" name="modules" id="s_modules" value="main,panic,worldStats,gridBoost,population,climate,seaports,vaccine,bite,viralInfect,movement" /><br />
+            <span data-i18n="labels.models">Modules: </span><input type="text" name="modules" id="s_modules" value="main,panic,worldStats,gridBoost,population,climate,seaports,bite,viralInfect,movement" /><br />
             <span data-i18n="labels.language">Language: </span><select name="language" id="s_lng">
                 <option value="en">English</option>
                 <option value="jp">日本語</option>
@@ -38,7 +73,8 @@
     <div id="ui" style="display: none;"><div id="ui_mask"></div></div>
 
     <script>
-        var UI,R,S,seed,gData,gConfig,debug;
+        // Global variables
+        var UI,R,S,seed,debug;
 
         /* Debug Commands
             debug.watchPoint : int, id of the point that you want to be printed to console when it is affected in the simulator
@@ -47,10 +83,30 @@
         debug = {
             watchPoint: false,
             logModules: false,
-            mouseOverDebugData: false
+            mouseOverDebugData: false,
+            openConsole: function () {
+                if(!debug.console) {
+                    $.getScript('js/Debugger.js', function () {
+                        console.log('Loaded Debugger. Opening console...');
+                        if(S && S.startPoint)
+                            debug.console.push(new Debugger(S.startPoint));
+                        else
+                            debug.console.push(new Debugger());
+                    });
+                } else {
+                    debug.console.push(new Debugger());
+                }
+            } 
         };
 
         $(function () {
+            $(window).unload(function() {
+                if(debug.console)
+                    for (var point in debug.console) 
+                        if(debug.console.hasOwnProperty(point) && debug.console[point].close)
+                            debug.console[point].close();
+            });
+
             $.i18n.init({ resGetPath: 'locales/__lng__/__ns__.json', lng: 'en', load: 'unspecific', ns: 'setup', fallbackLng: 'en', debug: true, useCookie: false }, function() {
                 $("#setup").i18n();
             });
@@ -92,8 +148,9 @@
             });
         });
 
-        var tGenerator = new Worker('js/Generator.js');
-        var tCompletion = 0;
+        var tGenerator = new Worker('js/Generator.js'),
+            tCompletion = 0,
+            gConfig,gData;
         tGenerator.addEventListener('message', function(event) {
             var data = event.data;
             switch (data.cmd) {
@@ -118,7 +175,7 @@
                         gData.points[i].__proto__ = DataPoint.prototype;
                     }
                     UI.load.endGenerator();
-                    S = new Simulator(['main'],R,UI);
+                    S = new Simulator(['main'],R,UI,gConfig,gData);
                     S.setName(data.generatedName);
                     tCompletion++;
                     gStart(tCompletion);

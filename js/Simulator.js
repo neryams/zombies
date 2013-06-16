@@ -159,7 +159,7 @@ gridPoint.prototype.equals = function(gridpoint) {
     return this.x == gridpoint.x && this.y == gridpoint.y;
 }
 
-function Simulator(modules, R, UI) {
+function Simulator(modules, R, UI, gConfig, gData) {
 	this.modules = {};
 	this.activeModules = {infect:[],spread:[],event:[]};
 	this.activePoints = [];
@@ -242,7 +242,9 @@ Simulator.prototype = {
 	division: 1,
 	iteration: 0,
 	paused: false,
+	startPoint: null,
 	properties: {},
+	interval: null,
 	setName: function (name) {
 		this.properties.virus_name = name;		
 	}
@@ -258,8 +260,11 @@ Simulator.prototype.start = function(strainId) {
 
 	that = this;
 	that.strain.init(function(startSq) {
+		that.startPoint = startSq;
 		that.activePoints.push(startSq);
 		startSq.infected = 1;
+		if(debug.console)
+			debug.console.watchPoint(startSq);
 
 		// Sort out the children for the upgrades, convert string pointers to related upgrades to actual pointers.
 		for (key in that.upgrades) {
@@ -282,8 +287,7 @@ Simulator.prototype.start = function(strainId) {
 
 		that.Renderer.lookAt(startSq);
 
-		that.tick()
-		that.interval = setInterval( (function(self) { return function() {self.tick()}} )(that), 500);
+		that.tick();
 	});
 }
 
@@ -512,6 +516,8 @@ Simulator.prototype.tick = function() {
 		S = this;
 	if(this.strain != null) {
         var size;
+		if(debug.console)
+			debug.console.newTick();
 
 		for(i = 0, n = this.activePoints.length; i < n; i++) {
 			current = this.activePoints[i];
@@ -556,42 +562,28 @@ Simulator.prototype.tick = function() {
 			strength.mobility = 0;
 			strength.panic = 0;
 
-			if(debug.logModules)
-				console.log(strength);
+			if(debug.console) 
+				debug.console.updateTarget(current, target);
 
 			for(j = 0; j < this.activeModules.infect.length; j++) {
 				this.activeModules.infect[j].process(current,target,strength);
-				if(debug.logModules) {
-					console.log('\\/ \\/ \\/ \\/ \\/ \\/ \\/ \\/ \\/ ');
-					console.log(this.activeModules.infect[j].id);
-					console.log(this.activeModules.infect[j]);
-					console.log('\\/ \\/ \\/ \\/ \\/ \\/ \\/ \\/ \\/ ');
-					console.log(strength);
-				}
-
-				if(isNaN(current.infected))
-					debugger;
-				if(isNaN(target.infected))
-					debugger;
+				if(debug.console)
+					debug.console.reportModule(current, this.activeModules.infect[j].id, strength);
 			}
 			
-			this.strain.process(current,current,strength);
-			this.strain.process(current,target,strength);
-
-			if(debug.logModules) {
-				console.log('\\/ \\/ \\/ \\/ \\/ \\/ \\/ \\/ \\/ ');
-				console.log(this.strain.id);
-				console.log(this.strain);
+			if(debug.console) {
+				debug.console.reportOutput(current, this.strain.process(current,current,strength));
+				debug.console.reportOutput(current, this.strain.process(current,target,strength));
+			} else {
+				this.strain.process(current,current,strength);
+				this.strain.process(current,target,strength);
 			}
 
 			for(j = 0; j < this.activeModules.spread.length; j++) {
-				if(debug.logModules) {
-					console.log('\\/ \\/ \\/ \\/ \\/ \\/ \\/ \\/ \\/ ');
-					console.log(this.activeModules.spread[j].id);
-					console.log(this.activeModules.spread[j]);
-				}
-
-				this.activeModules.spread[j].process(current,strength);		
+				if(debug.console)
+					debug.console.reportOutput(current, this.activeModules.spread[j].process(current,strength));
+				else
+					this.activeModules.spread[j].process(current,strength);
 			}
 
 			// Update nearby square populations
@@ -616,20 +608,13 @@ Simulator.prototype.tick = function() {
 				i--;
 			}*/
 		}
-		if(debug.logModules)
-			console.log('[above x'+this.activePoints.length+']');
 
 		for(j = 0; j < this.activeModules.event.length; j++) {
-			if(debug.logModules) {
-				console.log('\\/ \\/ \\/ \\/ \\/ \\/ \\/ \\/ \\/ ');
-				console.log(this.activeModules.event[j].id);
-				console.log(this.activeModules.event[j]);
-			}
-
-			this.activeModules.event[j].process();
+			if(debug.console)
+				debug.console.reportOutput(current, this.activeModules.event[j].process());
+			else
+				this.activeModules.event[j].process();
 		}
-		if(debug.logModules)
-			debug.logModules = false;
 
 		this.Renderer.updateMatrix();
 
@@ -638,11 +623,22 @@ Simulator.prototype.tick = function() {
 		this.UIData['iteration'] = this.iteration;
 		this.UI.updateUI(this.UIData);
 		this.iteration++;
+
+		if(debug.console && debug.console.manualTicks) {
+			if(this.interval) {
+				clearInterval(this.interval);
+				this.interval = false;
+			}
+		} else {
+			if(!this.interval)
+				this.interval = setInterval( (function(self) { return function() {self.tick()}} )(this), 500);
+		}
+
 	}
 }
 Simulator.prototype.updateSquare = function(target) {
-	var	size_pop = (target.total_pop) / gConfig.max_pop,
-		size_zom = (target.infected) / gConfig.max_pop;
+	var	size_pop = (target.total_pop) / this.config.max_pop,
+		size_zom = (target.infected) / this.config.max_pop;
 	if(!target.cache) {
 		this.Renderer.setData(target, size_pop, size_zom);
 		target.cache = { infected: target.infected, total_pop: target.total_pop }
@@ -651,6 +647,9 @@ Simulator.prototype.updateSquare = function(target) {
 		target.cache.infected = target.infected;
 		target.cache.total_pop = target.total_pop;
 	}
+}
+Simulator.prototype.rendererDecal = function(id, lat, lng, size, texture) {
+	this.Renderer.decal(id, lat, lng, size, texture);
 }
 
 /*
@@ -728,6 +727,7 @@ function Module(type,processFunction,options) {
 }
 
 Module.prototype = {
+	id: '',
 	type: 'infect',
 	alwaysActive: false,
 	runtime: 10, // Smaller numbers run sooner

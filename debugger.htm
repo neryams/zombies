@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset=utf-8 />
+    <title>Debugger</title>
+    <style>
+    body {
+    	margin: 0;
+    	padding: 0;
+    }
+    .debugOptions {
+		height: 109px;
+		width: 690px;
+		padding: 5px;
+	}
+	.debugConsoleWindow {
+		border-top: 1px solid #ccc;
+		height: 280px;
+		width: 700px;
+		overflow: scroll;
+	}
+	.debugConsole {
+		border-spacing: 0;
+	}
+	.debugConsole table, .debugConsole div {
+		border: 1px solid #ccc;
+		height: 240px;
+		margin: 5px;
+		float: left;
+		border-spacing: 8px;
+	}
+	.debugConsole table th, .debugConsole table td {
+		white-space: nowrap;
+	}
+	.debugConsole table .to {
+		background: no-repeat center url(ui/arrow_r.jpg);
+		padding: 5px;
+	}
+	.debugConsole div {
+		width: 250px;
+	}
+	.pointInfo {
+		border-left: 1px solid #ccc;
+		height: 390px;
+		width: 290px;
+		padding: 5px;
+		overflow: scroll;
+		position: absolute;
+		top: 0;
+		right: 0;
+		font-size: 11px;
+		font-family: monospace;
+		line-height: 10px;
+	}
+    </style>
+</head>
+<body>
+	<div class="debugOptions">
+		<div>Debug Point: <input id="o_debugPoint"></div>
+		<div>Pause after tick: <input type="checkbox" id="o_manualTicks"></div>
+		<p><button id="o_endTurn">End Turn</button></p>
+	</div>
+	<div class="debugConsoleWindow">
+		<table><tr class="debugConsole"></tr></table>
+	</div>
+	<div class="pointInfo">
+	</div>
+</body>
+</html>
