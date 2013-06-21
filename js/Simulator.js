@@ -262,6 +262,7 @@ Simulator.prototype.start = function(strainId) {
 	that.strain.init(function(startSq) {
 		that.startPoint = startSq;
 		that.activePoints.push(startSq);
+		startSq.active = true;
 		startSq.infected = 1;
 		if(debug.console)
 			debug.console.watchPoint(startSq);
@@ -521,6 +522,12 @@ Simulator.prototype.tick = function() {
 
 		for(i = 0, n = this.activePoints.length; i < n; i++) {
 			current = this.activePoints[i];
+
+			if(current.infected < 1) {
+				current.active = false;
+				this.activePoints.splice(i,1);
+				i--;
+			}
 
 			chances = this.bakedValues.latCumChance[Math.floor(Math.abs(current.lat))];
 			beginInfected = current.infected;
