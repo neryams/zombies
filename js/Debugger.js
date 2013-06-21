@@ -63,6 +63,16 @@ function Debugger(dataPoint) {
 		that.debugBody.find('#o_endTurn').on('click', function() {
 			S.tick();
 		});
+
+		that.debugBody.find('.debugConsoleWindow').on('mousewheel DOMMouseScroll', function(event) {
+		    event.preventDefault();
+		    if (event.type == 'mousewheel') {
+		        this.scrollLeft -= parseInt(event.originalEvent.wheelDelta);
+		    }
+		    else if (event.type == 'DOMMouseScroll') {
+		        this.scrollLeft -= parseInt(event.originalEvent.detail);
+		    }
+		});
 	});
 }
 
