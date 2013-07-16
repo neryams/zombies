@@ -100,6 +100,7 @@
         };
 
         $(function () {
+            // On window close or reload, close all child windows (i.e. debug consoles)
             $(window).unload(function() {
                 if(debug.console)
                     for (var point in debug.console) 
@@ -107,10 +108,12 @@
                             debug.console[point].close();
             });
 
+            // Load language files
             $.i18n.init({ resGetPath: 'locales/__lng__/__ns__.json', lng: 'en', load: 'unspecific', ns: 'setup', fallbackLng: 'en', debug: true, useCookie: false }, function() {
                 $("#setup").i18n();
             });
 
+            // Event handler for updating setup menu with language choice change
             $('#s_lng').change(function () {
                 $("form :input").attr("disabled", true);
                 $.i18n.setLng( $(this).val(), function() {
@@ -119,6 +122,7 @@
                 });
             });
 
+            // On form submit, load the game
             $('form').on('submit', function (event) {
                 event.preventDefault();
 
@@ -128,11 +132,13 @@
                     language: $('#s_lng').val()
                 }
 
+                // Load the rest of the language files
                 $.i18n.loadNamespaces(['ui', 'messages', 'dom'], function() { 
                     $.i18n.setDefaultNamespace('messages');
                     var ns_loaded = true;
                 });
 
+                // Load the chosen modules first, then initiate the game 
                 $.getScript('js/loadModules.php?modules='+$('#s_modules').val(), function () {
                     $("#setup").remove();
 
@@ -144,8 +150,13 @@
                         tGenerator.postMessage(userConfig);
                     });
                 });
+
+                // Open debug menu by default.
+                debug.openConsole();
                 return false;
             });
+
+
         });
 
         var tGenerator = new Worker('js/Generator.js'),
