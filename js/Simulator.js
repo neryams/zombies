@@ -520,7 +520,7 @@ Simulator.prototype.tick = function() {
 		if(debug.console)
 			debug.console.newTick();
 
-		for(i = 0, n = this.activePoints.length; i < n; i++) {
+		for(i = 0; i < this.activePoints.length; i++) {
 			current = this.activePoints[i];
 
 			if(current.infected < 1) {
