@@ -579,8 +579,8 @@ Simulator.prototype.tick = function() {
 			}
 			
 			if(debug.console) {
-				debug.console.reportOutput(current, this.strain.process(current,current,strength));
-				debug.console.reportOutput(current, this.strain.process(current,target,strength));
+				debug.console.reportOutput(current, this.strain.id+'.self', this.strain.process(current,current,strength));
+				debug.console.reportOutput(current, this.strain.id+'.target', this.strain.process(current,target,strength));
 			} else {
 				this.strain.process(current,current,strength);
 				this.strain.process(current,target,strength);
@@ -588,7 +588,7 @@ Simulator.prototype.tick = function() {
 
 			for(j = 0; j < this.activeModules.spread.length; j++) {
 				if(debug.console)
-					debug.console.reportOutput(current, this.activeModules.spread[j].process(current,strength));
+					debug.console.reportOutput(current, this.activeModules.spread[j].id, this.activeModules.spread[j].process(current,strength));
 				else
 					this.activeModules.spread[j].process(current,strength);
 			}
@@ -600,25 +600,11 @@ Simulator.prototype.tick = function() {
 
 			this.updateSquare(current);
 			this.updateSquare(target);
-			/*
-			if(current.infected == 0) {
-				// If square has no zombies, remove it from the active points
-				var search = this.activePoints.length - 1;
-				do {
-					if(this.activePoints[search].id == current.id) {
-						this.activePoints.splice(search,1);
-						current.active = false;
-						break;
-					}
-				} while(search--);
-				n--;
-				i--;
-			}*/
 		}
 
 		for(j = 0; j < this.activeModules.event.length; j++) {
 			if(debug.console)
-				debug.console.reportOutput(current, this.activeModules.event[j].process());
+				debug.console.reportOutput(current, this.activeModules.event[j].id, this.activeModules.event[j].process());
 			else
 				this.activeModules.event[j].process();
 		}

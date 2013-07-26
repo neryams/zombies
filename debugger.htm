@@ -9,13 +9,13 @@
     	padding: 0;
     }
     .debugOptions {
-		height: 109px;
+		height: 99px;
 		width: 690px;
 		padding: 5px;
 	}
 	.debugConsoleWindow {
 		border-top: 1px solid #ccc;
-		height: 280px;
+		height: 260px;
 		width: 700px;
 		overflow-x: scroll;
 		overflow-y: hidden;
@@ -25,10 +25,18 @@
 	}
 	.debugConsole table, .debugConsole div {
 		border: 1px solid #ccc;
-		height: 240px;
-		margin: 5px;
+		height: 220px;
+		padding: 8px;
 		float: left;
 		border-spacing: 8px;
+	}
+	.debugConsole div {
+		width: 250px;
+		box-sizing: border-box;
+	}
+	.debugConsole .selected {
+		border: 4px solid orange;
+		padding: 5px;
 	}
 	.debugConsole table th, .debugConsole table td {
 		white-space: nowrap;
@@ -37,12 +45,15 @@
 		background: no-repeat center url(ui/arrow_r.jpg);
 		padding: 5px;
 	}
-	.debugConsole div {
-		width: 250px;
+	.debugConsole div h3 {
+		text-align: center;
+		margin-top: 8px;
+		font-weight: bold;
+		font-size: inherit;
 	}
 	.pointInfo {
 		border-left: 1px solid #ccc;
-		height: 390px;
+		height: 360px;
 		width: 290px;
 		padding: 5px;
 		overflow: scroll;
@@ -52,6 +63,9 @@
 		font-size: 11px;
 		font-family: monospace;
 		line-height: 10px;
+	}
+	.pointInfo h3 {
+		margin-top: 0;
 	}
     </style>
 </head>

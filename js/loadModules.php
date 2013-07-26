@@ -2,6 +2,11 @@
 header('Content-Type: application/javascript');
 $load_modules = explode(',',$_GET['modules']);
 
+$debug = "
+	if(debug.console)
+		if(debug.console.watchModules(arguments[0])[this.id])
+			debugger;";
+
 if(is_dir('modules') && !empty($_GET['modules'])) {
 
 	chdir('modules');
@@ -12,7 +17,8 @@ if(is_dir('modules') && !empty($_GET['modules'])) {
 	while (($file = readdir($dir)) !== false) {
 		$module_name = preg_replace('/(.+?)(\.[^.]*$|$)/','$1',$file);
 		if (is_file($file)) {
-			echo 'SimulatorModules[\'' . $module_name . '\'] = ' . file_get_contents($file) . ";\n";
+			// Add debugger script
+			echo 'SimulatorModules[\'' . $module_name . '\'] = ' . preg_replace("/(new\s+Module.* {)/","$1 $debug", file_get_contents($file)) . ";\n";
 		}
 	}
 	echo "Simulator.prototype.loadModules=function(){";
