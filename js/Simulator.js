@@ -579,10 +579,8 @@ Simulator.prototype.tick = function() {
 			}
 			
 			if(debug.console) {
-				debug.console.reportOutput(current, this.strain.id+'.self', this.strain.process(current,current,strength));
-				debug.console.reportOutput(current, this.strain.id+'.target', this.strain.process(current,target,strength));
+				debug.console.reportOutput(current, this.strain.id, this.strain.process(current,target,strength));
 			} else {
-				this.strain.process(current,current,strength);
 				this.strain.process(current,target,strength);
 			}
 
