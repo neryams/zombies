@@ -155,9 +155,9 @@ Debugger.prototype.updateStrength = function(name,strength) {
         }
 
 	this.debugBody.find('.debugConsole').append($('<td></td>').append(moduleInfo));
+	
 	if(this.watchModules[moduleId])
 		moduleInfo.addClass('selected');
-
 	if(!moduleInfo.data('moduleId'))
 		moduleInfo.data('moduleId', moduleId);
 }
@@ -166,11 +166,10 @@ Debugger.prototype.reportOutput = function(name,string) {
 	var moduleInfo = $('<div class="module"></div>').html('<h3>'+name+'</h3>'+string);
 	this.debugBody.find('.debugConsole').append($('<td></td>').append(moduleInfo));
 
-	if(!moduleInfo.data('moduleId')) {
+	if(this.watchModules[moduleId])
+		moduleInfo.addClass('selected');
+	if(!moduleInfo.data('moduleId'))
 		moduleInfo.data('moduleId', moduleId);
-		if(name.split('.')[1])
-			moduleInfo.data('moduleRuntime', name.split('.')[1]);
-	}
 }
 Debugger.prototype.watchPoint = function(dataPoint) {
 	if(dataPoint) {

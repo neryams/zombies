@@ -3,8 +3,6 @@
 
 ----- Priority 2
 
-	Make function for adding icons and images to the 3-d view
-
 	Add human resistance. Army killing zombies, rural guns, martial law
 
 	Add human strongholds in later stages of panic.
@@ -13,6 +11,7 @@
 ----- Priority 3
 	
 	Make floaty icons/text for when zombies are killed or perhaps for when humans are killed/converted!
+		-> Also only show the icons above a threshold of whatever is happening, like LoL healing
 
 	Add functionality to genes to affect other adjacent genes
 
