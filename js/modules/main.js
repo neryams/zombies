@@ -74,5 +74,6 @@ new Module('strain', function(current,target,strength) {
 		);
 
 		callback(this.S.countries[randCountry].capitol);
-	}
+	},
+	children: ['worldStats']
 })

@@ -608,10 +608,11 @@ Planet.prototype.generatePerlinSphere = function(P,w,scale,octaves,progressShare
 }
 
 // Generates all the data for the planet
+// Progress bar ratios are in here!
 Planet.prototype.generate = function(P,callback) {
 	// Generate terrain texture
 	var planet = this;
-	planet.texture = planet.generatePerlinSphere(P,planet.config.tx_w,0.62,8,0.75, "terrain", function () {
+	planet.texture = planet.generatePerlinSphere(P,planet.config.tx_w,0.62,8, 0.65 , "terrain", function () {
 		// Convert texture to heightmap
 	 	self.postMessage({cmd: 'progress'});
 		planet.setHeight(planet.texture);
@@ -620,12 +621,12 @@ Planet.prototype.generate = function(P,callback) {
 	 	self.postMessage({cmd: 'progress'});
 		planet.calculateCoastLine(function() {
 			// Calculate temperatures based on proximity to water and elevation and lat/long
-			var climateTurb = planet.generatePerlinSphere(P,planet.config.w,4,2,0.05, "climate", function () {
-				planet.calculateClimate(climateTurb,0.05,function() {
+			var climateTurb = planet.generatePerlinSphere(P,planet.config.w,4,2, 0.05 , "climate", function () {
+				planet.calculateClimate(climateTurb, 0.05 ,function() {
 					// Calculate population affected by elevation, temperature, proximity to water, and precipitation
-					var popGen = planet.generatePerlinSphere(P,planet.config.w,4,8,0.05, "population", function () {
-						var cBorders = planet.generatePerlinSphere(P,planet.config.w,2,7,0.05, "countries", function () {
-							planet.generatePop(popGen,cBorders,0.05);
+					var popGen = planet.generatePerlinSphere(P,planet.config.w,4,8, 0.05 , "population", function () {
+						var cBorders = planet.generatePerlinSphere(P,planet.config.w,2,7, 0.05 , "countries", function () {
+							planet.generatePop(popGen,cBorders, 0.15 );
 	 						self.postMessage({cmd: 'progress'});
 							setTimeout(callback,50);
 						});

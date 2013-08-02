@@ -3,7 +3,9 @@
 
 ----- Priority 2
 
-	Add human resistance. Army killing zombies, rural guns, martial law
+	Make resistance kill zombies. Also resistance is too strong right now.
+
+	Button for toggling mouseover debug in console
 
 	Add human strongholds in later stages of panic.
 
@@ -12,6 +14,8 @@
 	
 	Make floaty icons/text for when zombies are killed or perhaps for when humans are killed/converted!
 		-> Also only show the icons above a threshold of whatever is happening, like LoL healing
+
+	Button for clicking on a square to debug it
 
 	Add functionality to genes to affect other adjacent genes
 
