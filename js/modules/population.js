@@ -2,8 +2,9 @@
 	Population: Module to change the infect rate based on population
 */
 new Module('infect', function(current,target,strength) {
-	strength.infectSelf *= Math.sqrt(current.infected)*Math.sqrt(current.total_pop/this.S.config.max_pop);
-	strength.infect *= Math.sqrt(current.infected)*Math.sqrt(target.total_pop/this.S.config.max_pop);
+	var ratio = Math.sqrt(current.infected + target.total_pop)/Math.pow(this.S.config.max_pop,1/2.5);
+	strength.infectSelf *= ratio;
+	strength.infect *= ratio;
 },{
 	runtime: 9,
 	children: ['aggression'],
