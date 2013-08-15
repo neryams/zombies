@@ -121,7 +121,7 @@ Planet.prototype.generatePop = function(heightmap,borderNoise,progressShare) {
 			}
 		}
 	}
-	self.postMessage({cmd: 'progress',share: progressShare,progress: 0.1});
+	self.postMessage({cmd: 'progress',share: progressShare,progress: 0.05});
 
 	// Determine the population multiplier based on the desired total world population
 	this.config.pop_ratio = this.config.world_pop / world_pop;
@@ -148,7 +148,7 @@ Planet.prototype.generatePop = function(heightmap,borderNoise,progressShare) {
 		}
 		current.perlinTest = borderNoise[i];
 	}
-	self.postMessage({cmd: 'progress',share: progressShare,progress: 0.2});
+	self.postMessage({cmd: 'progress',share: progressShare,progress: 0.1});
 
 	// Fuzzify the country edges based on perlin noise, otherwise the country borders will be straight lines
 	for(j = 0; j < 10; j++) {
@@ -162,7 +162,7 @@ Planet.prototype.generatePop = function(heightmap,borderNoise,progressShare) {
 			}
 		}
 	}
-	self.postMessage({cmd: 'progress',share: progressShare,progress: 0.3});
+	self.postMessage({cmd: 'progress',share: progressShare,progress: 0.15});
 
 	for(i = 0, n = this.data.length; i < n; i++) {
 		current = this.data[i];
@@ -174,7 +174,7 @@ Planet.prototype.generatePop = function(heightmap,borderNoise,progressShare) {
 				current.country = current.adjacent[1].country;
 		}
 	}
-	self.postMessage({cmd: 'progress',share: progressShare,progress: 0.4});
+	self.postMessage({cmd: 'progress',share: progressShare,progress: 0.2});
 
 	for(i = 0, n = this.data.length; i < n; i++) {
 		current = this.data[i];
@@ -182,7 +182,7 @@ Planet.prototype.generatePop = function(heightmap,borderNoise,progressShare) {
 		if(current.total_pop > 0 && (this.countries[current.country].capitol == null || this.countries[current.country].capitol.total_pop < current.total_pop))
 			this.countries[current.country].capitol = current;
 	}
-	self.postMessage({cmd: 'progress',share: progressShare,progress: 0.5});
+	self.postMessage({cmd: 'progress',share: progressShare,progress: 0.25});
 
 	// Remove countries without capitols (meaning countries with no population), set capitol names?
 	for(i = 1; i < this.countries.length; i++) {
@@ -233,7 +233,7 @@ Planet.prototype.generatePop = function(heightmap,borderNoise,progressShare) {
 		}
 	}
 
-	self.postMessage({cmd: 'progress',share: progressShare,progress: 0.6});
+	self.postMessage({cmd: 'progress',share: progressShare,progress: 0.35});
 
 	for(i = 0, n = this.data.length; i < n; i++) {
 		// Clean up unneeded stuff from all the previous steps
@@ -243,8 +243,8 @@ Planet.prototype.generatePop = function(heightmap,borderNoise,progressShare) {
 		delete this.data[i].blend;
 
 		this.data[i].updateNearbyPop();
-		if(i % 10000 == 0)
-			self.postMessage({cmd: 'progress',share: progressShare,progress: 0.6 + 0.4*i/this.data.length});
+		if(i % 1000 == 0)
+			self.postMessage({cmd: 'progress',share: progressShare,progress: 0.35 + 0.6*i/this.data.length});
 	}
 	self.postMessage({cmd: 'progress',share: progressShare,progress: 1});
 }
@@ -612,7 +612,7 @@ Planet.prototype.generatePerlinSphere = function(P,w,scale,octaves,progressShare
 Planet.prototype.generate = function(P,callback) {
 	// Generate terrain texture
 	var planet = this;
-	planet.texture = planet.generatePerlinSphere(P,planet.config.tx_w,0.62,8, 0.65 , "terrain", function () {
+	planet.texture = planet.generatePerlinSphere(P,planet.config.tx_w,0.62,8, 0.55 , "terrain", function () {
 		// Convert texture to heightmap
 	 	self.postMessage({cmd: 'progress'});
 		planet.setHeight(planet.texture);
@@ -626,7 +626,7 @@ Planet.prototype.generate = function(P,callback) {
 					// Calculate population affected by elevation, temperature, proximity to water, and precipitation
 					var popGen = planet.generatePerlinSphere(P,planet.config.w,4,8, 0.05 , "population", function () {
 						var cBorders = planet.generatePerlinSphere(P,planet.config.w,2,7, 0.05 , "countries", function () {
-							planet.generatePop(popGen,cBorders, 0.15 );
+							planet.generatePop(popGen,cBorders, 0.25 );
 	 						self.postMessage({cmd: 'progress'});
 							setTimeout(callback,50);
 						});
