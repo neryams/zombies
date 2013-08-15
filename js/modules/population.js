@@ -3,10 +3,11 @@
 */
 new Module('infect', function(current,target,strength) {
 	var ratio = Math.sqrt(current.infected + target.total_pop)/Math.pow(this.S.config.max_pop,1/2.5);
-	strength.infectSelf *= ratio;
-	strength.infect *= ratio;
+	strength.infectSelf *= ratio * current.infected;
+	strength.kill *= ratio * current.infected;
+	strength.infect *= ratio * (current.infected/3);
 },{
-	runtime: 9,
-	children: ['aggression'],
+	runtime: 11,
+	children: ['density'],
 	alwaysActive: true
 })

@@ -11,24 +11,25 @@ new Module('infect', function(current,target,strength) {
 		if(current.cache.total_pop != current.total_pop)
 			current.human_strength *= (current.total_pop/current.cache.total_pop)
 
-		// Civilians have a base strength of 0.005 per person, soldiers have experience (starting at 1)
+		// 1 solder at base strength is worth 20 civilians
 		if(current.army) {
-			var adjustedCombat = current.human_strength * (current.total_pop - current.army.size) * 0.005 + current.army.size * current.army.experience;
+			var adjustedCombat = current.human_strength * (current.total_pop - current.army.size) + current.army.size * current.army.experience * 20;
 			// Army can protect itself but offers only limited protection to civilians, the less the better
 			adjustedCombat *= (current.army.size / current.total_pop);
 		} else {
-			var adjustedCombat = current.human_strength * current.total_pop * 0.005;
+			var adjustedCombat = current.human_strength * current.total_pop * 0.05;
 		}
 
-		// Army can protect itself but offers only limited protection to civilians, the less the better
-		adjustedCombat *= 0.1;
 		strength.kill /= (1+adjustedCombat);
 		strength.infectSelf /= (1+adjustedCombat);
+
+		strength.humanStrength = adjustedCombat;
 	}
 },{
 	init: function() {
 
 	},
+	runtime: 15,
 	alwaysActive: true,
-	children: ['armies']
+	children: ['armies','zombieKill']
 })

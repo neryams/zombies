@@ -62,7 +62,6 @@ new Module('event', function() {
 			return true;
 		}
 	},
-	runtime: 9,
 	alwaysActive: true,
 	dependencies: ['resistance']
 })

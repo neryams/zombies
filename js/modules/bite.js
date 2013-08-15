@@ -22,5 +22,6 @@ new Module('infect', function(current,target,strength) {
 		);
 	},
 	runtime: 1,
-	alwaysActive: true
+	alwaysActive: true,
+	dependencies: ['aggression']
 })

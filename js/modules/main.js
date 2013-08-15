@@ -31,7 +31,7 @@ new Module('strain', function(current,target,strength) {
 
 		// Infect self tile
 		if(strength.infectSelf) {
-			var self_affected = Math.abs(((rand*2 + (rand*10%1)*2 + (rand*100%1)*2 - 3)*(current.infected/3)) * (strength.infectSelf + strength.kill));
+			var self_affected = Math.abs((rand*2 + (rand*10%1)*2 + (rand*100%1)*2 - 3) * (strength.infectSelf + strength.kill));
 			totalKilled = Math.round(self_affected * (strength.kill/(strength.infectSelf + strength.kill)));
 			totalConverted = Math.round(self_affected * (strength.infectSelf/(strength.infectSelf + strength.kill)));
 		}
