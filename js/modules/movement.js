@@ -213,5 +213,5 @@ new Module('spread', function(current,strength) {
 		}
 	},
 	alwaysActive: true,
-	children: ['moveSpeed']
+	dependencies: ['moveSpeed']
 })

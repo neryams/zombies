@@ -21,7 +21,7 @@ new Module('infect', function(current,target,strength) {
 	// Otherwise this is a standard run
 	} else {
 		strength.mobility = this.speed;
-		strength.encounterProbability = this.speed + this.burstSpeed;
+		strength.encounterProbability = 1 + this.burstSpeed;
 		strength.panic += this.panic;
 	}
 },{
@@ -37,5 +37,6 @@ new Module('infect', function(current,target,strength) {
 		);
 	},
 	runtime: 1,
-	alwaysActive: true
+	alwaysActive: true,
+	children: ['mobility']
 })
