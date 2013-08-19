@@ -4,7 +4,8 @@
 new Module('strain', function(current,target,strength) {
 	var newInfection = false,
 		totalInfected = 0,
-		totalKilled = 0;
+		totalKilled = 0,
+		zombieLosses = 0;
 	if(target.total_pop > 0) {
 		var rand = Math.random();
 		// Human strength and zombie strength should be directly comparable.
@@ -27,23 +28,30 @@ new Module('strain', function(current,target,strength) {
 
 		this.attack(target, totalInfected);
 
+		if(debug.console)
+			var result = "targetInfected: "+totalInfected;
+
 		// Infect self tile
 		if(strength.encounterProbability) {
 			var self_encounters = Math.round((rand*2 + (rand*10%1)*2 + (rand*100%1)*2)/3 * (strength.encounterProbability)),
 				totalStrength = strength.zombieStrength + strength.humanStrength,
-				humanLosses = self_encounters*(strength.zombieStrength/totalStrength),
-				zombieLosses = self_encounters*(strength.humanStrength/totalStrength),
-				totalInfected = humanLosses * strength.infectChance;
+				humanLosses = self_encounters*(strength.zombieStrength/totalStrength);
+			zombieLosses = self_encounters*(strength.humanStrength/totalStrength);
+			totalInfected = humanLosses * strength.infectChance;
 			totalKilled = humanLosses - totalInfected;
 		}
 
-		this.attack(current, totalInfected, totalKilled);
+		this.attack(current, totalInfected, totalKilled, zombieLosses);
+
+		if(debug.console)
+			result += "<br />selfInfected: "+totalInfected+"<br />selfHumansKilled: "+totalKilled+"<br />selfZombiesKilled: "+zombieLosses;
 
 		this.S.properties.panic += strength.panic;
 		this.S.countries[target.country].panic += strength.panic;
-	}
 
-	return newInfection;
+		if(debug.console)
+			return result;
+	}
 },{
 	init: function(callback) {
 		var candidate = [0,null];
