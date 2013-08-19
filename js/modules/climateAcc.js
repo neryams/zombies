@@ -3,16 +3,16 @@
 */
 new Module('event', function(upgrade) {
 	if(upgrade.level % 3 == 0) {
-		this.S.modules['climate'].val('idealTemp',5,'+');
+		this.S.modules['climate'].val('idealTemp',6,'+');
 		this.S.modules['climate'].val('rangeTemp',3,'+');
 	}
 	else if(upgrade.level - 1 % 3 == 0) {
-		this.S.modules['climate'].val('idealTemp',5,'-');
+		this.S.modules['climate'].val('idealTemp',6,'-');
 		this.S.modules['climate'].val('rangeTemp',3,'+');
 	}
 	else {
-		this.S.modules['climate'].val('idealWet',25,'+');
-		this.S.modules['climate'].val('rangeWet',12,'+');
+		this.S.modules['climate'].val('idealWet',10,'+');
+		this.S.modules['climate'].val('rangeWet',10,'+');
 	}
 },{
 	init: function() {
