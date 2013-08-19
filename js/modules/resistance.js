@@ -20,16 +20,13 @@ new Module('infect', function(current,target,strength) {
 			var adjustedCombat = current.human_strength * current.total_pop * 0.05;
 		}
 
-		strength.kill /= (1+adjustedCombat);
-		strength.infectSelf /= (1+adjustedCombat);
-
 		strength.humanStrength = adjustedCombat;
 	}
 },{
 	init: function() {
 
 	},
-	runtime: 15,
+	runtime: 1,
 	alwaysActive: true,
-	children: ['armies','zombieKill']
+	children: ['armies']
 })

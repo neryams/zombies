@@ -21,7 +21,8 @@ new Module('infect', function(current,target,strength) {
 	// Otherwise this is a standard run
 	} else {
 		strength.mobility = this.speed;
-		strength.panic += this.panic	
+		strength.encounterProbability = this.speed + this.burstSpeed;
+		strength.panic += this.panic;
 	}
 },{
 	init: function() {
@@ -35,6 +36,6 @@ new Module('infect', function(current,target,strength) {
 			{cost: 8000,paths:['moveSpeed-2'],name:'Ravenous Sprint', description:'Zombies can sprint. Results in abject terror and a large increase in deadliness.', gene:{size: 6, shape: 'c', color: 'red'}}
 		);
 	},
-	runtime: 0,
+	runtime: 1,
 	alwaysActive: true
 })

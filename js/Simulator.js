@@ -563,9 +563,11 @@ Simulator.prototype.tick = function() {
 			}
 			
 			// infect is for all squares, infectSelf is for just its own square, mobili
-			strength.infect = 0;
-			strength.infectSelf = 0;
-			strength.kill = 0;
+			strength.encounterProbability = 0;
+			strength.zombieStrength = 0;
+			strength.humanStrength = 0;
+			strength.infectChance = 0;
+			strength.spreadChance = 0;
 			strength.mobility = 0;
 			strength.panic = 0;
 
@@ -662,6 +664,17 @@ Simulator.prototype.rendererDecal = function(id, lat, lng, size, texture) {
 					Recieves parameters SIMULATORDATA, and optional second parameter that is the mouse click event with attached jQuery.on event.data.
 					Affects other modules by changing their data.  Useful for activating, modifying or deactivating modules based on world events or infection upgrades.
 		processFunction -- function | function that performs tasks at intervals depending on the type of the module
+			parameters
+				infect
+					current: current square
+					target: target square
+					strength: object that is passed to every module and is used by the strain to do final operations. All values styart at zero.
+						encounterProbability
+						zombieStrength
+						humanStrength
+						infectChance
+						spreadChance
+						mobility
 		options -- object | Optional. Sets other options.
 			Valid options:
 				dependencies -- array | List of modules that should be loaded before this one. If they are not loaded, they will be initialized before this one is.

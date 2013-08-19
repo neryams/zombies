@@ -4,13 +4,14 @@
 new Module('infect', function(current,target,strength) {
 	// If this is running  due to an upgrade, do the upgrade
 	if(arguments.length < 3) {
-		this.val('panic',2);
-		this.val('infectPower',1);
+		if(!this.isActive())
+			this.S.addActive(this.id);
+
+		this.val('panic',1);
+		this.val('infectPower',0.2);
 	// Otherwise this is a standard run
 	} else {
-		var bite_power = this.S.modules['aggression'].val('aggression') * (strength.mobility + this.S.modules['moveSpeed'].val('burstSpeed'));
-		strength.infectSelf = this.infectPower * bite_power;
-		strength.kill = 1/this.infectPower * bite_power;
+		strength.infectChance = this.infectPower;
 		strength.panic += this.panic;
 	}
 },{
@@ -22,6 +23,5 @@ new Module('infect', function(current,target,strength) {
 		);
 	},
 	runtime: 1,
-	alwaysActive: true,
 	dependencies: ['aggression']
 })
