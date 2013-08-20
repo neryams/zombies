@@ -33,11 +33,11 @@ new Module('strain', function(current,target,strength) {
 
 		// Infect self tile
 		if(strength.encounterProbability) {
-			var self_encounters = Math.round((rand*2 + (rand*10%1)*2 + (rand*100%1)*2)/3 * (strength.encounterProbability)),
+			var self_encounters = Math.round(((rand*2 + (rand*10%1)*2 + (rand*100%1)*2)/3) * (strength.encounterProbability)),
 				totalStrength = strength.zombieStrength + strength.humanStrength,
-				humanLosses = self_encounters*(strength.zombieStrength/totalStrength);
-			zombieLosses = self_encounters*(strength.humanStrength/totalStrength);
-			totalInfected = humanLosses * strength.infectChance;
+				humanLosses = Math.round(self_encounters*(strength.zombieStrength/totalStrength));
+			zombieLosses = self_encounters - humanLosses;
+			totalInfected = Math.round(humanLosses * strength.infectChance);
 			totalKilled = humanLosses - totalInfected;
 		}
 
@@ -90,5 +90,5 @@ new Module('strain', function(current,target,strength) {
 
 		callback(this.S.countries[randCountry].capitol);
 	},
-	children: ['worldStats','population','bite','movement'/*,'viralInfect','panic'*/]
+	children: ['worldStats','population','bite','movement','panic'/*,'viralInfect'*/]
 })

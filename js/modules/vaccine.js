@@ -1,6 +1,7 @@
 /* 
 	Vaccine: Makes the world start vaccine research based on panic. If the vaccine is completed, you lose
 	Vaccine progress is applied to the upgrade colors on a specific row  
+	Also contains code for a "hot row", the row in the mutation menu that affects the vaccine research
 */
 new Module('event', function() {
 	var addResearch = 0;
