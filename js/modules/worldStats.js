@@ -2,6 +2,9 @@
 	World Stats: Module to update the UI with various statistics about the simulation.
 */
 new Module('event', function() {
+	if(this.world_infected < 1)
+		this.S.end('lose');
+	
 	this.S.properties.money += 1;
 
 	this.S.UIData['world_pop'] = this.world_pop;

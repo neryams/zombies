@@ -104,14 +104,14 @@ function Debugger(dataPoint) {
 		that.debugBody.find('.debugConsole').on('click','.module',function() {
 			var moduleId = $(this).data('moduleId');
 			if(!that.watchModules[moduleId]) {
-				$(this).addClass('selected');
+				$(this).parent().addClass('selected');
 				if($(this).data('moduleRuntime'))
 					that.watchModules[moduleId] = $(this).data('moduleRuntime');
 				else
 					that.watchModules[moduleId] = true;
 			}
 			else {
-				$(this).removeClass('selected');
+				$(this).parent().removeClass('selected');
 				that.watchModules[moduleId] = false;
 			}
 			debug.console.watchModulesCache = false;
@@ -157,7 +157,7 @@ Debugger.prototype.updateStrength = function(name,strength) {
 	this.debugBody.find('.debugConsole').append($('<td></td>').append(moduleInfo));
 	
 	if(this.watchModules[moduleId])
-		moduleInfo.addClass('selected');
+		moduleInfo.parent().addClass('selected');
 	if(!moduleInfo.data('moduleId'))
 		moduleInfo.data('moduleId', moduleId);
 }
@@ -167,7 +167,7 @@ Debugger.prototype.reportOutput = function(name,string) {
 	this.debugBody.find('.debugConsole').append(moduleInfo);
 
 	if(this.watchModules[moduleId])
-		moduleInfo.addClass('selected');
+		moduleInfo.parent().addClass('selected');
 	if(!moduleInfo.data('moduleId'))
 		moduleInfo.data('moduleId', moduleId);
 }
