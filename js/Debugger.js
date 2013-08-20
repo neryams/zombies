@@ -149,7 +149,7 @@ Debugger.prototype.updateStrength = function(name,strength) {
 			if(this.lastStrength[item] === undefined)
 				this.lastStrength[item] = 0;
 
-			moduleInfo.append($('<tr></tr>').html('<td>s.'+item+'</td><td>'+this.lastStrength[item]+'</td><td class="to"></td><td>'+strength[item]+'</td>'));
+			moduleInfo.append($('<tr></tr>').html('<td>s.'+item+'</td><td>'+this.lastStrength[item].toPrecision(3)+'</td><td class="to"></td><td>'+strength[item].toPrecision(3)+'</td>'));
 
         	this.lastStrength[item] = strength[item];
         }
@@ -163,8 +163,8 @@ Debugger.prototype.updateStrength = function(name,strength) {
 }
 Debugger.prototype.reportOutput = function(name,string) {
 	var moduleId = name.split('.',1)[0];
-	var moduleInfo = $('<div class="module"></div>').html('<h3>'+name+'</h3>'+string);
-	this.debugBody.find('.debugConsole').append($('<td></td>').append(moduleInfo));
+	var moduleInfo = $('<td class="module"></td>').html('<h3>'+name+'</h3>'+string);
+	this.debugBody.find('.debugConsole').append(moduleInfo);
 
 	if(this.watchModules[moduleId])
 		moduleInfo.addClass('selected');
