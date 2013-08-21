@@ -19,10 +19,10 @@ new Module('event', function(upgrade) {
 		this.S.addUpgrades(this,
 			{cost: 200,paths:['main'],name:'Heat Affinity I', description:'Zombies become stronger in warmth.', gene:{size: 3, shape: 'r', color: 'yellow'}},
 			{cost: 200,paths:['main'],name:'Cold Affinity I', description:'Zombies become stronger in cold.', gene:{size: 3, shape: 'r', color: 'green'}},
-			{cost: 200,paths:['main'],name:'Water Affinity I',bg:30, description:'Zombies become stronger in wet conditions.', gene:{size: 3, shape: 'r', color: 'blue'}},
+			{cost: 200,paths:['main'],name:'Water Affinity I',bg:1, description:'Zombies become stronger in wet conditions.', gene:{size: 3, shape: 'r', color: 'blue'}},
 			{cost: 400,paths:['climateAcc-0'],name:'Heat Affinity II', description:'Zombies become stronger in warmth.', gene:{size: 3, shape: 'r', color: 'yellow'}},
 			{cost: 400,paths:['climateAcc-1'],name:'Cold Affinity II', description:'Zombies become stronger in cold.', gene:{size: 3, shape: 'r', color: 'green'}},
-			{cost: 400,paths:['climateAcc-2'],name:'Water Affinity II',bg:30, description:'Zombies become stronger in wet conditions.', gene:{size: 3, shape: 'r', color: 'blue'}}
+			{cost: 400,paths:['climateAcc-2'],name:'Water Affinity II',bg:1, description:'Zombies become stronger in wet conditions.', gene:{size: 3, shape: 'r', color: 'blue'}}
 		);
 	},
 	dependencies: ['climate']

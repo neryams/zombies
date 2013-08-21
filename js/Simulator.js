@@ -379,6 +379,10 @@ Simulator.prototype.addUpgrades = function(module) {
     	this.upgrades[levels[j].id] = new Upgrade(levels[j]);
     	this.upgrades[levels[j].id].module = module;
     	this.upgrades[levels[j].id].level = j;
+
+    	// Send in default values etc
+    	if(!levels[j].bg)
+    		levels[j].bg = this.upgrades[levels[j].id].bg;
     }
     // send all the levels to the UI
     var evolution = this.UI.addEvolution(module.id,levels);
@@ -624,7 +628,7 @@ Simulator.prototype.tick = function() {
 			}
 		} else {
 			if(!this.interval)
-				this.interval = setInterval( (function(self) { return function() {self.tick()}} )(this), 500);
+				this.interval = setInterval( (function(self) { return self.tick } )(this), 500);
 		}
 
 	}

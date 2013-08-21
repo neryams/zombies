@@ -200,9 +200,11 @@ function Evolution(name,levels,options) {
 	this.element.attr('class','');
 	for(i = 0; i < levels.length; i++) {
 		var currentId = levels[i].id
-		// Clone a div element for each level so it can be treated as a separate evolution
-		var currentElement = this.element.clone().addClass('evolutionButton_' + this.name + ' evolutionButton_' + this.id).appendTo(this.evolveMenu.element)
-			.css('background-position', this.bg + 'px 0').data('id',currentId);
+
+		// Create the evolution upgrade button in the menu
+			// Clone a div element for each level so it can be treated as a separate evolution
+		var currentElement = this.element.clone().addClass(/*'evolutionButton_' + this.name + ' */'evolutionButton_' + currentId).appendTo(this.evolveMenu.element)
+			.css('background-position', (levels[i].bg*30) + 'px 0').data('id',currentId);
 
 		this.all[currentId] = levels[i];
 		if(this.all[currentId].gene)
@@ -216,9 +218,8 @@ function Evolution(name,levels,options) {
 		this.all[currentId].element = currentElement;
 		this.all[currentId].children = [];
 
-		// Draw gene shape image
+		// Draw gene shape image, (the tetris peices)
 		if(this.all[currentId].gene) {
-
 			// Get canvas for drawing the image
 			var imageCtx = this.imageCanvas.getContext("2d"),
 				currPoint;
@@ -255,7 +256,7 @@ function Evolution(name,levels,options) {
 			}
 			imageCtx.lineWidth = 1;
 
-			// array for removing points that are not
+			// array for removing points that are not on the outside
 			var borders = [];
 			// For each point, draw a square at the coordinates
 			for(var j = 0; j < this.all[currentId].gene.shape.length; j++) {
