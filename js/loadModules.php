@@ -2,10 +2,12 @@
 header('Content-Type: application/javascript');
 $load_modules = explode(',',$_GET['modules']);
 
-$debug = "
+/* Add debug breakpoint to all modules. 
+	Also, store the first argument as a local var for use by the value function. */
+$inject = '
 	if(debug.console)
 		if(debug.console.watchModules(arguments[0])[this.id])
-			debugger;";
+			debugger;';
 
 if(is_dir('modules') && !empty($_GET['modules'])) {
 
@@ -18,7 +20,7 @@ if(is_dir('modules') && !empty($_GET['modules'])) {
 		$module_name = preg_replace('/(.+?)(\.[^.]*$|$)/','$1',$file);
 		if (is_file($file)) {
 			// Add debugger script
-			echo 'SimulatorModules[\'' . $module_name . '\'] = ' . preg_replace("/(new\s+Module.* {)/","$1 $debug", file_get_contents($file)) . ";\n";
+			echo 'SimulatorModules[\'' . $module_name . '\'] = ' . preg_replace("/(new\s+Module.* {)/","$1 $inject", file_get_contents($file)) . ";\n";
 		}
 	}
 	echo "Simulator.prototype.loadModules=function(){";

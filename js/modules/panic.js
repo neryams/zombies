@@ -81,7 +81,7 @@ new Module('event', function() {
 		}
 		this.panicThresholds = [0,1000,1000000,30000000];
 		this.currPanicLevel = 1;
-		this.countryPanicThresholds = [0,200,80000,160000,320000];
+		this.countryPanicThresholds = [0,400,80000,160000,320000];
         this.worldPanic = this.S.UI.interfaceParts.stats.addDataField('progressBar',{
         	title: 'ui:labels.world_panic',
         	dynamic: 'world_panic',

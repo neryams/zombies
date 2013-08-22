@@ -13,7 +13,7 @@ new Module('infect', function(current,target,strength) {
 
 		// 1 solder at base strength is worth 20 civilians
 		if(current.army) {
-			var adjustedCombat = current.human_strength * (current.total_pop - current.army.size) + current.army.size * current.army.experience * 20;
+			var adjustedCombat = current.human_strength * (current.total_pop - current.army.size) * 0.05 + current.army.size * current.army.experience;
 			// Army can protect itself but offers only limited protection to civilians, the less the better
 			adjustedCombat *= (current.army.size / current.total_pop);
 		} else {

@@ -111,11 +111,11 @@ Upgrade.prototype.generateGene = function(pieceSize, shape, color) {
     this.gene.width = bottomRight.x - topLeft.x + 1;
     this.gene.placement = new gridPoint();
 }
-Upgrade.prototype.activate = function() {
+Upgrade.prototype.purchase = function() {
 	this.active = true;
 	// If there is no gene, run the process.
 	if(!this.gene) {
-		this.module.process(this);
+		this.onUpgrade();
 	}
 }
 Upgrade.prototype.resetGene = function() {
@@ -129,10 +129,19 @@ Upgrade.prototype.activateGene = function(x,y) {
 	if(this.gene && this.active) {
 		this.gene.active = true;
 		this.gene.position = new gridPoint().setCoords(x,y);
-		this.module.process(this);
+		this.onUpgrade();
 		return true;
 	}
 	return false;
+}
+Upgrade.prototype.val = function(val, newval, operation) {
+	if(!operation)
+		operation = '';
+	this.module.val(val, newval, operation, this);
+}
+Upgrade.prototype.activate = function() {
+	if(!this.module.isActive())
+		this.module.S.addActive(this.module.id);
 }
 
 function gridPoint(clone) {
@@ -254,7 +263,6 @@ Simulator.prototype.start = function(strainId) {
 	// Add all the modules specified in the contruction of the Simulator
 	this.loadModules();
 
-
 	this.addActive(strainId);
 	Math.seedrandom(); // Before we start the simulation, generate a new random seed so the game itself is unpredictable with respect to the land generation.
 
@@ -269,7 +277,8 @@ Simulator.prototype.start = function(strainId) {
 
 		// Sort out the children for the upgrades, convert string pointers to related upgrades to actual pointers.
 		for (key in that.upgrades) {
-			var pathPointers = []
+			var pathPointers = [],
+				current;
 			if (that.upgrades.hasOwnProperty(key)) {
 				current = that.upgrades[key];
 				for(i = 0; i < current.paths.length; i++) {
@@ -383,6 +392,7 @@ Simulator.prototype.addUpgrades = function(module) {
     	// Send in default values etc
     	if(!levels[j].bg)
     		levels[j].bg = this.upgrades[levels[j].id].bg;
+    	delete levels[j].onUpgrade;
     }
     // send all the levels to the UI
     var evolution = this.UI.addEvolution(module.id,levels);
@@ -450,7 +460,7 @@ Simulator.prototype.purchaseUpgrades = function(upgrades) {
 	while(upgrades.length) {
 		upgrade = this.upgrades[upgrades.pop()];
 		this.properties.money -= upgrade.cost;
-		upgrade.activate();
+		upgrade.purchase();
 	}
 
 	return true;
@@ -628,7 +638,7 @@ Simulator.prototype.tick = function() {
 			}
 		} else {
 			if(!this.interval)
-				this.interval = setInterval( (function(self) { return self.tick } )(this), 500);
+				this.interval = setInterval( (function(self) { return function() {self.tick()}} )(this), 500);
 		}
 
 	}
@@ -746,32 +756,36 @@ Module.prototype = {
 Module.prototype.isActive = function() {
 	return this.activeId != undefined;
 }
-Module.prototype.val = function(name, newval, operation) {
+Module.prototype.val = function(name, newval, operation, upgrade) {
 	if(!newval)
 		return this[name];
 	else {
+		// Gene upgrades should store a default value to it gcan be reverted when the gene is removed. 
 		if(!this.defaults)
 			this.defaults = {};
 		if(this.defaults[name] === undefined)
 			this.defaults[name] = this[name]
+
+		// Make sure geneless upgrades actually change the default value as well so they are permanant.
+		if(upgrade !== undefined && !upgrade.gene) {
+			switch(operation) {
+				case '+':this.defaults[name] += newval;break;
+				case '-':this.defaults[name] -= newval;break;
+				case '*':this.defaults[name] *= newval;break;
+				case '/':this.defaults[name] /= newval;break;
+				case '^':this.defaults[name] = Math.pow(this[name],newval);break;
+				default: this.defaults[name] = newval;
+			}
+
+		}
+
 		switch(operation) {
-			case '+':
-				this[name] += newval;
-				break;
-			case '-':
-				this[name] -= newval;
-				break;
-			case '*':
-				this[name] *= newval;
-				break;
-			case '/':
-				this[name] /= newval;
-				break;
-			case '^':
-				this[name] = Math.pow(this[name],newval);
-				break;
-			default:
-				this[name] = newval;
+			case '+':this[name] += newval;break;
+			case '-':this[name] -= newval;break;
+			case '*':this[name] *= newval;break;
+			case '/':this[name] /= newval;break;
+			case '^':this[name] = Math.pow(this[name],newval);break;
+			default: this[name] = newval;
 		}
 	}
 }

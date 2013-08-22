@@ -1,16 +1,9 @@
 ## Priority 1 ##
-
-	* Each square has: encounterProbability, zombieStrength, humanStrength, infectChance, spreadChance (8 index array for the virus itself to adjacent squares)
-		+ zombieStrength and humanStrength should be directly comparable
-		+ subset of humans and zombies that encounter each other fight, infectChance takes effect for every zombie that "wins the fight". Other zombies that 
-			win just kill their opponent. Humans that win always kill the zombie
 			
 	* Do every square for each module at once, as opposed to every module for each square to reduce function calls from 30000n to n
-
+	
 
 ## Priority 2 ##
-
-	* Make resistance kill zombies.
 
 	* Button for toggling mouseover debug in console
 
