@@ -435,7 +435,7 @@ Evolution.prototype.mutate = function() {
 				this.all[key].gene.active = this.mutation.length;
 				this.mutation.push({ upgrade: key, placement: this.all[key].gene.placement });
 			} else {
-				if(this.all[key].gene.active)
+				if(this.all[key].gene.active !== undefined)
 					delete this.all[key].gene.active;
 			}
 		}
