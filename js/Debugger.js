@@ -104,14 +104,14 @@ function Debugger(dataPoint) {
 		that.debugBody.find('.debugConsole').on('click','.module',function() {
 			var moduleId = $(this).data('moduleId');
 			if(!that.watchModules[moduleId]) {
-				$(this).parent().addClass('selected');
+				$(this).addClass('selected');
 				if($(this).data('moduleRuntime'))
 					that.watchModules[moduleId] = $(this).data('moduleRuntime');
 				else
 					that.watchModules[moduleId] = true;
 			}
 			else {
-				$(this).parent().removeClass('selected');
+				$(this).removeClass('selected');
 				that.watchModules[moduleId] = false;
 			}
 			debug.console.watchModulesCache = false;
@@ -140,7 +140,7 @@ Debugger.prototype.updateTarget = function(self,target) {
 }
 Debugger.prototype.updateStrength = function(name,strength) {
 	var moduleId = name.split('.',1)[0];
-	var moduleInfo = $('<table class="module"></table>');
+	var moduleInfo = $('<table></table>');
 	moduleInfo.append($('<tr></tr>').html('<th colspan="4">'+name+'</th>'));
 	if(this.lastStrength === null)
 		this.lastStrength = {};
@@ -154,22 +154,23 @@ Debugger.prototype.updateStrength = function(name,strength) {
         	this.lastStrength[item] = strength[item];
         }
 
-	this.debugBody.find('.debugConsole').append($('<td></td>').append(moduleInfo));
+    var moduleContainer = $('<td class="module"></td>');
+	this.debugBody.find('.debugConsole').append(moduleContainer.append(moduleInfo));
 	
 	if(this.watchModules[moduleId])
-		moduleInfo.parent().addClass('selected');
-	if(!moduleInfo.data('moduleId'))
-		moduleInfo.data('moduleId', moduleId);
+		moduleContainer.addClass('selected');
+	if(!moduleContainer.data('moduleId'))
+		moduleContainer.data('moduleId', moduleId);
 }
 Debugger.prototype.reportOutput = function(name,string) {
 	var moduleId = name.split('.',1)[0];
-	var moduleInfo = $('<td class="module"></td>').html('<h3>'+name+'</h3>'+string);
-	this.debugBody.find('.debugConsole').append(moduleInfo);
+	var moduleContainer = $('<td class="module"></td>').html('<div><h3>'+name+'</h3>'+string+'</div>');
+	this.debugBody.find('.debugConsole').append(moduleContainer);
 
 	if(this.watchModules[moduleId])
-		moduleInfo.parent().addClass('selected');
-	if(!moduleInfo.data('moduleId'))
-		moduleInfo.data('moduleId', moduleId);
+		moduleContainer.addClass('selected');
+	if(!moduleContainer.data('moduleId'))
+		moduleContainer.data('moduleId', moduleId);
 }
 Debugger.prototype.watchPoint = function(dataPoint) {
 	if(dataPoint) {
