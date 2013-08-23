@@ -34,9 +34,8 @@ new Module('strain', function(current,target,strength) {
 
 		this.attack(target, totalInfected);
 
-		this.S.countries[target.country].panic += strength.panic;
 		if(debug.console)
-			result += 'targetInfected: '+totalInfected+'<br />'+this.S.countries[target.country].name+' panic change: '+this.S.countries[target.country].panic+'<br />';
+			result += 'targetInfected: '+totalInfected+'<br />';
 	}
 
 	// Contact infection on self tile
@@ -50,11 +49,13 @@ new Module('strain', function(current,target,strength) {
 
 		this.attack(current, totalInfected, totalKilled, zombieLosses);
 
-		this.S.countries[current.country].panic += strength.panic;
 		if(debug.console)
 			result += 'selfInfected: '+totalInfected+'<br />selfHumansKilled: '+totalKilled+'<br />selfZombiesKilled: '+zombieLosses+'<br />'+this.S.countries[current.country].name+' panic change: '+this.S.countries[current.country].panic+'<br />';
 	}
-	this.S.properties.panic += strength.panic;
+
+	if(current.panic === undefined)
+		current.panic = 0;
+	current.panic += strength.panic;
 
 	if(debug.console)
 		return result + 'world panic change: '+strength.panic;
@@ -70,16 +71,18 @@ new Module('strain', function(current,target,strength) {
 				zombiesKilled = 0;
 			if(target.total_pop < totalKilled)
 				totalKilled = target.total_pop;
-			if(target.total_pop< totalInfected + totalKilled)
+			if(target.total_pop < totalInfected + totalKilled)
 				totalInfected = target.total_pop - totalKilled;
-			if(target.infected < zombiesKilled)
-				zombiesKilled = target.infected;
 
 			target.total_pop -= totalInfected;
 			target.total_pop -= totalKilled;
 			target.infected += totalInfected;
-			target.infected -= zombiesKilled;
 			target.dead += totalKilled;
+
+			if(target.infected < zombiesKilled)
+				zombiesKilled = target.infected;
+			
+			target.infected -= zombiesKilled;
 
 			// Update world pop numbers
 			this.S.modules['worldStats'].val('world_pop',totalInfected+totalKilled,'-');

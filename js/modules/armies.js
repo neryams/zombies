@@ -40,9 +40,6 @@ new Module('event', function() {
 					this.S.points[i].total_pop -= to_move;
 					this.S.updateSquare(this.S.points[i]);
 					total_pop += to_move;
-
-					// Enlisting to army also boosts the country's resistance level as a whole - Higher alertness.
-					this.S.points[i].human_strength += portion;
 				}
 			} while (i);
 			this.size += total_pop;
