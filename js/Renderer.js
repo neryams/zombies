@@ -170,15 +170,13 @@ var Renderer = function () {
         // Bars to show zombies and humans
         geometry = new THREE.CubeGeometry(0.9, 0.9, 1, 1, 1, 1, null, false, { px: true,
               nx: true, py: true, ny: true, pz: false, nz: true});
-        geometry.faces.length = 5 // remove bottom of cube (=4 to temove top as well)
         // Move the "position point" of the cube to the bottom so it sits on the surface of the globe.
-        geometry.applyMatrix( new THREE.Matrix4().translate( new THREE.Vector3(0, 0, 0.5)));
+        geometry.applyMatrix( new THREE.Matrix4().makeTranslation(0, 0, 0.5) );
         point = new THREE.Mesh(geometry); // humans
 
         geometry = new THREE.CubeGeometry(0.9, 0.8, 1, 1, 1, 1, null, false, { px: true,
               nx: true, py: true, ny: true, pz: false, nz: true});
-        geometry.applyMatrix( new THREE.Matrix4().translate( new THREE.Vector3(0, 0, 0.5)));
-        geometry.faces.length = 5 // remove bottom of cube
+        geometry.applyMatrix( new THREE.Matrix4().makeTranslation(0, 0, 0.5) );
         point2 = new THREE.Mesh(geometry); // zombies
 
         camera.lookAt( scene.position );
@@ -223,8 +221,8 @@ var Renderer = function () {
             element = datapoint.total_pop / gConfig.max_pop;
             //element = (gData.points[i].temperature - 220) / 100;
 
-        color.setHSV( ( 0.6 - ( element * 0.3 ) ), 1.0, 1.0 );
-        infectColor.setHSV( 0, 1.0, 0.9 );
+        color.setHSL( ( 0.6 - ( element * 0.3 ) ), 1.0, 0.5 );
+        infectColor.setHSL( 0, 1.0, 0.45 );
         var size = element * 60 + 2;
 
         point.position.x = 198 * Math.sin(phi) * Math.cos(theta);
