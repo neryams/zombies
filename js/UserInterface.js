@@ -585,7 +585,7 @@ var UserInterface = function UserInterface(Renderer,language) {
 			$('#progress p').html(i18n.t("setup:loading.0"));
 		},
 		endGenerator: function() {
-			addDataField('stats','div',{ class: 'stats' }).addDataField('h1').label('ui:title');
+			addDataField('stats','div',{ class: 'stats' }).addDataField('h1').label('setup:title');
 			var uiMenu = addDataField('menu','div',{ class: 'main_menu' });
 			addDataField('money','text',{
 				title: 'Evolution Points',

@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset=utf-8 />
-    <title>Pandemic</title>
+    <title data-i18n="title"></title>
     <link rel="stylesheet" type="text/css" media="screen" href="css/main.css" />
     <script src="js/third-party/jquery-2.0.2.min.js"></script>
     <script src="js/third-party/i18next-1.6.3.min.js"></script>
@@ -52,7 +52,7 @@
 </head>
 <body>
     <div id="setup">
-        <h2>Zombies</h2>
+        <h2 data-i18n="title"></h2>
         <form action="#" method="GET">
             <span data-i18n="labels.texturesize"></span><select name="texture_size" id="s_tx">
                 <option data-i18n="texturesizes.low" value="360"></option>
@@ -103,7 +103,7 @@
             // On window close or reload, close all child windows (i.e. debug consoles)
             $(window).unload(function() {
                 if(debug.console)
-                    for (var point in debug.console) 
+                    for (var point in debug.console)
                         if(debug.console.hasOwnProperty(point) && debug.console[point].close)
                             debug.console[point].close();
             });
@@ -111,6 +111,7 @@
             // Load language files
             $.i18n.init({ resGetPath: 'locales/__lng__/__ns__.json', lng: 'en', load: 'unspecific', ns: 'setup', fallbackLng: 'en', debug: true, useCookie: false }, function() {
                 $("#setup").i18n();
+                $("head title").i18n();
             });
 
             // Event handler for updating setup menu with language choice change
@@ -118,6 +119,7 @@
                 $("form :input").attr("disabled", true);
                 $.i18n.setLng( $(this).val(), function() {
                     $("#setup").i18n();
+                    $("head title").i18n();
                     $("form :input").attr("disabled", false);
                 });
             });
