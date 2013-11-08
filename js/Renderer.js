@@ -2,34 +2,9 @@
     3d renderer module. 
     Dependencies: Three.js
 */
-var Renderer = function () {
-    var camera, scene, sphere, renderer, dataBars, point, point2, visualLayer, visualLayerTexture, visualArc,
-        visualization, visualizations = {}, uiTextures = {}, decals = {},
-        mouseVector, windowX, windowY,
-
-        climateGradient = document.createElement('canvas'),
-        climateBg = new Image(),
-
-        subgeo = new THREE.Geometry(),
-        rotation = { x: 0, y: 0, z: 0 },
-        PI_HALF = Math.PI / 2,
-        onRender = function () {},
-        ready = false;
-
-    mouseVector = new THREE.Vector3(0, 0, 0);
-
-    climateBg.onload = function () {
-        climateGradient.width = climateBg.width;
-        climateGradient.height = climateBg.height;
-        var ctx = climateGradient.getContext("2d");
-        ctx.drawImage(climateBg, 0, 0);
-    };
-    climateBg.src = 'ui/climateGradient.jpg';
-
-    uiTextures['gun'] = new THREE.ImageUtils.loadTexture('ui/gun.png');
-
+var Renderer = function (scaling) {
     // Function for filling the canvases with the data generated previously
-    function buildImage(globeTexture, globeHeightmap, texture) {
+    var buildImage = function(globeTexture, globeHeightmap, texture) {
         var current, dtI, gradX, gradY, gradI, color, color_ratio,
             ctxT = globeTexture.getContext("2d"),
             ctxH = globeHeightmap.getContext("2d"),
@@ -86,9 +61,9 @@ var Renderer = function () {
         }
         ctxT.putImageData(imgdT, 0, 0);
         ctxH.putImageData(imgdH, 0, 0);
-    }
+    },
 
-    var init = function(texture) {
+    init = function(texture) {
         /* Create Textures for Globe ----------- */
         var globeTexture = document.createElement( 'canvas' ); 
         globeTexture.width = gConfig.tx_w;
@@ -114,10 +89,7 @@ var Renderer = function () {
         buildImage(globeTexture,globeHeightmap,texture);
 
         /* Create 3D Globe --------------------- */
-        windowX = window.innerWidth;
-        windowY = window.innerHeight;
-
-        camera = new THREE.PerspectiveCamera( 60, windowX / windowY, 1, 10000 );
+        camera = new THREE.PerspectiveCamera( 60, display.windowX / display.windowY, 1, 10000 );
         camera.position.z = 450;
 
         scene = new THREE.Scene();
@@ -185,15 +157,15 @@ var Renderer = function () {
         /*renderer = new THREE.CanvasRenderer();
         renderer.setSize( window.innerWidth, window.innerHeight );*/
         renderer = new THREE.WebGLRenderer( { antialias: true, clearColor: 0x060708, clearAlpha: 1 } );
-        renderer.setSize( windowX, windowY );
+        resize();
 
         document.getElementById('container').appendChild( renderer.domElement );
 
         addData();
         ready = true;
-    }
+    },
 
-    function addData() {
+    addData = function() {
         var lat, lng, color, i, element;
 
         for (i = 0; i < gData.points.length; i++) {
@@ -211,9 +183,9 @@ var Renderer = function () {
             side: THREE.BackSide
         }));
         sphere.add( dataBars );
-    };
+    },
 
-    function addPoint( lat, lng, datapoint ) {
+    addPoint = function( lat, lng, datapoint ) {
         var phi = (90 - lat) * Math.PI / 180,
             theta = (180 - lng) * Math.PI / 180,
             color = new THREE.Color(),
@@ -253,9 +225,9 @@ var Renderer = function () {
         THREE.GeometryUtils.merge(subgeo, point2);
         // Last 8 points in merged geometry should be the vertices of the moving bar
         datapoint.vertices_zom = subgeo.vertices.slice(-8);
-    }
+    },
 
-    function render() {
+    render = function() {
         if(mouseVector.length() < 0.5)
             mouseVector.set(0,0,0);
         else {
@@ -282,21 +254,21 @@ var Renderer = function () {
         onRender();
 
         renderer.render( scene, camera );
-    }
+    },
 
-    function animate() {
+    animate = function() {
         requestAnimationFrame( animate );
         render();
-    }
+    },
 
-    function getSphereScreenSize( dist ) {
+    getSphereScreenSize = function( dist ) {
         // Given sphere size of 200 and FoV of 60
-        return (400/(2 * Math.tan( 30/180 * Math.PI ) * dist))*windowY;
-    }
+        return (400/(2 * Math.tan( 30/180 * Math.PI ) * dist))*display.windowY;
+    },
 
-    function checkIntersection( mouseX, mouseY ) {
+    checkIntersection = function( mouseX, mouseY ) {
         var projector = new THREE.Projector();
-        var vector    = new THREE.Vector3( (mouseX / windowX) * 2 - 1,    -(mouseY / windowY) * 2 + 1, 0.5);
+        var vector    = new THREE.Vector3( (mouseX / display.windowX) * 2 - 1,    -(mouseY / display.windowY) * 2 + 1, 0.5);
 
         // now "unproject" the point on the screen
         // back into the the scene itself. This gives
@@ -312,9 +284,9 @@ var Renderer = function () {
             return intersects[0].point;
         }
         return false;
-    }
+    },
 
-    function getVisualization(layer) {
+    getVisualization = function(layer) {
         if(visualizations[layer] != undefined)
             return visualizations[layer];
 
@@ -448,11 +420,11 @@ var Renderer = function () {
         }
 
         return visualization;
-    }
+    },
 
-    function getSphereCoords(mouseX,mouseY) {
-        var distX = mouseX - windowX/2;
-        var distY = mouseY - windowY/2;
+    getSphereCoords = function(mouseX,mouseY) {
+        var distX = mouseX - display.windowX/2;
+        var distY = mouseY - display.windowY/2;
         if(Math.sqrt(distX*distX + distY*distY) < getSphereScreenSize(camera.position.z)/2) {
             var intersect = checkIntersection( event.clientX, event.clientY );
 
@@ -464,9 +436,9 @@ var Renderer = function () {
                 return [(90 - Math.abs(phi*180/Math.PI)),360 + (theta*180/Math.PI + 90)%360,intersect];
         }
         return false;
-    }
+    },
 
-    function coordToCartesian(lat,lng,dist) {
+    coordToCartesian = function(lat,lng,dist) {
         if(!dist)
             dist = 200;
         phi = (90 - lat) * Math.PI / 180;
@@ -475,12 +447,66 @@ var Renderer = function () {
         y = dist * Math.cos(phi);
         z = dist * Math.sin(phi) * Math.sin(theta);
         return new THREE.Vector3(x,y,z);
-    }
+    },
+
+    resize = function(newWidth, newHeight, scaling) {
+        if(newWidth) {
+            display.windowX = newWidth;
+            display.windowY = newHeight;            
+        }
+        if(scaling)
+            display.scaling = parseFloat(scaling);
+
+        if(camera != undefined) {
+            camera.aspect = display.windowX / display.windowY;
+            camera.updateProjectionMatrix();
+        }
+        if(renderer != undefined) {
+            renderer.setSize( display.windowX/display.scaling, display.windowY/display.scaling );
+            $(renderer.domElement).css('width',display.windowX).css('height',display.windowY);
+            /*if(display.scaling != 1)
+                renderer.setViewport( 0, 0, display.windowX, display.windowY );     */       
+        }
+    },
+
+    // Initialize variables
+    camera, scene, sphere, renderer, dataBars, point, point2, visualLayer, visualLayerTexture, visualArc,
+        visualization, visualizations = {}, uiTextures = {}, decals = {},
+        mouseVector, 
+        display = { windowX:0 , windowY:0 , scaling:0 },
+
+        climateGradient = document.createElement('canvas'),
+        climateBg = new Image(),
+
+        subgeo = new THREE.Geometry(),
+        rotation = { x: 0, y: 0, z: 0 },
+        PI_HALF = Math.PI / 2,
+        onRender = function () {},
+        ready = false;
+
+    mouseVector = new THREE.Vector3(0, 0, 0);
+
+    climateBg.onload = function () {
+        climateGradient.width = climateBg.width;
+        climateGradient.height = climateBg.height;
+        var ctx = climateGradient.getContext("2d");
+        ctx.drawImage(climateBg, 0, 0);
+    };
+    climateBg.src = 'ui/climateGradient.jpg';
+
+    uiTextures['gun'] = new THREE.ImageUtils.loadTexture('ui/gun.png');
+
+    resize(window.innerWidth, window.innerHeight, scaling);
+
+    $(window).resize(function(event) {
+        resize(window.innerWidth,window.innerHeight);
+    });
 
     // Return functions
     return {
         animate: animate,
         getSphereCoords: getSphereCoords,
+        resize: resize,
         onRender: function(doOnRender) {
             onRender = doOnRender;
         },
@@ -519,17 +545,6 @@ var Renderer = function () {
                 sphere.add(decals[id]);
             } else {
                 // If the decal already exists, animate it
-            }
-        },
-        resize: function(newWidth, newHeight) {
-            if(camera != undefined) {
-                windowX = newWidth;
-                windowY = newHeight;
-
-                camera.aspect = newWidth / newHeight;
-                camera.updateProjectionMatrix();
-
-                renderer.setSize( newWidth, newHeight );          
             }
         },
         lookAt: function (square) {

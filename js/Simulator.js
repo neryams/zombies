@@ -169,6 +169,13 @@ gridPoint.prototype.equals = function(gridpoint) {
 }
 
 function Simulator(modules, R, UI, gConfig, gData) {
+	// Game and virus properties!
+	this.properties = { 
+		virus_name: '', 
+		money: 500000, 
+		panic: 0, 
+		gridSize: 5
+	};
 	this.modules = {};
 	this.activeModules = {infect:[],spread:[],event:[]};
 	this.activePoints = [];
@@ -176,7 +183,6 @@ function Simulator(modules, R, UI, gConfig, gData) {
 	this.date = new Date();
 	this.date.setTime(1577880000000); // Jan 1st, 2030
 	this.UIData = {};
-	this.properties = { virus_name: '', money: 500000, panic: 0, gridSize: 5 };
 	this.upgrades = {};
 
 	// Pre-generate some values for the simulation so they only have to be calculated once

@@ -2,6 +2,7 @@
 	"title": "ロボワールド",
 	"labels": {
 		"texturesize": "画質",
+		"resolution": "解像度",
 		"seed": "シード",
 		"models": "使うモデル",
 		"language": "言語",

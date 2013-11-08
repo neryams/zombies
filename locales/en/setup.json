@@ -2,6 +2,7 @@
 	"title": "Roboworld",
 	"labels": {
 		"texturesize": "Texture Size",
+		"resolution": "Resolution",
 		"seed": "Seed",
 		"models": "Models",
 		"language": "Language",

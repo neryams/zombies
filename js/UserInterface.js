@@ -987,10 +987,6 @@ var UserInterface = function UserInterface(Renderer,language) {
         //UI.interfaceParts.mutateMenu_button.element.trigger('click');
 	}
 
-	$(window).resize(function(event) {
-		Renderer.resize(window.innerWidth,window.innerHeight);
-	});
-
    	// Function that runs on every frame, sending mouse movement from UI as coordinates to the renderer to move 3-d elements around
 	Renderer.onRender(function() {
 		if(!status.pauseRenderer) {

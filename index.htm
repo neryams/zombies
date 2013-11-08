@@ -60,6 +60,11 @@
                 <option data-i18n="texturesizes.high" value="1440"></option>
                 <option data-i18n="texturesizes.ultra" value="2160"></option>
             </select><br />
+            <span data-i18n="labels.resolution"></span><select name="resolution" id="s_rs">
+                <option value="1" selected>native</option>
+                <option value="1.5">1/1.5</option>
+                <option value="2">1/2</option>
+            </select><br />
             <span data-i18n="labels.seed"></span><input type="text" name="seed" id="s_seed" /><br />
             <span data-i18n="labels.models">Modules: </span><input type="text" name="modules" id="s_modules" value="main,gridBoost,climate,seaports" /><br />
             <span data-i18n="labels.language">Language: </span><select name="language" id="s_lng">
@@ -131,7 +136,8 @@
                 var userConfig = {
                     seed: $('#s_seed').val(),
                     tx_w: $('#s_tx').val(),
-                    language: $('#s_lng').val()
+                    language: $('#s_lng').val(),
+                    resolution: $('#s_rs').val()
                 }
 
                 // Load the rest of the language files
@@ -144,7 +150,7 @@
                 $.getScript('js/loadModules.php?modules='+$('#s_modules').val(), function () {
                     $("#setup").remove();
 
-                    R = Renderer();
+                    R = Renderer(userConfig.resolution);
                     UI = UserInterface(R);
 
                     UI.init(function() {
