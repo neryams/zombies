@@ -38,11 +38,12 @@ new Module('strain', function(current,target,strength) {
 			result += 'targetInfected: '+totalInfected+'<br />';
 	}
 
+	var self_encounters = 0;
 	// Contact infection on self tile
 	if(strength.encounterProbability && totalStrength > 0) {
 		var rand = Math.random();
-		var self_encounters = Math.round(((rand*2 + (rand*10%1)*2 + (rand*100%1)*2)/3) * (strength.encounterProbability)),
-			humanLosses = Math.round(self_encounters*(strength.zombieStrength/totalStrength));
+		self_encounters = Math.round(((rand*2 + (rand*10%1)*2 + (rand*100%1)*2)/3) * (strength.encounterProbability));
+		var humanLosses = Math.round(self_encounters*(strength.zombieStrength/totalStrength));
 		zombieLosses = self_encounters - humanLosses;
 		totalInfected = Math.round(humanLosses * strength.infectChance);
 		totalKilled = humanLosses - totalInfected;
@@ -50,15 +51,15 @@ new Module('strain', function(current,target,strength) {
 		this.attack(current, totalInfected, totalKilled, zombieLosses);
 
 		if(debug.console)
-			result += 'selfInfected: '+totalInfected+'<br />selfHumansKilled: '+totalKilled+'<br />selfZombiesKilled: '+zombieLosses+'<br />'+this.S.countries[current.country].name+' panic change: '+this.S.countries[current.country].panic+'<br />';
+			result += 'selfInfected: '+totalInfected+'<br />selfHumansKilled: '+totalKilled+'<br />selfZombiesKilled: '+zombieLosses;
 	}
 
 	if(current.panic === undefined)
 		current.panic = 0;
-	current.panic += strength.panic;
+	current.panic += strength.panic*self_encounters;
 
 	if(debug.console)
-		return result + 'world panic change: '+strength.panic;
+		return result + '<br />' + current.id + ' square change: '+strength.panic;
 },{
 	init: function(callback) {
 
