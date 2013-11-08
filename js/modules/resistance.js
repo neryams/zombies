@@ -7,14 +7,12 @@ new Module('infect', function(current,target,strength) {
 		if(!current.humanStrength)
 			current.humanStrength = 0;
 
-		current.humanStrength += current.panic / 100;
-
-		if(current.army) {
+		/*if(current.army) {
 			// Army can protect itself but offers only limited protection to civilians, the less the better
 			current.humanStrength += (current.army.size / current.total_pop) * current.army.experience;
-		}
+		}*/
 
-		strength.humanStrength = current.humanStrength;
+		strength.humanStrength = current.humanStrength + Math.log(current.panic+1);
 	}
 },{
 	init: function() {

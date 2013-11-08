@@ -61,9 +61,8 @@ new Module('strain', function(current,target,strength) {
 		return result + 'world panic change: '+strength.panic;
 },{
 	init: function(callback) {
-		var candidate = [0,null];
-		var randCountry = Math.floor((this.S.countries.length-1) * Math.random()) + 1;
 
+		// Save the function that will perform the simulation based on strength, after the infect modules.
 		this.attack = function(target, totalInfected, totalKilled, zombiesKilled) {
 			if(!totalKilled)
 				totalKilled = 0;
@@ -93,11 +92,30 @@ new Module('strain', function(current,target,strength) {
 			// return Math.round((totalInfected*1.5+totalKilled) * (target.total_pop/this.S.config.max_pop + 0.5));
 		}
 
+		// Code to start the simulation
+		var startRandomizer = 1000 + Math.round(Math.random()*4000);
+		var randPoint = null;
+
+		// Loop through all the points and pick the starting point, the point with population closest to a random number
+		// don't want to start in an area with no people, but not in a huge city either.
+		for(var i = 0, n = this.S.points.length; i < n; i++) {
+			if(this.S.points[i].total_pop) {
+				if(!randPoint) {
+					randPoint = this.S.points[i];
+				} else {
+					if(Math.abs(randPoint.total_pop - startRandomizer) > Math.abs(this.S.points[i].total_pop - startRandomizer))
+						randPoint = this.S.points[i];						
+				}
+			}
+		}
+
+		// Create the starting seed for the upgrade tree
 		this.S.addUpgrades(this,
 			{cost:0,paths:[],name:'Virus',active:true, description:'Basic Virus. Creates slow, witless zombies that enjoy eating healthy brains.'} // setting active to true makes the upgrade automatically purchased
 		);
 
-		callback(this.S.countries[randCountry].capitol);
+		// Send the starting point back to the callback function to start the simulation
+		callback(randPoint);
 	},
 	children: ['worldStats','population','bite','movement','panic','viralInfect']
 })
