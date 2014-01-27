@@ -4,7 +4,7 @@
     <meta charset=utf-8 />
     <title data-i18n="title"></title>
     <link rel="stylesheet" type="text/css" media="screen" href="css/main.css" />
-    <script src="js/third-party/jquery-2.0.2.min.js"></script>
+    <script src="js/third-party/jquery-2.1.0.min.js"></script>
     <script src="js/third-party/i18next-1.6.3.min.js"></script>
     <script src="js/third-party/seedrandom.min.js"></script>
     <script src="js/third-party/three.js"></script>
@@ -105,6 +105,12 @@
         };
 
         $(function () {
+            // Select Resolution closes to device pixel ratio
+            var ratioSelect = $('#s_rs')
+            $('option', ratioSelect).each(function() {
+                if(Math.abs(parseFloat(ratioSelect.val()) - window.devicePixelRatio) > Math.abs(parseFloat($(this).attr('value')) - window.devicePixelRatio))
+                    ratioSelect.val($(this).attr('value'));
+            })
             // On window close or reload, close all child windows (i.e. debug consoles)
             $(window).unload(function() {
                 if(debug.console)
