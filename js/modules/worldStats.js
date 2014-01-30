@@ -12,6 +12,7 @@ new Module('event', function() {
 	this.S.UIData['cur_date'] = this.S.date.getMonthName() + ' ' + this.S.date.getDate() + ', ' + this.S.date.getFullYear();
 	this.S.UIData['money'] = this.S.properties.money;
 },{
+	runtime: 20, // Always run this last to get accurate data
 	init: function() {
 		this.world_pop = 0;
 		for(var i = 0, n = this.S.populatedPoints.length; i < n; i++) {
@@ -34,5 +35,6 @@ new Module('event', function() {
         	value: this.world_infected
         });
 	},
-	alwaysActive: true
+	alwaysActive: true,
+	children: ['locationStats']
 })

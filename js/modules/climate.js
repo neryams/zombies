@@ -6,8 +6,8 @@ new Module('infect', function(current,target,strength) {
 	var precAdjust = 1 / (Math.pow((this.idealWet - target.precipitation)/(this.rangeWet),2) + 1);
 	strength.spreadChance   *= tempAdjust * precAdjust * 1.5;
 
-	var tempAdjust = 1 / (Math.pow((this.idealTemp - current.temperature)/(this.rangeTemp),2) + 1);
-	var precAdjust = 1 / (Math.pow((this.idealWet - current.precipitation)/(this.rangeWet),2) + 1);
+	var tempAdjust = 1 / (Math.pow((this.idealTemp - current.location.temperature)/(this.rangeTemp),2) + 1);
+	var precAdjust = 1 / (Math.pow((this.idealWet - current.location.precipitation)/(this.rangeWet),2) + 1);
 	strength.infectChance   *= tempAdjust * precAdjust * 1.5;
 	strength.zombieStrength *= tempAdjust * precAdjust * 1.5;
 	strength.mobility *= tempAdjust * precAdjust;

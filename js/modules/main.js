@@ -22,10 +22,6 @@ new Module('strain', function(current,target,strength) {
 		if(strength.spreadChance && target.infected == 0) {
 			if(rand < (strength.spreadChance)) {
 				totalInfected = Math.round(rand * strength.spreadChance);
-				if(totalInfected > 0 && !target.active) {
-					this.S.activePoints.push(target);
-					target.active = true;				
-				}
 			}
 		// Or further infect tiles with zombies already in them
 		} else if(strength.spreadChance) {
@@ -48,23 +44,23 @@ new Module('strain', function(current,target,strength) {
 		totalInfected = Math.round(humanLosses * strength.infectChance);
 		totalKilled = humanLosses - totalInfected;
 
-		this.attack(current, totalInfected, totalKilled, zombieLosses);
+		this.attack(current.location, totalInfected, current, totalKilled, zombieLosses);
 
 		if(debug.console)
 			result += 'selfInfected: '+totalInfected+'<br />selfHumansKilled: '+totalKilled+'<br />selfZombiesKilled: '+zombieLosses;
 	}
 
-	if(current.panic === undefined)
-		current.panic = 0;
-	current.panic += strength.panic*self_encounters;
+	if(current.location.panic === undefined)
+		current.location.panic = 0;
+	current.location.panic += strength.panic*self_encounters;
 
 	if(debug.console)
-		return result + '<br />' + current.id + ' square change: '+strength.panic;
+		return result + '<br />' + current.location.id + ' square change: '+strength.panic;
 },{
 	init: function(callback) {
 
 		// Save the function that will perform the simulation based on strength, after the infect modules.
-		this.attack = function(target, totalInfected, totalKilled, zombiesKilled) {
+		this.attack = function(target, totalInfected, horde, totalKilled, zombiesKilled) {
 			if(!totalKilled)
 				totalKilled = 0;
 			if(!zombiesKilled)
@@ -74,23 +70,28 @@ new Module('strain', function(current,target,strength) {
 			if(target.total_pop < totalInfected + totalKilled)
 				totalInfected = target.total_pop - totalKilled;
 
-			target.total_pop -= totalInfected;
-			target.total_pop -= totalKilled;
-			target.infected += totalInfected;
-			target.dead += totalKilled;
+			if(totalInfected > 0 || totalKilled > 0) {
+				// Update the population record on the square
+				target.total_pop -= totalInfected;
+				target.total_pop -= totalKilled;
+				target.infected += totalInfected;
+				target.dead += totalKilled;
 
-			if(target.infected < zombiesKilled)
-				zombiesKilled = target.infected;
-			
-			target.infected -= zombiesKilled;
+				if(target.infected < zombiesKilled)
+					zombiesKilled = target.infected;
+				
+				target.infected -= zombiesKilled;
 
-			// Update world pop numbers
-			this.S.modules['worldStats'].val('world_pop',totalInfected+totalKilled,'-');
-			this.S.modules['worldStats'].val('world_infected',totalInfected,'+');
-			this.S.modules['worldStats'].val('world_infected',zombiesKilled,'-');
+				if(!horde && totalInfected > 0) {
+					var horde = new Horde(totalInfected, target);
+					this.S.hordes.push(horde);
+				}
+				else
+					horde.size += totalInfected
 
-			// Test removing panic from main, too confusing. // Add the cumulative panic level into the country and the world
-			// return Math.round((totalInfected*1.5+totalKilled) * (target.total_pop/this.S.config.max_pop + 0.5));
+				// Update world pop numbers
+				this.S.modules['worldStats'].val('world_pop',totalInfected+totalKilled,'-');
+			}
 		}
 
 		// Code to start the simulation

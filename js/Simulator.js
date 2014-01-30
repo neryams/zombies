@@ -168,6 +168,38 @@ gridPoint.prototype.equals = function(gridpoint) {
     return this.x == gridpoint.x && this.y == gridpoint.y;
 }
 
+function Horde(size, location, inherit) {
+	if(inherit)
+		for (var key in options)
+			if (inherit.hasOwnProperty(key)) {
+				this[key] = inherit[key];
+			}
+
+	this.id = Horde.prototype.id++;
+	this.size = size;
+	if(this.location !== undefined)
+		this.location = location;
+}
+Horde.prototype = {
+	id: 0,
+	size: 0,
+	location: null,
+	split: function(amount) {
+		if(amount > 0 && amount < 1) {
+			var newHorde = new Horde(this.size * amount, this.location, this);
+			this.size = this.size * (1-amount);
+			return newHorde;
+		} else if(amount >= 1) {
+			if(amount >= this.size) {
+				amount = this.size;
+			}
+			var newHorde = new Horde(amount, this.location, this);
+			this.size = this.size - amount;
+			return newHorde;
+		}
+	}
+}
+
 function Simulator(modules, R, UI, gConfig, gData) {
 	// Game and virus properties!
 	this.properties = { 
@@ -178,7 +210,7 @@ function Simulator(modules, R, UI, gConfig, gData) {
 	};
 	this.modules = {};
 	this.activeModules = {infect:[],spread:[],event:[]};
-	this.activePoints = [];
+	this.hordes = [];
 	this.iteration = 0;
 	this.date = new Date();
 	this.date.setTime(1577880000000); // Jan 1st, 2030
@@ -275,9 +307,8 @@ Simulator.prototype.start = function(strainId) {
 	that = this;
 	that.strain.init(function(startSq) {
 		that.startPoint = startSq;
-		that.activePoints.push(startSq);
-		startSq.active = true;
-		startSq.infected = 1;
+		// Create the first horde, with one zombie in it.
+		that.hordes.push(new Horde(1, startSq));
 		if(debug.console)
 			debug.console.watchPoint(startSq);
 
@@ -533,53 +564,53 @@ Simulator.prototype.tick = function() {
 	if(this.paused)
 		return false;
 
-	var i,j,n,spread_rand,rand,target,current,chance,chances,direction,distance,beginInfected,strength = {},
+	var i,j,n,spread_rand,rand,target,current,chance,chances,direction,distance,strength = {},
 		S = this;
 	if(this.strain != null) {
-        var size;
 		if(debug.console)
 			debug.console.newTick();
 
-		for(i = 0; i < this.activePoints.length; i++) {
-			current = this.activePoints[i];
+		// Must cache the horde length because we will be adding more in this loop and want to not do them until next time
+		for(i = 0, n = this.hordes.length; i < n; i++) { 
+			current = this.hordes[i];
 
-			if(current.infected < 1) {
-				current.active = false;
-				this.activePoints.splice(i,1);
+			if(current.size < 1) {
+				this.hordes.splice(i,1);
+				delete current;
 				i--;
+				n--;
 			}
 
-			chances = this.bakedValues.latCumChance[Math.floor(Math.abs(current.lat))];
-			beginInfected = current.infected;
-			if(debug.watchPoint == current.id) {
+			chances = this.bakedValues.latCumChance[Math.floor(Math.abs(current.location.lat))];
+			if(debug.watchPoint == current.location.id) {
 				console.log(current);
 				debugger;
 			}
 
 			rand = Math.random();
 			if(rand < chances[0]) {
-				target = current.adjacent[0];
+				target = current.location.adjacent[0];
 			}
 			else if(rand < chances[1]) {
-				target = current.adjacent[1];
+				target = current.location.adjacent[1];
 			}
 			else if(rand < chances[2]) {
-				target = current.adjacent[2];
+				target = current.location.adjacent[2];
 			}
 			else if(rand < chances[3]) {
-				target = current.adjacent[3];
+				target = current.location.adjacent[3];
 			}
 			else if(rand < chances[4]) {
-				target = current.adjacent[0].adjacent[1];
+				target = current.location.adjacent[0].adjacent[1];
 			}
 			else if(rand < chances[5]) {
-				target = current.adjacent[2].adjacent[1];
+				target = current.location.adjacent[2].adjacent[1];
 			}
 			else if(rand < chances[6]) {
-				target = current.adjacent[2].adjacent[3];
+				target = current.location.adjacent[2].adjacent[3];
 			}
 			else {
-				target = current.adjacent[0].adjacent[3];
+				target = current.location.adjacent[0].adjacent[3];
 			}
 			
 			// infect is for all squares, infectSelf is for just its own square, mobili
@@ -591,21 +622,25 @@ Simulator.prototype.tick = function() {
 			strength.mobility = 0;
 			strength.panic = 0;
 
+
 			if(debug.console) 
 				debug.console.updateTarget(current, target);
 
+			// Run infect modules on each horde
 			for(j = 0; j < this.activeModules.infect.length; j++) {
 				this.activeModules.infect[j].process(current,target,strength);
 				if(debug.console)
 					debug.console.reportModule(current, this.activeModules.infect[j].id, strength);
 			}
 			
+			// Run main modules on each horde
 			if(debug.console) {
 				debug.console.reportOutput(current, this.strain.id, this.strain.process(current,target,strength));
 			} else {
 				this.strain.process(current,target,strength);
 			}
 
+			// Run spread modules on each horde
 			for(j = 0; j < this.activeModules.spread.length; j++) {
 				if(debug.console)
 					debug.console.reportOutput(current, this.activeModules.spread[j].id, this.activeModules.spread[j].process(current,strength));
@@ -615,13 +650,14 @@ Simulator.prototype.tick = function() {
 
 			// Update nearby square populations
 			if(this.iteration%10 == current.id%10) {
-				current.updateNearbyPop();				
+				current.location.updateNearbyPop();				
 			}
 
-			this.updateSquare(current);
+			this.updateSquare(current.location);
 			this.updateSquare(target);
 		}
 
+		// Run event modules once
 		for(j = 0; j < this.activeModules.event.length; j++) {
 			if(debug.console)
 				debug.console.reportOutput(current, this.activeModules.event[j].id, this.activeModules.event[j].process());
