@@ -652,9 +652,6 @@ Simulator.prototype.tick = function() {
 			if(this.iteration%10 == current.id%10) {
 				current.location.updateNearbyPop();				
 			}
-
-			this.updateSquare(current.location);
-			this.updateSquare(target);
 		}
 
 		// Run event modules once
@@ -685,13 +682,13 @@ Simulator.prototype.tick = function() {
 
 	}
 }
-Simulator.prototype.updateSquare = function(target) {
+Simulator.prototype.updateSquare = function(target, force) {
 	var	size_pop = (target.total_pop) / this.config.max_pop,
 		size_zom = (target.infected) / this.config.max_pop;
 	if(!target.cache) {
 		this.Renderer.setData(target, size_pop, size_zom);
 		target.cache = { infected: target.infected, total_pop: target.total_pop }
-	} else if(target.cache.infected != target.infected || target.cache.total_pop != target.total_pop) {
+	} else if(force || (target.cache.infected != target.infected || target.cache.total_pop != target.total_pop)) {
 		this.Renderer.setData(target, size_pop, size_zom); 
 		target.cache.infected = target.infected;
 		target.cache.total_pop = target.total_pop;
@@ -793,49 +790,61 @@ Module.prototype = {
 	runtime: 10, // Smaller numbers run sooner
 	dependencies: [],
 	children: [],
-	process: function() {return 0}
-}
-Module.prototype.isActive = function() {
-	return this.activeId != undefined;
-}
-Module.prototype.val = function(name, newval, operation, upgrade) {
-	if(!newval)
-		return this[name];
-	else {
-		// Gene upgrades should store a default value to it gcan be reverted when the gene is removed. 
-		if(!this.defaults)
-			this.defaults = {};
-		if(this.defaults[name] === undefined)
-			this.defaults[name] = this[name]
+	process: function() {return 0},
+	isActive: function() {
+		return this.activeId != undefined;
+	},
+	reset: function() {
+		if(this.defaults) {
+			for (var key in this.defaults)
+				if(this.defaults.hasOwnProperty(key))
+					this[key] = this.defaults[key];
+			delete this.defaults
+		}
+	},
+	val: function(name, newval, operation, upgrade) {
+		if(!newval)
+			return this[name];
+		else {
+			// Gene upgrades should store a default value to it gcan be reverted when the gene is removed. 
+			if(!this.defaults)
+				this.defaults = {};
+			if(this.defaults[name] === undefined)
+				this.defaults[name] = this[name]
 
-		// Make sure geneless upgrades actually change the default value as well so they are permanant.
-		if(upgrade !== undefined && !upgrade.gene) {
-			switch(operation) {
-				case '+':this.defaults[name] += newval;break;
-				case '-':this.defaults[name] -= newval;break;
-				case '*':this.defaults[name] *= newval;break;
-				case '/':this.defaults[name] /= newval;break;
-				case '^':this.defaults[name] = Math.pow(this[name],newval);break;
-				default: this.defaults[name] = newval;
+			// Make sure geneless upgrades actually change the default value as well so they are permanant.
+			if(upgrade !== undefined && !upgrade.gene) {
+				switch(operation) {
+					case '+':this.defaults[name] += newval;break;
+					case '-':this.defaults[name] -= newval;break;
+					case '*':this.defaults[name] *= newval;break;
+					case '/':this.defaults[name] /= newval;break;
+					case '^':this.defaults[name] = Math.pow(this[name],newval);break;
+					case 'append':
+						if(this.defaults[name].push == undefined)
+							this.defaults[name] = [this.defaults[name],newval];
+						else
+							this.defaults[name].push(newval);
+						break;
+					default: this.defaults[name] = newval;
+				}
+
 			}
 
+			switch(operation) {
+				case '+':this[name] += newval;break;
+				case '-':this[name] -= newval;break;
+				case '*':this[name] *= newval;break;
+				case '/':this[name] /= newval;break;
+				case '^':this[name] = Math.pow(this[name],newval);break;
+				case 'append':
+					if(this[name].push == undefined)
+						this[name] = [this[name],newval];
+					else
+						this[name].push(newval);
+					break;
+				default: this[name] = newval;
+			}
 		}
-
-		switch(operation) {
-			case '+':this[name] += newval;break;
-			case '-':this[name] -= newval;break;
-			case '*':this[name] *= newval;break;
-			case '/':this[name] /= newval;break;
-			case '^':this[name] = Math.pow(this[name],newval);break;
-			default: this[name] = newval;
-		}
-	}
-}
-Module.prototype.reset = function() {
-	if(this.defaults) {
-		for (var key in this.defaults)
-			if(this.defaults.hasOwnProperty(key))
-				this[key] = this.defaults[key];
-		delete this.defaults
 	}
 }
