@@ -8,7 +8,7 @@ debug.console.push = function(debugObject) {
 		debug.console['_'+debugObject.selectedPoint.id] = debugObject;
 }
 debug.console.updateTarget = function(self,target) {
-	var consoleId = '_'+self.location.id;
+	var consoleId = '_'+self.id;
 	if(debug.console[consoleId]) {
 		debug.console[consoleId].updateTarget(self,target);
 	}
@@ -16,14 +16,14 @@ debug.console.updateTarget = function(self,target) {
 		return false;
 }
 debug.console.reportModule = function(self,name,strength) {
-	var consoleId = '_'+self.location.id;
+	var consoleId = '_'+self.id;
 	if(debug.console[consoleId])
 		debug.console[consoleId].updateStrength(self,name,strength);
 	else
 		return false;
 }
 debug.console.reportOutput = function(self,name,string) {
-	var consoleId = '_'+self.location.id;
+	var consoleId = '_'+self.id;
 	if(debug.console[consoleId])
 		debug.console[consoleId].reportOutput(self,name,string);
 	else
@@ -39,10 +39,10 @@ debug.console.newTick = function() {
 			delete debug.console[point].currentHorde;
 		}
 }
-debug.console.watchPoint = function(dataPoint) {
+debug.console.watch = function(horde) {
 	for (var point in debug.console) 
 		if(debug.console.hasOwnProperty(point) && debug.console[point].debugWindow && debug.console[point].selectedPoint === null) {
-			debug.console[point].watchPoint(dataPoint);
+			debug.console[point].watch(horde);
 			break;
 		}
 }
@@ -67,7 +67,7 @@ debug.console.watchModules = function(self) {
 		return {};
 }
 
-function Debugger(dataPoint) {
+function Debugger(horde) {
 	// Open a new debugger window
 	this.debugWindow = window.open('debugger.htm', '_blank', "height=400,width=1000,location=no");
 	var that = this;
@@ -76,15 +76,15 @@ function Debugger(dataPoint) {
 	$(this.debugWindow).load(function() {
 		that.debugBody = $(that.debugWindow.document.body);
 
-		if(dataPoint)
-			that.watchPoint(dataPoint);
+		if(horde !== undefined)
+			that.watch(horde);
 
 		// Add handler on textbox to change the watch point
 		that.debugBody.find('#o_debugPoint').on('blur', function() {
 			if($(this).val() === '' && this.selectedPoint !== null)
 				$(this).val(this.selectedPoint.id)
 			else if($(this).val() !== '')
-				that.watchPoint(S.points[$(this).val()]);
+				that.watch(S.points[$(this).val()]);
 		});
 
 		// Add handler on checkbox to break on every turn
@@ -151,7 +151,9 @@ Debugger.prototype.updateTarget = function(self,target) {
 
 	// print information about the hordes
 	var printStr = JSON.stringify(self, function(key,value) {
-				if(key == 'location' || key == 'split') 
+				if(key == 'location') 
+					return value.id;
+				else if(key == 'location' || key == 'split') 
 					return undefined;
 				else
 					return value;
@@ -209,15 +211,15 @@ Debugger.prototype.reportOutput = function(self,name,string) {
 	if(!moduleContainer.data('moduleId'))
 		moduleContainer.data('moduleId', moduleId);
 }
-Debugger.prototype.watchPoint = function(dataPoint) {
-	if(dataPoint) {
+Debugger.prototype.watch = function(horde) {
+	if(horde !== undefined) {
 		if(this.selectedPoint === null)
 			delete debug.console['_default'];
 		else
 			delete debug.console['_'+this.selectedPoint.id];
 
-		this.debugBody.find('#o_debugPoint').val(dataPoint.id);
-		this.selectedPoint = dataPoint;
+		this.debugBody.find('#o_debugPoint').val(horde.id);
+		this.selectedPoint = horde;
 		debug.console['_'+this.selectedPoint.id] = this;
 	}
 }

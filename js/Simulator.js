@@ -310,7 +310,7 @@ Simulator.prototype.start = function(strainId) {
 		// Create the first horde, with one zombie in it.
 		that.hordes.push(new Horde(1, startSq));
 		if(debug.console)
-			debug.console.watchPoint(startSq);
+			debug.console.watch(that.hordes[0]);
 
 		// Sort out the children for the upgrades, convert string pointers to related upgrades to actual pointers.
 		for (key in that.upgrades) {
@@ -582,7 +582,7 @@ Simulator.prototype.tick = function() {
 			}
 
 			chances = this.bakedValues.latCumChance[Math.floor(Math.abs(current.location.lat))];
-			if(debug.watchPoint == current.location.id) {
+			if(debug.watch == current.id) {
 				console.log(current);
 				debugger;
 			}
