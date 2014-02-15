@@ -19,5 +19,5 @@ new Module('infect', function(current,target,strength) {
 	},
 	runtime: 1,
 	alwaysActive: true,
-	children: ['armies']
+	children: ['panic','armies']
 })

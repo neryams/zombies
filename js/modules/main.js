@@ -19,16 +19,10 @@ new Module('strain', function(current,target,strength) {
 			target.dead = 0;
 
 		// If target has no zombies, newly infect
-		if(strength.spreadChance && target.infected == 0) {
-			if(rand < (strength.spreadChance)) {
-				totalInfected = Math.round(rand * strength.spreadChance);
-			}
-		// Or further infect tiles with zombies already in them
-		} else if(strength.spreadChance) {
+		if(strength.spreadChance) 
 			totalInfected = Math.round(rand * strength.spreadChance);
-		}
-
-		this.attack(target, totalInfected);
+		if(totalInfected > 0)
+			this.attack(target, totalInfected);
 
 		if(debug.console)
 			result += 'targetInfected: '+totalInfected+'<br />';
@@ -86,7 +80,7 @@ new Module('strain', function(current,target,strength) {
 
 				if(!horde && totalInfected > 0) {
 					var horde = new Horde(totalInfected, target);
-					this.S.hordes.push(horde);
+					this.S.hordes.sortPush(horde);
 				}
 				else
 					horde.size += totalInfected
@@ -121,5 +115,5 @@ new Module('strain', function(current,target,strength) {
 		// Send the starting point back to the callback function to start the simulation
 		callback(randPoint);
 	},
-	children: ['worldStats','population','bite','movement','panic','viralInfect']
+	children: ['worldStats','population','bite','movement','viralInfect']
 })

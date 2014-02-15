@@ -12,7 +12,7 @@ new Module('infect', function(current,target,strength) {
 			{cost: 500,paths:['aggression-0'],name:'Infected Bite', onUpgrade: function() {
 				this.activate();
 				this.val('panic',1);
-				this.val('infectPower',0.2);
+				this.val('infectPower',0.5);
 			}, description:'The quintessential trademark of a zombie. Allows infection of healthy humans. Creates lots of panic.', gene:{size: 2, shape: 'l', color: 'purple'}}
 		);
 	},

@@ -502,6 +502,14 @@ var Renderer = function (scaling) {
         resize(window.innerWidth,window.innerHeight);
     });
 
+    THREE.Vector3.prototype.addScalars = function(x,y,z) {
+        this.x += x;
+        this.y += y;
+        this.z += z;
+
+        return this;
+    }
+
     // Return functions
     return {
         animate: animate,
@@ -675,12 +683,4 @@ var Renderer = function (scaling) {
         },
         init: init
     };
-}
-
-THREE.Vector3.prototype.addScalars = function(x,y,z) {
-    this.x += x;
-    this.y += y;
-    this.z += z;
-
-    return this;
 }

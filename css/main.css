@@ -78,6 +78,7 @@ h3 {
 	height: 100%;
 	left: 0px;
 	top: 0px;
+	background: black; /*remove*/
 }
 #ui_mask {
 	z-index: 12;
@@ -208,6 +209,7 @@ div.main_menu {
 div.main_menu button, div.monitor button {
 	color: white;
 	background: #990000;
+	background: #220000; /* remove */
 	display: block;
 	width: 100%;
 	margin-top: 8px;

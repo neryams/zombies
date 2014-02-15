@@ -3,17 +3,18 @@
 */
 new Module('event', function() {
 	if(this.squaresToUpdate.length > 0) {
-		// If this is a new iteration, reset the counter
-		if(this.currentIteration != this.S.iteration) {
-			this.currentIteration = this.S.iteration;
-			this.world_infected = 0;
-		}
-
+		
+		// Prevent going through the same square twice.
+		this.world_infected = this.S.hordes.total();
+		
+		var updated = {};
 		while(this.squaresToUpdate.length > 0) {
 			var current = this.squaresToUpdate.pop();
 
-			this.S.updateSquare(current);
-			this.world_infected += current.infected;
+			if(updated[current.id] === undefined) {
+				this.S.updateSquare(current);
+			}
+			updated[current.id] == true;
 		}
 
 		if(this.world_infected < 1)
@@ -31,7 +32,6 @@ new Module('event', function() {
 },{
 	runtime: 20, // Always run this last to get accurate data
 	init: function() {
-		this.currentIteration = 0;
 		this.world_infected = 0;
 		this.world_pop = 0;
 		this.squaresToUpdate = [];
@@ -56,6 +56,6 @@ new Module('event', function() {
         	value: this.world_infected
         });
 	},
-	alwaysActive: true,
-	children: ['locationStats']
+	alwaysActive: true/*,
+	children: ['locationStats']*/
 })

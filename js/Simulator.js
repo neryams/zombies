@@ -211,6 +211,50 @@ function Simulator(modules, R, UI, gConfig, gData) {
 	this.modules = {};
 	this.activeModules = {infect:[],spread:[],event:[]};
 	this.hordes = [];
+	this.hordes.toAdd = [];
+	this.hordes.total = function() {
+		var result = [],
+			total = 0;
+		for(var i = 0; i < this.length; i++) {
+			if(result[this[i].location.id] === undefined)
+				result[this[i].location.id] = this[i].size;
+			else 
+				result[this[i].location.id] += this[i].size;
+			total += this[i].size;
+			this[i].location.infected = result[this[i].location.id];
+		}
+		return total;
+	}
+	this.hordes.sortPush = function(horde) {
+		this.toAdd.push(horde);
+		//this.splice(this.getSortLocation(horde) + 1, 0, horde);
+	}
+	this.hordes.addAllNew = function() {
+		if(this.toAdd.length) {
+			// Sort the new hordes biggest to smallest
+			this.toAdd.sort(function (a, b) {
+				return b.size - a.size;
+			});
+			var newHordes = [];
+			while(this.length > 0 || this.toAdd.length > 0) {
+				// If new hordes list is empty, add the rest of the originals reverse order
+				if(!this.toAdd.length)
+					newHordes.push(this.pop());
+				// If originals hordes list is empty, add the rest of the news reverse order
+				else if(!this.length)
+					newHordes.push(this.toAdd.pop());
+				// Check the last (smallest) horde in the orignals and the news, put the smaller one on first
+				else if(this[this.length-1].size < this.toAdd[this.toAdd.length-1].size)
+					newHordes.push(this.pop());
+				else
+					newHordes.push(this.toAdd.pop());
+			}
+			// Reverse the sorted combined arrays back onto the hordes array
+			while(newHordes.length > 0)
+				this.push(newHordes.pop());
+		}
+	}
+
 	this.iteration = 0;
 	this.date = new Date();
 	this.date.setTime(1577880000000); // Jan 1st, 2030
@@ -565,13 +609,23 @@ Simulator.prototype.tick = function() {
 		return false;
 
 	var i,j,n,spread_rand,rand,target,current,chance,chances,direction,distance,strength = {},
-		S = this;
+		S = this,
+		simplifyAt = 2000,
+		simplifyCof = 1;
 	if(this.strain != null) {
 		if(debug.console)
 			debug.console.newTick();
 
 		// Must cache the horde length because we will be adding more in this loop and want to not do them until next time
-		for(i = 0, n = this.hordes.length; i < n; i++) { 
+		for(i = 0, n = this.hordes.length; i < n; i+=simplifyCof) {
+			// When we hit the Xth horde where X is the simplify at value, start skipping hordes
+			if(i > 0 && i % simplifyAt < simplifyCof) {
+				i = simplifyCof*simplifyAt;
+				simplifyCof++;
+				i += this.iteration % simplifyCof;
+				if(i >= n)
+					break;
+			}
 			current = this.hordes[i];
 
 			if(current.size < 1) {
@@ -588,30 +642,22 @@ Simulator.prototype.tick = function() {
 			}
 
 			rand = Math.random();
-			if(rand < chances[0]) {
+			if(rand < chances[0])
 				target = current.location.adjacent[0];
-			}
-			else if(rand < chances[1]) {
+			else if(rand < chances[1])
 				target = current.location.adjacent[1];
-			}
-			else if(rand < chances[2]) {
+			else if(rand < chances[2])
 				target = current.location.adjacent[2];
-			}
-			else if(rand < chances[3]) {
+			else if(rand < chances[3])
 				target = current.location.adjacent[3];
-			}
-			else if(rand < chances[4]) {
+			else if(rand < chances[4])
 				target = current.location.adjacent[0].adjacent[1];
-			}
-			else if(rand < chances[5]) {
+			else if(rand < chances[5])
 				target = current.location.adjacent[2].adjacent[1];
-			}
-			else if(rand < chances[6]) {
+			else if(rand < chances[6])
 				target = current.location.adjacent[2].adjacent[3];
-			}
-			else {
+			else
 				target = current.location.adjacent[0].adjacent[3];
-			}
 			
 			// infect is for all squares, infectSelf is for just its own square, mobili
 			strength.encounterProbability = 0;
@@ -669,6 +715,8 @@ Simulator.prototype.tick = function() {
 		this.UIData['iteration'] = this.iteration;
 		this.UI.updateUI(this.UIData);
 		this.iteration++;
+
+		this.hordes.addAllNew();
 
 		if(debug.console && debug.console.manualTicks) {
 			if(this.interval) {

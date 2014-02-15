@@ -312,12 +312,13 @@ function Evolution(name,levels,options) {
 			evol.showToolTip(toolTipContent,$(this),200);
 		});
 
-		// Click event for evolution
+		// Click event for evolution in the upgrade menu
 		currentElement.on('click.evolutionSelect', { Simulator: this.Simulator, evolution: this },function(event) {
 			var i, upgradeId = $(this).data('id'),
 				upgrade = event.data.evolution.all[upgradeId],
 				selectedUpgrades = event.data.evolution.selectedUpgrades;
 
+			// User is buying the upgrade
 			if(!upgrade.selected) {
 				if(upgrade.available) {
 					selectedUpgrades.push(upgradeId);
@@ -325,6 +326,7 @@ function Evolution(name,levels,options) {
 					evol.UIStatus.money -= upgrade.cost;
 					evol.interfaceParts.money.val(evol.UIStatus.money);
 				}
+			// User is undoing the purchase
 			} else {
 				for(i = 0; i < upgrade.children.length; i++)
 					if(upgrade.children[i].selected)
@@ -332,6 +334,8 @@ function Evolution(name,levels,options) {
 				for(i = 0; i < selectedUpgrades.length; i++)
 					if(selectedUpgrades[i] == upgrade.id) {
 						selectedUpgrades.splice(i,1);
+						evol.UIStatus.money += upgrade.cost;
+						evol.interfaceParts.money.val(evol.UIStatus.money);
 						delete upgrade.selected;
 						upgrade.element.removeClass('active');
 						break;
