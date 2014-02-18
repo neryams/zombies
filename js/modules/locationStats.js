@@ -7,7 +7,6 @@ new Module('spread', function(current,strength) {
 	// If this is a new iteration, reset the counter
 	if(this.currentIteration != this.S.iteration) {
 		this.currentIteration = this.S.iteration;
-		this.current
 
 		for (var lastSquare in this.calculatedSquares) {
 			this.S.points[lastSquare].infected = 0;				

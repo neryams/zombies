@@ -101,13 +101,11 @@ new Module('spread', function(current,strength) {
 			}
 			if(!allWater) {
 				current.movement = 0;
-				this.S.modules['worldStats'].val('squaresToUpdate',currentLocation,'append');
 		    	if(chances[chanceA]*ratioA > chances[chanceB]*ratioB) {
-		    		current.location = targetA;
+		    		current.move(targetA);
 		    	} else {
-		    		current.location = targetB;
+		    		current.move(targetB);
 		    	}
-				this.S.modules['worldStats'].val('squaresToUpdate',current.location,'append');
 			}
 	    }
 	}

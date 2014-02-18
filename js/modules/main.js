@@ -47,9 +47,6 @@ new Module('strain', function(current,target,strength) {
 		current.location.panic = 0;
 	current.location.panic += strength.panic*self_encounters;
 
-	this.S.modules['worldStats'].val('squaresToUpdate',current.location,'append');
-	this.S.modules['worldStats'].val('squaresToUpdate',target,'append');
-
 	if(debug.console)
 		return result + '<br />' + current.location.id + ' square change: '+strength.panic;
 },{

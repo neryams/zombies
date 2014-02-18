@@ -205,10 +205,11 @@
                     S = new Simulator(['main'],R,UI,gConfig,gData);
                     S.setName(data.generatedName);
                     tCompletion++;
+                    console.timeEnd('webWorkerTransferTimer');
                     gStart(tCompletion);
                     break;
                 case 'texture':
-                    R.init(data.texture);
+                    R.init(new Float32Array(data.texture));
                     tCompletion++;
                     gStart(tCompletion);
                     break;
@@ -225,7 +226,6 @@
                 UI.setSimulator(S);
                 tGenerator.terminate();
                 delete tGenerator;
-                console.timeEnd('webWorkerTransferTimer')
 
                 S.start('main');
                 UI.load.end();

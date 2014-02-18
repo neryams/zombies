@@ -178,12 +178,22 @@ function Horde(size, location, inherit) {
 	this.id = Horde.prototype.id++;
 	this.size = size;
 	if(this.location !== undefined)
-		this.location = location;
+		this.move(location);
 }
 Horde.prototype = {
 	id: 0,
 	size: 0,
 	location: null,
+	pointsToWatch: null,
+	move: function(newLocation) {
+		if(this.location) {
+			this.pointsToWatch[this.location.id] = true;
+			this.location.infected -= this.size;
+		}
+		this.pointsToWatch[newLocation.id] = true;
+		newLocation.infected += this.size;
+		this.location = newLocation;
+	},
 	split: function(amount) {
 		if(amount > 0 && amount < 1) {
 			var newHorde = new Horde(this.size * amount, this.location, this);
@@ -210,51 +220,6 @@ function Simulator(modules, R, UI, gConfig, gData) {
 	};
 	this.modules = {};
 	this.activeModules = {infect:[],spread:[],event:[]};
-	this.hordes = [];
-	this.hordes.toAdd = [];
-	this.hordes.total = function() {
-		var result = [],
-			total = 0;
-		for(var i = 0; i < this.length; i++) {
-			if(result[this[i].location.id] === undefined)
-				result[this[i].location.id] = this[i].size;
-			else 
-				result[this[i].location.id] += this[i].size;
-			total += this[i].size;
-			this[i].location.infected = result[this[i].location.id];
-		}
-		return total;
-	}
-	this.hordes.sortPush = function(horde) {
-		this.toAdd.push(horde);
-		//this.splice(this.getSortLocation(horde) + 1, 0, horde);
-	}
-	this.hordes.addAllNew = function() {
-		if(this.toAdd.length) {
-			// Sort the new hordes biggest to smallest
-			this.toAdd.sort(function (a, b) {
-				return b.size - a.size;
-			});
-			var newHordes = [];
-			while(this.length > 0 || this.toAdd.length > 0) {
-				// If new hordes list is empty, add the rest of the originals reverse order
-				if(!this.toAdd.length)
-					newHordes.push(this.pop());
-				// If originals hordes list is empty, add the rest of the news reverse order
-				else if(!this.length)
-					newHordes.push(this.toAdd.pop());
-				// Check the last (smallest) horde in the orignals and the news, put the smaller one on first
-				else if(this[this.length-1].size < this.toAdd[this.toAdd.length-1].size)
-					newHordes.push(this.pop());
-				else
-					newHordes.push(this.toAdd.pop());
-			}
-			// Reverse the sorted combined arrays back onto the hordes array
-			while(newHordes.length > 0)
-				this.push(newHordes.pop());
-		}
-	}
-
 	this.iteration = 0;
 	this.date = new Date();
 	this.date.setTime(1577880000000); // Jan 1st, 2030
@@ -324,6 +289,53 @@ function Simulator(modules, R, UI, gConfig, gData) {
 		else {
 			console.error('First Simulator Object must have initialized generator, renderer and ui classes linked as parameters.');
 			return false;
+		}
+	}
+
+	this.pointsToWatch = [];
+
+	Horde.prototype.pointsToWatch = this.pointsToWatch;
+	this.hordes = [];
+	this.hordes.toAdd = [];
+	this.hordes.total = function() {
+		var result = [],
+			total = 0;
+		for(var i = 0; i < this.length; i++) {
+			if(result[this[i].location.id] === undefined)
+				result[this[i].location.id] = this[i].size;
+			else 
+				result[this[i].location.id] += this[i].size;
+			total += this[i].size;
+			this[i].location.infected = result[this[i].location.id];
+		}
+		return total;
+	}
+	this.hordes.sortPush = function(horde) {
+		this.toAdd.push(horde);
+	}
+	this.hordes.addAllNew = function() {
+		if(this.toAdd.length) {
+			// Sort the new hordes biggest to smallest
+			this.toAdd.sort(function (a, b) {
+				return b.size - a.size;
+			});
+			var newHordes = [];
+			while(this.length > 0 || this.toAdd.length > 0) {
+				// If new hordes list is empty, add the rest of the originals reverse order
+				if(!this.toAdd.length)
+					newHordes.push(this.pop());
+				// If originals hordes list is empty, add the rest of the news reverse order
+				else if(!this.length)
+					newHordes.push(this.toAdd.pop());
+				// Check the last (smallest) horde in the orignals and the news, put the smaller one on first
+				else if(this[this.length-1].size < this.toAdd[this.toAdd.length-1].size)
+					newHordes.push(this.pop());
+				else
+					newHordes.push(this.toAdd.pop());
+			}
+			// Reverse the sorted combined arrays back onto the hordes array
+			while(newHordes.length > 0)
+				this.push(newHordes.pop());
 		}
 	}
 }
@@ -618,7 +630,7 @@ Simulator.prototype.tick = function() {
 
 		// Must cache the horde length because we will be adding more in this loop and want to not do them until next time
 		for(i = 0, n = this.hordes.length; i < n; i+=simplifyCof) {
-			// When we hit the Xth horde where X is the simplify at value, start skipping hordes
+			// Don't process every horde every turn. Smaller hordes can be skipped the majority of turns 
 			if(i > 0 && i % simplifyAt < simplifyCof) {
 				i = simplifyCof*simplifyAt;
 				simplifyCof++;
@@ -627,15 +639,15 @@ Simulator.prototype.tick = function() {
 					break;
 			}
 			current = this.hordes[i];
+			currentLocation = current.location;
+			this.pointsToWatch[currentLocation.id] = true;
 
 			if(current.size < 1) {
-				this.hordes.splice(i,1);
-				delete current;
-				i--;
+				this.hordes[i] = this.hordes.pop(); // don't use splice here, very expensive for huge array. Just swap element to remove with last.
 				n--;
 			}
 
-			chances = this.bakedValues.latCumChance[Math.floor(Math.abs(current.location.lat))];
+			chances = this.bakedValues.latCumChance[Math.floor(Math.abs(currentLocation.lat))];
 			if(debug.watch == current.id) {
 				console.log(current);
 				debugger;
@@ -643,21 +655,21 @@ Simulator.prototype.tick = function() {
 
 			rand = Math.random();
 			if(rand < chances[0])
-				target = current.location.adjacent[0];
+				target = currentLocation.adjacent[0];
 			else if(rand < chances[1])
-				target = current.location.adjacent[1];
+				target = currentLocation.adjacent[1];
 			else if(rand < chances[2])
-				target = current.location.adjacent[2];
+				target = currentLocation.adjacent[2];
 			else if(rand < chances[3])
-				target = current.location.adjacent[3];
+				target = currentLocation.adjacent[3];
 			else if(rand < chances[4])
-				target = current.location.adjacent[0].adjacent[1];
+				target = currentLocation.adjacent[0].adjacent[1];
 			else if(rand < chances[5])
-				target = current.location.adjacent[2].adjacent[1];
+				target = currentLocation.adjacent[2].adjacent[1];
 			else if(rand < chances[6])
-				target = current.location.adjacent[2].adjacent[3];
+				target = currentLocation.adjacent[2].adjacent[3];
 			else
-				target = current.location.adjacent[0].adjacent[3];
+				target = currentLocation.adjacent[0].adjacent[3];
 			
 			// infect is for all squares, infectSelf is for just its own square, mobili
 			strength.encounterProbability = 0;
@@ -696,7 +708,7 @@ Simulator.prototype.tick = function() {
 
 			// Update nearby square populations
 			if(this.iteration%10 == current.id%10) {
-				current.location.updateNearbyPop();				
+				current.location.updateNearbyPop();
 			}
 		}
 
@@ -708,9 +720,17 @@ Simulator.prototype.tick = function() {
 				this.activeModules.event[j].process();
 		}
 
+		// Iterate over the sparse array
+		for (var point in this.pointsToWatch) {
+			// If item is array index
+		    if (String(point >>> 0) == point && point >>> 0 != 0xffffffff) {
+				this.updateSquare(this.points[point]);
+		    }
+		}
+		this.pointsToWatch.length = 0;
+
 		this.Renderer.updateMatrix();
 
-		//if(this.iteration % 2 == 0)
 		this.UIData['gridSize'] = this.properties.gridSize;
 		this.UIData['iteration'] = this.iteration;
 		this.UI.updateUI(this.UIData);
