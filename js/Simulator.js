@@ -168,6 +168,48 @@ gridPoint.prototype.equals = function(gridpoint) {
     return this.x == gridpoint.x && this.y == gridpoint.y;
 }
 
+function Horde(size, location, inherit) {
+	if(inherit)
+		for (var key in options)
+			if (inherit.hasOwnProperty(key)) {
+				this[key] = inherit[key];
+			}
+
+	this.id = Horde.prototype.id++;
+	this.size = size;
+	if(this.location !== undefined)
+		this.move(location);
+}
+Horde.prototype = {
+	id: 0,
+	size: 0,
+	location: null,
+	pointsToWatch: null,
+	move: function(newLocation) {
+		if(this.location) {
+			this.pointsToWatch[this.location.id] = true;
+			this.location.infected -= this.size;
+		}
+		this.pointsToWatch[newLocation.id] = true;
+		newLocation.infected += this.size;
+		this.location = newLocation;
+	},
+	split: function(amount) {
+		if(amount > 0 && amount < 1) {
+			var newHorde = new Horde(this.size * amount, this.location, this);
+			this.size = this.size * (1-amount);
+			return newHorde;
+		} else if(amount >= 1) {
+			if(amount >= this.size) {
+				amount = this.size;
+			}
+			var newHorde = new Horde(amount, this.location, this);
+			this.size = this.size - amount;
+			return newHorde;
+		}
+	}
+}
+
 function Simulator(modules, R, UI, gConfig, gData) {
 	// Game and virus properties!
 	this.properties = { 
@@ -178,7 +220,6 @@ function Simulator(modules, R, UI, gConfig, gData) {
 	};
 	this.modules = {};
 	this.activeModules = {infect:[],spread:[],event:[]};
-	this.activePoints = [];
 	this.iteration = 0;
 	this.date = new Date();
 	this.date.setTime(1577880000000); // Jan 1st, 2030
@@ -250,6 +291,53 @@ function Simulator(modules, R, UI, gConfig, gData) {
 			return false;
 		}
 	}
+
+	this.pointsToWatch = [];
+
+	Horde.prototype.pointsToWatch = this.pointsToWatch;
+	this.hordes = [];
+	this.hordes.toAdd = [];
+	this.hordes.total = function() {
+		var result = [],
+			total = 0;
+		for(var i = 0; i < this.length; i++) {
+			if(result[this[i].location.id] === undefined)
+				result[this[i].location.id] = this[i].size;
+			else 
+				result[this[i].location.id] += this[i].size;
+			total += this[i].size;
+			this[i].location.infected = result[this[i].location.id];
+		}
+		return total;
+	}
+	this.hordes.sortPush = function(horde) {
+		this.toAdd.push(horde);
+	}
+	this.hordes.addAllNew = function() {
+		if(this.toAdd.length) {
+			// Sort the new hordes biggest to smallest
+			this.toAdd.sort(function (a, b) {
+				return b.size - a.size;
+			});
+			var newHordes = [];
+			while(this.length > 0 || this.toAdd.length > 0) {
+				// If new hordes list is empty, add the rest of the originals reverse order
+				if(!this.toAdd.length)
+					newHordes.push(this.pop());
+				// If originals hordes list is empty, add the rest of the news reverse order
+				else if(!this.length)
+					newHordes.push(this.toAdd.pop());
+				// Check the last (smallest) horde in the orignals and the news, put the smaller one on first
+				else if(this[this.length-1].size < this.toAdd[this.toAdd.length-1].size)
+					newHordes.push(this.pop());
+				else
+					newHordes.push(this.toAdd.pop());
+			}
+			// Reverse the sorted combined arrays back onto the hordes array
+			while(newHordes.length > 0)
+				this.push(newHordes.pop());
+		}
+	}
 }
 Simulator.prototype = {
 	modules: null,
@@ -275,11 +363,10 @@ Simulator.prototype.start = function(strainId) {
 	that = this;
 	that.strain.init(function(startSq) {
 		that.startPoint = startSq;
-		that.activePoints.push(startSq);
-		startSq.active = true;
-		startSq.infected = 1;
+		// Create the first horde, with one zombie in it.
+		that.hordes.push(new Horde(1, startSq));
 		if(debug.console)
-			debug.console.watchPoint(startSq);
+			debug.console.watch(that.hordes[0]);
 
 		// Sort out the children for the upgrades, convert string pointers to related upgrades to actual pointers.
 		for (key in that.upgrades) {
@@ -533,54 +620,56 @@ Simulator.prototype.tick = function() {
 	if(this.paused)
 		return false;
 
-	var i,j,n,spread_rand,rand,target,current,chance,chances,direction,distance,beginInfected,strength = {},
-		S = this;
+	var i,j,n,spread_rand,rand,target,current,chance,chances,direction,distance,strength = {},
+		S = this,
+		simplifyAt = 2000,
+		simplifyCof = 1;
 	if(this.strain != null) {
-        var size;
 		if(debug.console)
 			debug.console.newTick();
 
-		for(i = 0; i < this.activePoints.length; i++) {
-			current = this.activePoints[i];
+		// Must cache the horde length because we will be adding more in this loop and want to not do them until next time
+		for(i = 0, n = this.hordes.length; i < n; i+=simplifyCof) {
+			// Don't process every horde every turn. Smaller hordes can be skipped the majority of turns 
+			if(i > 0 && i % simplifyAt < simplifyCof) {
+				i = simplifyCof*simplifyAt;
+				simplifyCof++;
+				i += this.iteration % simplifyCof;
+				if(i >= n)
+					break;
+			}
+			current = this.hordes[i];
+			currentLocation = current.location;
+			this.pointsToWatch[currentLocation.id] = true;
 
-			if(current.infected < 1) {
-				current.active = false;
-				this.activePoints.splice(i,1);
-				i--;
+			if(current.size < 1) {
+				this.hordes[i] = this.hordes.pop(); // don't use splice here, very expensive for huge array. Just swap element to remove with last.
+				n--;
 			}
 
-			chances = this.bakedValues.latCumChance[Math.floor(Math.abs(current.lat))];
-			beginInfected = current.infected;
-			if(debug.watchPoint == current.id) {
+			chances = this.bakedValues.latCumChance[Math.floor(Math.abs(currentLocation.lat))];
+			if(debug.watch == current.id) {
 				console.log(current);
 				debugger;
 			}
 
 			rand = Math.random();
-			if(rand < chances[0]) {
-				target = current.adjacent[0];
-			}
-			else if(rand < chances[1]) {
-				target = current.adjacent[1];
-			}
-			else if(rand < chances[2]) {
-				target = current.adjacent[2];
-			}
-			else if(rand < chances[3]) {
-				target = current.adjacent[3];
-			}
-			else if(rand < chances[4]) {
-				target = current.adjacent[0].adjacent[1];
-			}
-			else if(rand < chances[5]) {
-				target = current.adjacent[2].adjacent[1];
-			}
-			else if(rand < chances[6]) {
-				target = current.adjacent[2].adjacent[3];
-			}
-			else {
-				target = current.adjacent[0].adjacent[3];
-			}
+			if(rand < chances[0])
+				target = currentLocation.adjacent[0];
+			else if(rand < chances[1])
+				target = currentLocation.adjacent[1];
+			else if(rand < chances[2])
+				target = currentLocation.adjacent[2];
+			else if(rand < chances[3])
+				target = currentLocation.adjacent[3];
+			else if(rand < chances[4])
+				target = currentLocation.adjacent[0].adjacent[1];
+			else if(rand < chances[5])
+				target = currentLocation.adjacent[2].adjacent[1];
+			else if(rand < chances[6])
+				target = currentLocation.adjacent[2].adjacent[3];
+			else
+				target = currentLocation.adjacent[0].adjacent[3];
 			
 			// infect is for all squares, infectSelf is for just its own square, mobili
 			strength.encounterProbability = 0;
@@ -591,21 +680,25 @@ Simulator.prototype.tick = function() {
 			strength.mobility = 0;
 			strength.panic = 0;
 
+
 			if(debug.console) 
 				debug.console.updateTarget(current, target);
 
+			// Run infect modules on each horde
 			for(j = 0; j < this.activeModules.infect.length; j++) {
 				this.activeModules.infect[j].process(current,target,strength);
 				if(debug.console)
 					debug.console.reportModule(current, this.activeModules.infect[j].id, strength);
 			}
 			
+			// Run main modules on each horde
 			if(debug.console) {
 				debug.console.reportOutput(current, this.strain.id, this.strain.process(current,target,strength));
 			} else {
 				this.strain.process(current,target,strength);
 			}
 
+			// Run spread modules on each horde
 			for(j = 0; j < this.activeModules.spread.length; j++) {
 				if(debug.console)
 					debug.console.reportOutput(current, this.activeModules.spread[j].id, this.activeModules.spread[j].process(current,strength));
@@ -615,13 +708,11 @@ Simulator.prototype.tick = function() {
 
 			// Update nearby square populations
 			if(this.iteration%10 == current.id%10) {
-				current.updateNearbyPop();				
+				current.location.updateNearbyPop();
 			}
-
-			this.updateSquare(current);
-			this.updateSquare(target);
 		}
 
+		// Run event modules once
 		for(j = 0; j < this.activeModules.event.length; j++) {
 			if(debug.console)
 				debug.console.reportOutput(current, this.activeModules.event[j].id, this.activeModules.event[j].process());
@@ -629,13 +720,23 @@ Simulator.prototype.tick = function() {
 				this.activeModules.event[j].process();
 		}
 
+		// Iterate over the sparse array
+		for (var point in this.pointsToWatch) {
+			// If item is array index
+		    if (String(point >>> 0) == point && point >>> 0 != 0xffffffff) {
+				this.updateSquare(this.points[point]);
+		    }
+		}
+		this.pointsToWatch.length = 0;
+
 		this.Renderer.updateMatrix();
 
-		//if(this.iteration % 2 == 0)
 		this.UIData['gridSize'] = this.properties.gridSize;
 		this.UIData['iteration'] = this.iteration;
 		this.UI.updateUI(this.UIData);
 		this.iteration++;
+
+		this.hordes.addAllNew();
 
 		if(debug.console && debug.console.manualTicks) {
 			if(this.interval) {
@@ -649,13 +750,13 @@ Simulator.prototype.tick = function() {
 
 	}
 }
-Simulator.prototype.updateSquare = function(target) {
+Simulator.prototype.updateSquare = function(target, force) {
 	var	size_pop = (target.total_pop) / this.config.max_pop,
 		size_zom = (target.infected) / this.config.max_pop;
 	if(!target.cache) {
 		this.Renderer.setData(target, size_pop, size_zom);
 		target.cache = { infected: target.infected, total_pop: target.total_pop }
-	} else if(target.cache.infected != target.infected || target.cache.total_pop != target.total_pop) {
+	} else if(force || (target.cache.infected != target.infected || target.cache.total_pop != target.total_pop)) {
 		this.Renderer.setData(target, size_pop, size_zom); 
 		target.cache.infected = target.infected;
 		target.cache.total_pop = target.total_pop;
@@ -757,49 +858,61 @@ Module.prototype = {
 	runtime: 10, // Smaller numbers run sooner
 	dependencies: [],
 	children: [],
-	process: function() {return 0}
-}
-Module.prototype.isActive = function() {
-	return this.activeId != undefined;
-}
-Module.prototype.val = function(name, newval, operation, upgrade) {
-	if(!newval)
-		return this[name];
-	else {
-		// Gene upgrades should store a default value to it gcan be reverted when the gene is removed. 
-		if(!this.defaults)
-			this.defaults = {};
-		if(this.defaults[name] === undefined)
-			this.defaults[name] = this[name]
+	process: function() {return 0},
+	isActive: function() {
+		return this.activeId != undefined;
+	},
+	reset: function() {
+		if(this.defaults) {
+			for (var key in this.defaults)
+				if(this.defaults.hasOwnProperty(key))
+					this[key] = this.defaults[key];
+			delete this.defaults
+		}
+	},
+	val: function(name, newval, operation, upgrade) {
+		if(!newval)
+			return this[name];
+		else {
+			// Gene upgrades should store a default value to it gcan be reverted when the gene is removed. 
+			if(!this.defaults)
+				this.defaults = {};
+			if(this.defaults[name] === undefined)
+				this.defaults[name] = this[name]
 
-		// Make sure geneless upgrades actually change the default value as well so they are permanant.
-		if(upgrade !== undefined && !upgrade.gene) {
-			switch(operation) {
-				case '+':this.defaults[name] += newval;break;
-				case '-':this.defaults[name] -= newval;break;
-				case '*':this.defaults[name] *= newval;break;
-				case '/':this.defaults[name] /= newval;break;
-				case '^':this.defaults[name] = Math.pow(this[name],newval);break;
-				default: this.defaults[name] = newval;
+			// Make sure geneless upgrades actually change the default value as well so they are permanant.
+			if(upgrade !== undefined && !upgrade.gene) {
+				switch(operation) {
+					case '+':this.defaults[name] += newval;break;
+					case '-':this.defaults[name] -= newval;break;
+					case '*':this.defaults[name] *= newval;break;
+					case '/':this.defaults[name] /= newval;break;
+					case '^':this.defaults[name] = Math.pow(this[name],newval);break;
+					case 'append':
+						if(this.defaults[name].push == undefined)
+							this.defaults[name] = [this.defaults[name],newval];
+						else
+							this.defaults[name].push(newval);
+						break;
+					default: this.defaults[name] = newval;
+				}
+
 			}
 
+			switch(operation) {
+				case '+':this[name] += newval;break;
+				case '-':this[name] -= newval;break;
+				case '*':this[name] *= newval;break;
+				case '/':this[name] /= newval;break;
+				case '^':this[name] = Math.pow(this[name],newval);break;
+				case 'append':
+					if(this[name].push == undefined)
+						this[name] = [this[name],newval];
+					else
+						this[name].push(newval);
+					break;
+				default: this[name] = newval;
+			}
 		}
-
-		switch(operation) {
-			case '+':this[name] += newval;break;
-			case '-':this[name] -= newval;break;
-			case '*':this[name] *= newval;break;
-			case '/':this[name] /= newval;break;
-			case '^':this[name] = Math.pow(this[name],newval);break;
-			default: this[name] = newval;
-		}
-	}
-}
-Module.prototype.reset = function() {
-	if(this.defaults) {
-		for (var key in this.defaults)
-			if(this.defaults.hasOwnProperty(key))
-				this[key] = this.defaults[key];
-		delete this.defaults
 	}
 }

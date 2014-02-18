@@ -89,5 +89,5 @@ new Module('event', function() {
         });
 	},
 	alwaysActive: true,
-	children: ['vaccine','resistance','panicAttrib']
+	children: ['vaccine','panicAttrib']
 })

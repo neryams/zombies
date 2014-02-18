@@ -4,16 +4,8 @@
     <meta charset=utf-8 />
     <title data-i18n="title"></title>
     <link rel="stylesheet" type="text/css" media="screen" href="css/main.css" />
-    <script src="js/third-party/jquery-2.0.2.min.js"></script>
+    <script src="js/third-party/jquery-2.1.0.min.js"></script>
     <script src="js/third-party/i18next-1.6.3.min.js"></script>
-    <script src="js/third-party/seedrandom.min.js"></script>
-    <script src="js/third-party/three.js"></script>
-    <script src="js/third-party/tween.min.js"></script>
-    <script src="js/third-party/hqx.min.js"></script>
-    <script src="js/DataPoint.js"></script>
-    <script src="js/Renderer.js"></script>
-    <script src="js/UserInterface.js"></script>
-    <script src="js/Simulator.js"></script>
     <script>
         // Replace the normal jQuery getScript function with one that supports
         // debugging and which references the script files as external resources
@@ -66,7 +58,8 @@
                 <option value="2">1/2</option>
             </select><br />
             <span data-i18n="labels.seed"></span><input type="text" name="seed" id="s_seed" /><br />
-            <span data-i18n="labels.models">Modules: </span><input type="text" name="modules" id="s_modules" value="main,gridBoost,climate,seaports" /><br />
+            <span data-i18n="labels.models">Modules: </span><input type="text" name="modules" id="s_modules" value="main,gridBoost,seaports" /><br />
+            <!-- main,resistance,climate,gridBoost,seaports -->
             <span data-i18n="labels.language">Language: </span><select name="language" id="s_lng">
                 <option value="en">English</option>
                 <option value="jp">日本語</option>
@@ -105,6 +98,12 @@
         };
 
         $(function () {
+            // Select Resolution closes to device pixel ratio
+            var ratioSelect = $('#s_rs')
+            $('option', ratioSelect).each(function() {
+                if(Math.abs(parseFloat(ratioSelect.val()) - window.devicePixelRatio) > Math.abs(parseFloat($(this).attr('value')) - window.devicePixelRatio))
+                    ratioSelect.val($(this).attr('value'));
+            })
             // On window close or reload, close all child windows (i.e. debug consoles)
             $(window).unload(function() {
                 if(debug.console)
@@ -128,6 +127,15 @@
                     $("form :input").attr("disabled", false);
                 });
             });
+
+            $.getScript('js/third-party/three.min.js');
+            $.getScript('js/third-party/seedrandom.min.js');
+            $.getScript('js/third-party/tween.min.js');
+            $.getScript('js/third-party/hqx.min.js');
+            $.getScript('js/DataPoint.js');
+            $.getScript('js/Renderer.js');
+            $.getScript('js/UserInterface.js');
+            $.getScript('js/Simulator.js');
 
             // On form submit, load the game
             $('form').on('submit', function (event) {
@@ -197,10 +205,11 @@
                     S = new Simulator(['main'],R,UI,gConfig,gData);
                     S.setName(data.generatedName);
                     tCompletion++;
+                    console.timeEnd('webWorkerTransferTimer');
                     gStart(tCompletion);
                     break;
                 case 'texture':
-                    R.init(data.texture);
+                    R.init(new Float32Array(data.texture));
                     tCompletion++;
                     gStart(tCompletion);
                     break;
@@ -217,7 +226,6 @@
                 UI.setSimulator(S);
                 tGenerator.terminate();
                 delete tGenerator;
-                console.timeEnd('webWorkerTransferTimer')
 
                 S.start('main');
                 UI.load.end();

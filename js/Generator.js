@@ -549,14 +549,15 @@ Planet.prototype.getAdj = function(i,direction) {
 
 // Generates a sphere in perlin noise. 
 Planet.prototype.generatePerlinSphere = function(P,w,scale,octaves,progressShare,noiseFunction,onComplete) {
-	var landGen = [],
-		h = w / 2, // Height is always 1/2 of width in mercator
+	var h = w / 2, // Height is always 1/2 of width in mercator
 		multiplier = w / 360, // Determine the resolution of the globe, size must remain constant for consistent results
 		times = 800*(multiplier*multiplier), // How many times we can run the perlin generator before reporting the progress (for speed)
 		i = 0,
 		n = w*h,
 		timer,
 		modifier = this.config.waterLevel/256;
+	var storage = new ArrayBuffer(w*h*4); // 4 bytes per element for 32 bit float
+	var landGen = new Float32Array(storage);
 	P.noiseDetail(octaves,.50);
 
 	for(i=0;i<n;i++) {
@@ -698,8 +699,8 @@ self.addEventListener('message', function(event) {
 
 	 	self.postMessage({
 	 		cmd: 'texture',
-	 		texture: myEarth.texture
-		});
+	 		texture: myEarth.texture.buffer
+		},[myEarth.texture.buffer]);
 
 	 	self.postMessage({
 	 		cmd: 'complete'

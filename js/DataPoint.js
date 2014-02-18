@@ -25,6 +25,7 @@ DataPoint.prototype = {
 	temperature: -1,
 	height: 0,
 	country: 0,
+	panic: 0,
 	adjacent:[]
 }
 DataPoint.prototype.updateNearbyPop = function () {
