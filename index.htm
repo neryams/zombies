@@ -96,7 +96,8 @@
                 }
             } 
         };
-        global.debugMenu = debugMenu;
+        if(typeof global !== 'undefined')
+            global.debugMenu = debugMenu;
 
         $(function () {
             // Select Resolution closes to device pixel ratio

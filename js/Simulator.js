@@ -17,7 +17,8 @@ Upgrade.prototype = {
 	paths:[],
 	children: []
 }
-global.Upgrade = Upgrade;
+if(typeof global !== 'undefined')
+	global.Upgrade = Upgrade;
 
 // Return an array of gene points
 Upgrade.prototype.generateGene = function(pieceSize, shape, color) {
@@ -210,7 +211,8 @@ Horde.prototype = {
 		}
 	}
 }
-global.Horde = Horde;
+if(typeof global !== 'undefined')
+    global.Horde = Horde;
 
 function Simulator(modules, R, UI, gConfig, gData) {
 	// Game and virus properties!
@@ -697,7 +699,8 @@ Simulator.prototype.tick = function() {
 			strength.zombieStrength = 0;
 			strength.humanStrength = 0;
 			strength.infectChance = 0;
-			strength.spreadChance = 0;
+			strength.transferStrength = 0;
+			strength.transferChance = 0;
 			strength.mobility = 0;
 			strength.panic = 0;
 
