@@ -1,7 +1,8 @@
 /* 
 	STRAIN - Simple virus. Infects  or kills healthy people, raises panic based on infected. 1 evo point per tick.
 */
-new Module('strain', function(current,target,strength) {
+exports.type = 'strain';
+exports.run = function(current,target,strength) {
 	var newInfection = false,
 		totalInfected = 0,
 		totalKilled = 0,
@@ -9,7 +10,7 @@ new Module('strain', function(current,target,strength) {
 		// Human strength and zombie strength should be directly comparable.
 		totalStrength = strength.zombieStrength + strength.humanStrength;
 
-	if(debug.console)
+	if(debugMenu.console)
 		var result = '';
 
 	// Non-contact infection to self or adjacent tiles
@@ -24,7 +25,7 @@ new Module('strain', function(current,target,strength) {
 		if(totalInfected > 0)
 			this.attack(target, totalInfected);
 
-		if(debug.console)
+		if(debugMenu.console)
 			result += 'targetInfected: '+totalInfected+'<br />';
 	}
 
@@ -40,16 +41,17 @@ new Module('strain', function(current,target,strength) {
 
 		this.attack(current.location, totalInfected, current, totalKilled, zombieLosses);
 
-		if(debug.console)
+		if(debugMenu.console)
 			result += 'selfInfected: '+totalInfected+'<br />selfHumansKilled: '+totalKilled+'<br />selfZombiesKilled: '+zombieLosses;
 	}
 	if(current.location.panic === undefined)
 		current.location.panic = 0;
 	current.location.panic += strength.panic*self_encounters;
 
-	if(debug.console)
+	if(debugMenu.console)
 		return result + '<br />' + current.location.id + ' square change: '+strength.panic;
-},{
+};
+exports.options = {
 	init: function(callback) {
 
 		// Save the function that will perform the simulation based on strength, after the infect modules.
@@ -113,4 +115,4 @@ new Module('strain', function(current,target,strength) {
 		callback(randPoint);
 	},
 	children: ['worldStats','population','bite','movement','viralInfect']
-})
+};

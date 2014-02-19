@@ -1,7 +1,8 @@
 /* 
 	Population: Module to change the infect rate based on population density
 */
-new Module('infect', function(current,target,strength) {
+exports.type = 'infect';
+exports.run = function(current,target,strength) {
 	var lat = Math.floor(Math.abs(current.location.lat));
 	var area = this.S.bakedValues.latDistances[lat][0] * this.S.bakedValues.latDistances[lat][1]; // square km
 	strength.encounterProbability *= Math.sqrt((current.size + current.location.total_pop) / area);
@@ -13,7 +14,8 @@ new Module('infect', function(current,target,strength) {
 	strength.panic *= current.size;
 	if(strength.panic > current.location.total_pop)
 		strength.panic = current.location.total_pop;
-},{
+};
+exports.options = {
 	runtime: 15,
 	alwaysActive: true
-})
+};

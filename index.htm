@@ -72,30 +72,31 @@
 
     <script>
         // Global variables
-        var UI,R,S,seed,debug;
+        var UI,R,S,seed,debugMenu;
 
         /* Debug Commands
-            debug.watchPoint : int, id of the point that you want to be printed to console when it is affected in the simulator
-            debug.mouseOverDebugData : set to true to display lots of data about a point when visualizations are enabled
+            debugMenu.watchPoint : int, id of the point that you want to be printed to console when it is affected in the simulator
+            debugMenu.mouseOverDebugData : set to true to display lots of data about a point when visualizations are enabled
         */
-        debug = {
+        debugMenu = {
             watchPoint: false,
             logModules: false,
             mouseOverDebugData: false,
             openConsole: function () {
-                if(!debug.console) {
+                if(!debugMenu.console) {
                     $.getScript('js/Debugger.js', function () {
                         console.log('Loaded Debugger. Opening console...');
                         if(S && S.startPoint)
-                            debug.console.push(new Debugger(S.startPoint));
+                            debugMenu.console.push(new Debugger(S.startPoint));
                         else
-                            debug.console.push(new Debugger());
+                            debugMenu.console.push(new Debugger());
                     });
                 } else {
-                    debug.console.push(new Debugger());
+                    debugMenu.console.push(new Debugger());
                 }
             } 
         };
+        global.debugMenu = debugMenu;
 
         $(function () {
             // Select Resolution closes to device pixel ratio
@@ -106,10 +107,10 @@
             })
             // On window close or reload, close all child windows (i.e. debug consoles)
             $(window).unload(function() {
-                if(debug.console)
-                    for (var point in debug.console)
-                        if(debug.console.hasOwnProperty(point) && debug.console[point].close)
-                            debug.console[point].close();
+                if(debugMenu.console)
+                    for (var point in debugMenu.console)
+                        if(debugMenu.console.hasOwnProperty(point) && debugMenu.console[point].close)
+                            debugMenu.console[point].close();
             });
 
             // Load language files
@@ -154,8 +155,7 @@
                     var ns_loaded = true;
                 });
 
-                // Load the chosen modules first, then initiate the game 
-                $.getScript('js/loadModules.php?modules='+$('#s_modules').val(), function () {
+                var onLoadModules = function () {
                     $("#setup").remove();
 
                     R = Renderer(userConfig.resolution);
@@ -165,10 +165,19 @@
                         UI.load.start();
                         tGenerator.postMessage(userConfig);
                     });
-                });
+                }
+
+                // Load the chosen modules first, then initiate the game 
+                // If this is not running in node, load modules form server
+                if(typeof require === 'undefined') {
+                    $.getScript('js/loadModules.php?modules='+$('#s_modules').val(), onLoadModules);
+                } else {
+                    Simulator.prototype.loadModules = $('#s_modules').val().split(',');
+                    onLoadModules();
+                }
 
                 // Open debug menu by default.
-                debug.openConsole();
+                debugMenu.openConsole();
                 return false;
             });
 
@@ -179,37 +188,38 @@
             tCompletion = 0,
             gConfig,gData;
         tGenerator.addEventListener('message', function(event) {
-            var data = event.data;
-            switch (data.cmd) {
+            switch (event.data.cmd) {
                 case 'progress':
-                    if(!data.progress)
+                    if(!event.data.progress)
                         UI.load.progress();
                     else
-                        UI.load.progress(data.progress,data.share);
+                        UI.load.progress(event.data.progress,event.data.share);
                     break;
                 case 'ready':
-                    gConfig = data.config;
+                    gConfig = event.data.config;
                     console.time('webWorkerTransferTimer');
                     break;
                 case 'data':
-                    gData = {points: data.points, countries: data.countries};
+                    gData = {points: [], countries: event.data.countries};
                     // Re-reference the adjacent points
+                    for(i = 0, n = event.data.points.length; i < n; i++) {
+                        gData.points[i] = new DataPoint(event.data.points[i]);
+                    }
                     for(i = 0, n = gData.points.length; i < n; i++) {
                         gData.points[i].adjacent[0] = gData.points[gData.points[i].adjacent[0]];
                         gData.points[i].adjacent[1] = gData.points[gData.points[i].adjacent[1]];
                         gData.points[i].adjacent[2] = gData.points[gData.points[i].adjacent[2]];
                         gData.points[i].adjacent[3] = gData.points[gData.points[i].adjacent[3]];
-                        gData.points[i].__proto__ = DataPoint.prototype;
                     }
                     UI.load.endGenerator();
                     S = new Simulator(['main'],R,UI,gConfig,gData);
-                    S.setName(data.generatedName);
+                    S.setName(event.data.generatedName);
                     tCompletion++;
                     console.timeEnd('webWorkerTransferTimer');
                     gStart(tCompletion);
                     break;
                 case 'texture':
-                    R.init(new Float32Array(data.texture));
+                    R.init(new Float32Array(event.data.texture));
                     tCompletion++;
                     gStart(tCompletion);
                     break;

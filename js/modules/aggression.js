@@ -1,10 +1,12 @@
 /* 
 	Aggression: allows zombies to kill people
 */
-new Module('infect', function(current,target,strength) {
+exports.type = 'infect';
+exports.run = function(current,target,strength) {
 	strength.zombieStrength = this.zombieStartStrength;
 	strength.panic = this.panic;
-},{
+};
+exports.options = {
 	runtime: 0,
 	init: function() {
 		this.panic = 0;
@@ -21,4 +23,4 @@ new Module('infect', function(current,target,strength) {
 		);
 	},
 	alwaysActive: true
-})
+};

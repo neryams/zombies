@@ -1,7 +1,8 @@
 /*
 	locationStats: Adds up horde data like size to get data for displaying information on the UI
 */
-new Module('spread', function(current,strength) {
+exports.type = 'spread';
+exports.run = function(current,strength) {
 	var currentLocation = current.location;
 	
 	// If this is a new iteration, reset the counter
@@ -24,7 +25,8 @@ new Module('spread', function(current,strength) {
 	// Set square value
 	current.location.infected = this.calculatedSquares[currentLocation.id];
 	this.S.modules['worldStats'].val('world_infected',current.size);
-},{
+};
+exports.options = {
 	runtime: 19, // Always run last to get accurate data
 	init: function() {
 		this.currentIteration = 0;
@@ -32,4 +34,4 @@ new Module('spread', function(current,strength) {
 	},
 	alwaysActive: true,
 	dependencies: ['worldStats']
-})
+};

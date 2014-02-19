@@ -1,11 +1,13 @@
 /*
 	Movespeed: upgrades to make zombies move faster
 */
-new Module('infect', function(current,target,strength) {
+exports.type = 'infect';
+exports.run = function(current,target,strength) {
 	strength.mobility = this.speed;
 	strength.encounterProbability = 1 + this.burstSpeed;
 	strength.panic += this.panic;
-},{
+};
+exports.options = {
 	init: function() {
 		this.speed = 3; // movement speed of zombies in kph. Average walking speed is 4.5-5.5 kph so they start pretty slow
 		this.burstSpeed = 0;
@@ -32,4 +34,4 @@ new Module('infect', function(current,target,strength) {
 	runtime: 1,
 	alwaysActive: true,
 	children: ['mobility']
-})
+};

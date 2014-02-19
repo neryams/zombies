@@ -1,7 +1,8 @@
 /* 
 	Seaports: Creates boats that can transport zombies across oceans
 */
-new Module('event', function() {
+exports.type = 'event';
+exports.run = function() {
 	var interval,i,strength = {};
 
 	// Check the ships that are currently moving
@@ -51,7 +52,8 @@ new Module('event', function() {
 				}
 			}
 		}
-},{
+};
+exports.options = {
 	init: function() {
 		var i,j,a,b,ab,interval,phi,theta,phix,phiy,hyp,distance,progressBar;
 		this.intervalList = [];
@@ -156,4 +158,4 @@ new Module('event', function() {
 		}
 	},
 	alwaysActive: true
-})
+};

@@ -17,6 +17,7 @@ Upgrade.prototype = {
 	paths:[],
 	children: []
 }
+global.Upgrade = Upgrade;
 
 // Return an array of gene points
 Upgrade.prototype.generateGene = function(pieceSize, shape, color) {
@@ -209,6 +210,7 @@ Horde.prototype = {
 		}
 	}
 }
+global.Horde = Horde;
 
 function Simulator(modules, R, UI, gConfig, gData) {
 	// Game and virus properties!
@@ -348,6 +350,7 @@ Simulator.prototype = {
 	startPoint: null,
 	properties: {},
 	interval: null,
+	loadModules: null,
 	setName: function (name) {
 		this.properties.virus_name = name;		
 	}
@@ -355,7 +358,17 @@ Simulator.prototype = {
 
 Simulator.prototype.start = function(strainId) {
 	// Add all the modules specified in the contruction of the Simulator
-	this.loadModules();
+
+	// if running in node, grab the modules automagically
+	if(typeof require === 'function') { 
+        for(var i = 0; i < this.loadModules.length; i++)
+        	this.addModule(this.loadModules[i],'node');
+    // if doing PHP loading, run the provided function
+	} else if(typeof this.loadModules === 'function') {
+		this.loadModules();
+    } else {
+    	console.error('Unable to load modules');
+    }
 
 	this.addActive(strainId);
 	Math.seedrandom(); // Before we start the simulation, generate a new random seed so the game itself is unpredictable with respect to the land generation.
@@ -365,8 +378,8 @@ Simulator.prototype.start = function(strainId) {
 		that.startPoint = startSq;
 		// Create the first horde, with one zombie in it.
 		that.hordes.push(new Horde(1, startSq));
-		if(debug.console)
-			debug.console.watch(that.hordes[0]);
+		if(debugMenu.console)
+			debugMenu.console.watch(that.hordes[0]);
 
 		// Sort out the children for the upgrades, convert string pointers to related upgrades to actual pointers.
 		for (key in that.upgrades) {
@@ -407,9 +420,16 @@ Simulator.prototype.end = function(state) {
 }
 
 Simulator.prototype.addModule = function(id,moduleArray) {
-	var i,n,that = this,
-	newModule = moduleArray[id];
-	if(!this.modules[id])
+	var i,n,that = this;
+
+	if(!this.modules[id]) {
+		if(moduleArray === 'node') {
+	        var loaded = require('./js/modules/'+id+'.js');
+	        var newModule = new Module(loaded.type,loaded.run,loaded.options);
+		} else {
+			var newModule = moduleArray[id];		
+		}
+
 		if(newModule != undefined) {
 			// Add dependencies recursively
 			for(i = 0, n = newModule.dependencies.length; i < n; i++)
@@ -427,7 +447,8 @@ Simulator.prototype.addModule = function(id,moduleArray) {
 				this.addModule(newModule.children[i],moduleArray);
 		}
 		else
-			console.error('Module "'+id+'" not found. Must assign variable "newModule" to the new module object');
+			console.error('Module "'+id+'" not found. Try adding it to Dependencies or Children');
+	}
 }
 
 Simulator.prototype.addActive = function(id) {
@@ -625,8 +646,8 @@ Simulator.prototype.tick = function() {
 		simplifyAt = 2000,
 		simplifyCof = 1;
 	if(this.strain != null) {
-		if(debug.console)
-			debug.console.newTick();
+		if(debugMenu.console)
+			debugMenu.console.newTick();
 
 		// Must cache the horde length because we will be adding more in this loop and want to not do them until next time
 		for(i = 0, n = this.hordes.length; i < n; i+=simplifyCof) {
@@ -648,7 +669,7 @@ Simulator.prototype.tick = function() {
 			}
 
 			chances = this.bakedValues.latCumChance[Math.floor(Math.abs(currentLocation.lat))];
-			if(debug.watch == current.id) {
+			if(debugMenu.watch == current.id) {
 				console.log(current);
 				debugger;
 			}
@@ -681,27 +702,27 @@ Simulator.prototype.tick = function() {
 			strength.panic = 0;
 
 
-			if(debug.console) 
-				debug.console.updateTarget(current, target);
+			if(debugMenu.console) 
+				debugMenu.console.updateTarget(current, target);
 
 			// Run infect modules on each horde
 			for(j = 0; j < this.activeModules.infect.length; j++) {
 				this.activeModules.infect[j].process(current,target,strength);
-				if(debug.console)
-					debug.console.reportModule(current, this.activeModules.infect[j].id, strength);
+				if(debugMenu.console)
+					debugMenu.console.reportModule(current, this.activeModules.infect[j].id, strength);
 			}
 			
 			// Run main modules on each horde
-			if(debug.console) {
-				debug.console.reportOutput(current, this.strain.id, this.strain.process(current,target,strength));
+			if(debugMenu.console) {
+				debugMenu.console.reportOutput(current, this.strain.id, this.strain.process(current,target,strength));
 			} else {
 				this.strain.process(current,target,strength);
 			}
 
 			// Run spread modules on each horde
 			for(j = 0; j < this.activeModules.spread.length; j++) {
-				if(debug.console)
-					debug.console.reportOutput(current, this.activeModules.spread[j].id, this.activeModules.spread[j].process(current,strength));
+				if(debugMenu.console)
+					debugMenu.console.reportOutput(current, this.activeModules.spread[j].id, this.activeModules.spread[j].process(current,strength));
 				else
 					this.activeModules.spread[j].process(current,strength);
 			}
@@ -714,8 +735,8 @@ Simulator.prototype.tick = function() {
 
 		// Run event modules once
 		for(j = 0; j < this.activeModules.event.length; j++) {
-			if(debug.console)
-				debug.console.reportOutput(current, this.activeModules.event[j].id, this.activeModules.event[j].process());
+			if(debugMenu.console)
+				debugMenu.console.reportOutput(current, this.activeModules.event[j].id, this.activeModules.event[j].process());
 			else
 				this.activeModules.event[j].process();
 		}
@@ -738,7 +759,7 @@ Simulator.prototype.tick = function() {
 
 		this.hordes.addAllNew();
 
-		if(debug.console && debug.console.manualTicks) {
+		if(debugMenu.console && debugMenu.console.manualTicks) {
 			if(this.interval) {
 				clearInterval(this.interval);
 				this.interval = false;

@@ -3,7 +3,8 @@
 	Vaccine progress is applied to the upgrade colors on a specific row  
 	Also contains code for a "hot row", the row in the mutation menu that affects the vaccine research
 */
-new Module('event', function() {
+exports.type = 'event';
+exports.run = function() {
 	var addResearch = 0;
 	// get the total amount of research added this turn based on remaining actively researching country populations
 	for(var i = 1, n = this.S.countries.length; i < n; i++)
@@ -23,7 +24,8 @@ new Module('event', function() {
 		if(this.research > this.requiredResearch)
 			this.S.end('lose'); 			
 	}
-},{
+};
+exports.options = {
 	init: function() {
 		this.research = 0;
 		this.requiredResearch = 10000;
@@ -87,4 +89,4 @@ new Module('event', function() {
 			this.currentColors.push(color);
 		}
 	}
-})
+};

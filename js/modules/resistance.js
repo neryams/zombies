@@ -1,7 +1,8 @@
 /* 
 	Resistance: Module to make humans kill zombies
 */
-new Module('infect', function(current,target,strength) {
+exports.type = 'infect';
+exports.run = function(current,target,strength) {
 	if(current.location.total_pop > 0 && current.location.cache) {
 		if(!current.location.humanStrength)
 			current.location.humanStrength = 0;
@@ -13,11 +14,12 @@ new Module('infect', function(current,target,strength) {
 
 		strength.humanStrength = current.location.humanStrength + Math.log(current.location.panic+1);
 	}
-},{
+};
+exports.options = {
 	init: function() {
 
 	},
 	runtime: 1,
 	alwaysActive: true,
 	children: ['panic','armies']
-})
+};

@@ -756,7 +756,7 @@ var UserInterface = function UserInterface(Renderer,language) {
 					$('#render_tooltip').html(event.data(point));
 
 					// Debug information to mouse over points
-					if(debug.mouseOverDebugData) {
+					if(debugMenu.mouseOverDebugData) {
 						$('#render_tooltip').html(JSON.stringify(point, 
 							function(key,value) {
 								if(key == 'adjacent' || key == 'vertices_pop' || key == 'vertices_zom') 

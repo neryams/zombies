@@ -1,7 +1,8 @@
 /*
 	Panic: module for activating various modules based on world panic
 */
-new Module('event', function() {
+exports.type = 'event';
+exports.run = function() {
 	if(this.S.properties.panic > 0) {
 		this.S.properties.panic = Math.ceil(this.S.properties.panic * 0.95);
 		if(this.S.properties.panic > this.panicThresholds[this.currPanicLevel]) {
@@ -74,7 +75,8 @@ new Module('event', function() {
 	}
 
 	this.S.UIData['world_panic'] = (this.S.properties.panic - this.panicThresholds[this.currPanicLevel - 1]) / (this.panicThresholds[this.currPanicLevel] - this.panicThresholds[this.currPanicLevel - 1]);
-},{
+};
+exports.options = {
 	init: function () {
 		for(var i = 1; i < this.S.countries.length; i++) {
 			this.S.countries[i].currPanicLevel = 1;
@@ -90,4 +92,4 @@ new Module('event', function() {
 	},
 	alwaysActive: true,
 	children: ['vaccine','panicAttrib']
-})
+};

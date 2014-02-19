@@ -1,11 +1,13 @@
 /* 
 	Armies: Humans will create armies that will kill zombies
 */
-new Module('event', function() {
+exports.type = 'event';
+exports.run = function() {
 	for(var i = 0; i < this.armies.length; i++) {
 
 	}
-},{
+};
+exports.options = {
 	init: function() {
 		module = this;
 		this.armies = [];
@@ -61,4 +63,4 @@ new Module('event', function() {
 	},
 	alwaysActive: true,
 	dependencies: ['resistance']
-})
+};

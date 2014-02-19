@@ -1,8 +1,10 @@
 /* 
 	Grid Booster: Allows the evolution grid to be expanded
 */
-new Module('event', function(upgrade) {
-},{
+exports.type = 'event';
+exports.run = function(upgrade) {
+};
+exports.options = {
 	init: function() {
 		var enlargeGrid = function() {
 			this.S.properties.gridSize++;	
@@ -13,4 +15,4 @@ new Module('event', function(upgrade) {
 			{cost: 100000,paths:['gridBoost-1'],name:'Gene Upgrade III', onUpgrade: enlargeGrid, description:'Makes gene mutation grid larger. Allows for the most complex mutations. <p class="strong">8x8 Mutation Grid</p>'}
 		);
 	}
-})
+};

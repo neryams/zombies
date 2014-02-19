@@ -2,7 +2,8 @@
 	Movement: causes zombies to wander around.
 	Zombies walking around, distance probability distribution function based in movement strength (Speed). mobility being in km/h, and radius of planet being 6378.1 km
 */
-new Module('spread', function(current,strength) {
+exports.type = 'spread';
+exports.run = function(current,strength) {
 	if(strength.mobility > 0) {
 		var currentLocation = current.location;
 		if(current.movement === undefined || current.movement === null)
@@ -109,7 +110,8 @@ new Module('spread', function(current,strength) {
 			}
 	    }
 	}
-},{
+};
+exports.options = {
 	init: function() {
 		this.bakedMoveChance = [];
 		this.smellCache = [];
@@ -172,4 +174,4 @@ new Module('spread', function(current,strength) {
 	},
 	alwaysActive: true,
 	dependencies: ['moveSpeed']
-})
+};

@@ -1,68 +1,68 @@
-debug.console = {};
-debug.console.manualTicks = false;
-debug.console.watchModulesCache = false;
-debug.console.push = function(debugObject) {
+debugMenu.console = {};
+debugMenu.console.manualTicks = false;
+debugMenu.console.watchModulesCache = false;
+debugMenu.console.push = function(debugObject) {
 	if(debugObject.selectedPoint === null)
-		debug.console['_default'] = debugObject;
+		debugMenu.console['_default'] = debugObject;
 	else
-		debug.console['_'+debugObject.selectedPoint.id] = debugObject;
+		debugMenu.console['_'+debugObject.selectedPoint.id] = debugObject;
 }
-debug.console.updateTarget = function(self,target) {
+debugMenu.console.updateTarget = function(self,target) {
 	var consoleId = '_'+self.id;
-	if(debug.console[consoleId]) {
-		debug.console[consoleId].updateTarget(self,target);
+	if(debugMenu.console[consoleId]) {
+		debugMenu.console[consoleId].updateTarget(self,target);
 	}
 	else
 		return false;
 }
-debug.console.reportModule = function(self,name,strength) {
+debugMenu.console.reportModule = function(self,name,strength) {
 	var consoleId = '_'+self.id;
-	if(debug.console[consoleId])
-		debug.console[consoleId].updateStrength(self,name,strength);
+	if(debugMenu.console[consoleId])
+		debugMenu.console[consoleId].updateStrength(self,name,strength);
 	else
 		return false;
 }
-debug.console.reportOutput = function(self,name,string) {
+debugMenu.console.reportOutput = function(self,name,string) {
 	var consoleId = '_'+self.id;
-	if(debug.console[consoleId])
-		debug.console[consoleId].reportOutput(self,name,string);
+	if(debugMenu.console[consoleId])
+		debugMenu.console[consoleId].reportOutput(self,name,string);
 	else
 		return false;
 }
-debug.console.newTick = function() {
-	for (var point in debug.console) 
-		if(debug.console.hasOwnProperty(point) && debug.console[point].debugWindow) {
-			delete debug.console[point].lastStrength;
-			debug.console[point].debugBody.find('.debugConsole').empty();
-			debug.console[point].debugBody.find('.pointInfo .selfInfo').empty();
-			debug.console[point].debugBody.find('.pointInfo .hordes').empty();
-			delete debug.console[point].currentHorde;
+debugMenu.console.newTick = function() {
+	for (var point in debugMenu.console) 
+		if(debugMenu.console.hasOwnProperty(point) && debugMenu.console[point].debugWindow) {
+			delete debugMenu.console[point].lastStrength;
+			debugMenu.console[point].debugBody.find('.debugConsole').empty();
+			debugMenu.console[point].debugBody.find('.pointInfo .selfInfo').empty();
+			debugMenu.console[point].debugBody.find('.pointInfo .hordes').empty();
+			delete debugMenu.console[point].currentHorde;
 		}
 }
-debug.console.watch = function(horde) {
-	for (var point in debug.console) 
-		if(debug.console.hasOwnProperty(point) && debug.console[point].debugWindow && debug.console[point].selectedPoint === null) {
-			debug.console[point].watch(horde);
+debugMenu.console.watch = function(horde) {
+	for (var point in debugMenu.console) 
+		if(debugMenu.console.hasOwnProperty(point) && debugMenu.console[point].debugWindow && debugMenu.console[point].selectedPoint === null) {
+			debugMenu.console[point].watch(horde);
 			break;
 		}
 }
-debug.console.watchModules = function(self) {
+debugMenu.console.watchModules = function(self) {
 	if(!self) {
-		if(!debug.console.watchModulesCache) {
-			debug.console.watchModulesCache = {}
-			for (var point in debug.console) 
-				if(debug.console.hasOwnProperty(point) && debug.console[point].debugWindow) {
-					for (var watch in debug.console[point].watchModules) {
-						if(debug.console[point].watchModules.hasOwnProperty(watch) && !debug.console.watchModulesCache[watch]) {
-							debug.console.watchModulesCache[watch] = debug.console[point].watchModules[watch];
+		if(!debugMenu.console.watchModulesCache) {
+			debugMenu.console.watchModulesCache = {}
+			for (var point in debugMenu.console) 
+				if(debugMenu.console.hasOwnProperty(point) && debugMenu.console[point].debugWindow) {
+					for (var watch in debugMenu.console[point].watchModules) {
+						if(debugMenu.console[point].watchModules.hasOwnProperty(watch) && !debugMenu.console.watchModulesCache[watch]) {
+							debugMenu.console.watchModulesCache[watch] = debugMenu.console[point].watchModules[watch];
 						}
 					}
 				}		
 		}
-		return debug.console.watchModulesCache;
+		return debugMenu.console.watchModulesCache;
 	}
-	else if(debug.console['_'+self.id] && debug.console['_'+self.id].watchModules)
-		return debug.console['_'+self.id].watchModules;
+	else if(debugMenu.console['_'+self.id] && debugMenu.console['_'+self.id].watchModules)
+		return debugMenu.console['_'+self.id].watchModules;
 	else
 		return {};
 }
@@ -88,8 +88,8 @@ function Debugger(horde) {
 		});
 
 		// Add handler on checkbox to break on every turn
-		debug.console.manualTicks = that.debugBody.find('#o_manualTicks').on('click', function() {
-			debug.console.manualTicks = $(this).is(':checked');
+		debugMenu.console.manualTicks = that.debugBody.find('#o_manualTicks').on('click', function() {
+			debugMenu.console.manualTicks = $(this).is(':checked');
 		}).is(':checked');
 
 		that.debugBody.find('#o_endTurn').on('click', function() {
@@ -121,7 +121,7 @@ function Debugger(horde) {
 				$(this).removeClass('selected');
 				that.watchModules[moduleId] = false;
 			}
-			debug.console.watchModulesCache = false;
+			debugMenu.console.watchModulesCache = false;
 		})
 	});
 }
@@ -214,13 +214,13 @@ Debugger.prototype.reportOutput = function(self,name,string) {
 Debugger.prototype.watch = function(horde) {
 	if(horde !== undefined) {
 		if(this.selectedPoint === null)
-			delete debug.console['_default'];
+			delete debugMenu.console['_default'];
 		else
-			delete debug.console['_'+this.selectedPoint.id];
+			delete debugMenu.console['_'+this.selectedPoint.id];
 
 		this.debugBody.find('#o_debugPoint').val(horde.id);
 		this.selectedPoint = horde;
-		debug.console['_'+this.selectedPoint.id] = this;
+		debugMenu.console['_'+this.selectedPoint.id] = this;
 	}
 }
 Debugger.prototype.close = function() {

@@ -1,10 +1,12 @@
 /*
 	Bite: infect healthy people that are in the same square as the zombie. 
 */
-new Module('infect', function(current,target,strength) {
+exports.type = 'infect';
+exports.run = function(current,target,strength) {
 	strength.infectChance = this.infectPower;
 	strength.panic += this.panic;
-},{
+};
+exports.options = {
 	init: function() {
 		this.panic = 0;
 		this.infectPower = 0;
@@ -18,4 +20,4 @@ new Module('infect', function(current,target,strength) {
 	},
 	runtime: 1,
 	dependencies: ['aggression']
-})
+};
