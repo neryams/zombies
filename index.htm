@@ -179,9 +179,6 @@
                 if(typeof require === 'undefined') {
                     $.getScript('js/loadModules.php?modules='+$('#s_modules').val(), onLoadModules);
                 } else {
-                    process.on('uncaughtException', function (err) {
-                        console.log('Caught exception: ' + err);
-                    });
                     Simulator.prototype.loadModules = $('#s_modules').val().split(',');
                     onLoadModules();
                 }

@@ -10,9 +10,9 @@ exports.run = function(current,target,strength) {
 		var rand = Math.random();
 		var self_encounters = Math.round(((rand*2 + (rand*10%1)*2 + (rand*100%1)*2)/3) * (strength.encounterProbability));
 		var humanLosses = Math.round(self_encounters*(strength.zombieStrength/totalStrength));
-		zombieLosses = self_encounters - humanLosses;
-		totalInfected = Math.round(humanLosses * strength.infectChance);
-		totalKilled = humanLosses - totalInfected;
+		var zombieLosses = self_encounters - humanLosses;
+		var totalInfected = Math.round(humanLosses * strength.infectChance);
+		var totalKilled = humanLosses - totalInfected;
 
 		if(totalInfected > 0 || totalKilled > 0) {
 			// Update the population record on the square
