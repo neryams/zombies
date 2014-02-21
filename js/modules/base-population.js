@@ -6,7 +6,7 @@ exports.run = function(current,target,strength) {
 	var lat = Math.floor(Math.abs(current.location.lat));
 	var area = this.S.bakedValues.latDistances[lat][0] * this.S.bakedValues.latDistances[lat][1]; // square km
 	strength.encounterProbability *= Math.sqrt((current.size + current.location.total_pop) / area);
-	strength.spreadChance *= Math.log(current.size * 10);
+	strength.transferChance *= Math.log(current.size);
 
 	strength.zombieStrength *= Math.log((current.size) / area + Math.E);
 	strength.humanStrength *= Math.log((current.location.total_pop) / area + Math.E);

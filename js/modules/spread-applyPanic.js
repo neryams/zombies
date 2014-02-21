@@ -11,5 +11,5 @@ exports.run = function(current,strength) {
 		return 'panic change: ' + (current.location.panic*2) + '<br />world panic change: ' + this.S.properties.panic + '<br />' + this.S.countries[current.location.country].name+' panic change: '+this.S.countries[current.location.country].panic;
 };
 exports.options = {
-	alwaysActive: true
+	dependencies: ['event-panic']
 };

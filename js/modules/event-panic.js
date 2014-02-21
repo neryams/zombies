@@ -91,5 +91,5 @@ exports.options = {
         });
 	},
 	alwaysActive: true,
-	children: ['vaccine','panicAttrib']
+	children: ['event-vaccine','spread-applyPanic','process-panic']
 };

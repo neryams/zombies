@@ -156,6 +156,5 @@ exports.options = {
 					}
 				}
 		}
-	},
-	alwaysActive: true
+	}
 };

@@ -214,7 +214,7 @@ Horde.prototype = {
 if(typeof global !== 'undefined')
     global.Horde = Horde;
 
-function Simulator(modules, R, UI, gConfig, gData) {
+function Simulator(R, UI, gConfig, gData) {
 	// Game and virus properties!
 	this.properties = { 
 		virus_name: '', 
@@ -439,14 +439,16 @@ Simulator.prototype.addModule = function(id,moduleArray) {
 
 			newModule.id = id;
 			this.modules[id] = newModule;
-			if(newModule.alwaysActive)
-				this.addActive(id);
 			if(newModule.init != undefined && newModule.type != 'strain')
 				newModule.init();
 
 			// Add children recursively
 			for(i = 0, n = newModule.children.length; i < n; i++)
 				this.addModule(newModule.children[i],moduleArray);
+
+			// Activate after adding all linked modules
+			if(newModule.alwaysActive)
+				this.addActive(id);
 		}
 		else
 			console.error('Module "'+id+'" not found. Try adding it to Dependencies or Children');
@@ -454,31 +456,59 @@ Simulator.prototype.addModule = function(id,moduleArray) {
 }
 
 Simulator.prototype.addActive = function(id) {
-	if(!this.modules[id].isActive()) {
+	var addModule = this.modules[id];
+	if(!addModule.isActive()) {
+		// Also activate this module's dependencies
+		if(addModule.dependencies.length > 0)
+			for(var i = 0; i < addModule.dependencies.length; i++)
+				this.addActive(addModule.dependencies[i]);		
+
 		// If module is a strain, set it as the Simulator's strain function. Never will need to be removed, just potentially overwritten.
-		if(this.modules[id].type == 'strain')
-			this.strain = this.modules[id];
+		if(addModule.type == 'strain') {
+			addModule.activeId = 0;
+			this.strain = addModule;
+		}
 		// Otherwise, just add it to the relavant function array
 		else {
-			this.modules[id].activeId = this.activeModules[this.modules[id].type].length;
-			this.activeModules[this.modules[id].type].push(this.modules[id]);
-			this.activeModules[this.modules[id].type].sort(function (a,b) {
-				return a.runtime - b.runtime;
-			});
-			if(this.modules[id].onActivate != undefined)
-				this.modules[id].onActivate();
-		}	
+			for(var i = this.activeModules[addModule.type].length; !addModule.isActive(); i--) {
+				if(i == 0 || this.activeModules[addModule.type][i-1].runtime < addModule.runtime) {
+					this.activeModules[addModule.type][i] = addModule;
+					addModule.activeId = i;
+				} else {
+					this.activeModules[addModule.type][i] = this.activeModules[addModule.type][i-1];
+					this.activeModules[addModule.type][i].activeId = i;
+				}
+			}
+			if(addModule.onActivate != undefined)
+				addModule.onActivate();
+		}
+
+		// Also activate this module's children
+		if(addModule.children.length > 0)
+			for(var i = 0; i < addModule.children.length; i++)
+				this.addActive(addModule.children[i]);
 	}
 }
 
 Simulator.prototype.removeActive = function(id) {
-	if(this.modules[id].isActive()) {
-		if(this.modules[id].onDeactivate != undefined)
-			this.modules[id].onDeactivate();
-		this.activeModules[this.modules[id].type].splice(this.modules[id].activeId,1);
-		for(var i = 0, n = this.activeModules[this.modules[id].type].length; i < n; i++)
-			this.activeModules[this.modules[id].type][i].activeId = i;
-		delete this.modules[id].activeId;
+	var removeModule = this.modules[id];
+	if(removeModule !== undefined && removeModule.isActive() && !removeModule.alwaysActive && removeModule.type !== 'strain') {
+		// Also deactivate this module's children
+		if(removeModule.children.length > 0)
+			for(var i = 0; i < removeModule.children.length; i++)
+				this.removeActive(removeModule.children[i]);
+
+		// Run the ondeactivate function
+		if(removeModule.onDeactivate != undefined)
+			removeModule.onDeactivate();
+
+		// Replace this module with the next in line and shift all subsequent modules down the queue
+		for(var i = removeModule.activeId; i < this.activeModules[removeModule.type].length - 1; i++) {
+			this.activeModules[removeModule.type][i] = this.activeModules[removeModule.type][i+1];
+			this.activeModules[removeModule.type][i].activeId = i;
+		}
+		this.activeModules[removeModule.type].length--;
+		delete removeModule.activeId;
 	}
 }
 
@@ -490,16 +520,19 @@ Simulator.prototype.unPause = function() {
 }
 
 Simulator.prototype.addUpgrades = function(module) {
-	var module = module;
-	var levels = [];
-	var j;
+	var module = module,
+		levels = [],
+		j;
+
     for (var i = 1, n = arguments.length; i < n; i++) {
     	j = i-1;
     	levels[j] = arguments[i];
-		if(n == 2)
+		if(module.type == 'strain')
+			levels[j].id = 'strain'
+		else if(n == 2)
 			levels[j].id = module.id;
 		else
-			levels[j].id = module.id + '-' + j;
+			levels[j].id = module.id + '_' + j;
 
     	this.upgrades[levels[j].id] = new Upgrade(levels[j]);
     	this.upgrades[levels[j].id].module = module;
@@ -662,13 +695,13 @@ Simulator.prototype.tick = function() {
 					break;
 			}
 			current = this.hordes[i];
-			currentLocation = current.location;
-			this.pointsToWatch[currentLocation.id] = true;
-
 			if(current.size < 1) {
-				this.hordes[i] = this.hordes.pop(); // don't use splice here, very expensive for huge array. Just swap element to remove with last.
+				current = this.hordes[i] = this.hordes.pop(); // don't use splice here, very expensive for huge array. Just swap element to remove with last.
 				n--;
 			}
+
+			currentLocation = current.location;
+			this.pointsToWatch[currentLocation.id] = true;
 
 			chances = this.bakedValues.latCumChance[Math.floor(Math.abs(currentLocation.lat))];
 			if(debugMenu.watch == current.id) {
@@ -693,33 +726,24 @@ Simulator.prototype.tick = function() {
 				target = currentLocation.adjacent[2].adjacent[3];
 			else
 				target = currentLocation.adjacent[0].adjacent[3];
-			
-			// infect is for all squares, infectSelf is for just its own square, mobili
-			strength.encounterProbability = 0;
-			strength.zombieStrength = 0;
-			strength.humanStrength = 0;
-			strength.infectChance = 0;
-			strength.transferStrength = 0;
-			strength.transferChance = 0;
-			strength.mobility = 0;
-			strength.panic = 0;
 
+			this.pointsToWatch[target.id] = true;
 
 			if(debugMenu.console) 
 				debugMenu.console.updateTarget(current, target);
-
-			// Run infect modules on each horde
-			for(j = 0; j < this.activeModules.infect.length; j++) {
-				this.activeModules.infect[j].process(current,target,strength);
-				if(debugMenu.console)
-					debugMenu.console.reportModule(current, this.activeModules.infect[j].id, strength);
-			}
 			
 			// Run main modules on each horde
 			if(debugMenu.console) {
 				debugMenu.console.reportOutput(current, this.strain.id, this.strain.process(current,target,strength));
 			} else {
 				this.strain.process(current,target,strength);
+			}
+
+			// Run infect modules on each horde
+			for(j = 0; j < this.activeModules.infect.length; j++) {
+				this.activeModules.infect[j].process(current,target,strength);
+				if(debugMenu.console)
+					debugMenu.console.reportModule(current, this.activeModules.infect[j].id, strength);
 			}
 
 			// Run spread modules on each horde
@@ -885,6 +909,9 @@ Module.prototype = {
 	process: function() {return 0},
 	isActive: function() {
 		return this.activeId != undefined;
+	},
+	activate: function() {
+		this.S.addActive(this.id);
 	},
 	reset: function() {
 		if(this.defaults) {

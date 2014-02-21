@@ -172,6 +172,5 @@ exports.options = {
 	    	return returnAmount;
 		}
 	},
-	alwaysActive: true,
-	dependencies: ['moveSpeed']
+	dependencies: ['base-movement']
 };

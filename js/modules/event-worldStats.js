@@ -38,6 +38,5 @@ exports.options = {
         	value: this.world_infected
         });
 	},
-	alwaysActive: true/*,
-	children: ['locationStats']*/
+	alwaysActive: true
 };

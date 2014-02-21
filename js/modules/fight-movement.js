@@ -7,6 +7,5 @@ exports.run = function(current,target,strength) {
 };
 exports.options = {
 	runtime: 11,
-	dependencies: ['moveSpeed'],
-	alwaysActive: true
+	dependencies: ['base-movement']
 };

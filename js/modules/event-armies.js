@@ -61,6 +61,5 @@ exports.options = {
 			return true;
 		}
 	},
-	alwaysActive: true,
-	dependencies: ['resistance']
+	dependencies: ['fight-human']
 };

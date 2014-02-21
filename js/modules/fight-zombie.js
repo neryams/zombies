@@ -7,20 +7,20 @@ exports.run = function(current,target,strength) {
 	strength.panic = this.panic;
 };
 exports.options = {
-	runtime: 0,
 	init: function() {
 		this.panic = 0;
 		this.zombieStartStrength = 0;
 		this.S.addUpgrades(this,
-			{cost: 1000,paths:['main'],name:'Hunger', onUpgrade: function() {
+			{cost: 1000,paths:['strain'],name:'Hunger', onUpgrade: function() {
 				this.val('zombieStartStrength',5);
 				this.val('panic',1);
 			}, description:'Makes zombies aggressive.'},
-			{cost: 1000,paths:['aggression-0'],name:'Hyper Agression',gene:{size: 5, shape: 's', color: 'red'}, onUpgrade: function() {
+			{cost: 1000,paths:['fight-zombie_0'],name:'Hyper Agression',gene:{size: 5, shape: 's', color: 'red'}, onUpgrade: function() {
 				this.val('zombieStartStrength',10,'+');
 				this.val('panic',2,'+');
 			}, description:'Makes zombies more likely to kill people. Improves effectiveness against military. Increases Panic.'}
 		);
 	},
-	alwaysActive: true
+	runtime: 5,
+	dependencies: ['process-fightBite']
 };

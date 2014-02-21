@@ -712,14 +712,13 @@ var UserInterface = function UserInterface(Renderer,language) {
 			addDataField('alert','div',{ overlay: true });
 		},
 		end: function() {
-			Evolution.prototype.buildWeb();
-			
 			$('#setup,#progress').remove();
 			$('#container').css('display','block');
 
 			$("#ui").append($('<div id="render_tooltip" class="tooltip"></div><div id="tooltip" class="tooltip"></div>'));
 
 			mainUIReady();
+			Evolution.prototype.buildWeb();
 		},
 		progress: function(ratio, share) {
 			if(ratio == undefined) {
@@ -989,6 +988,9 @@ var UserInterface = function UserInterface(Renderer,language) {
 
         //UI.interfaceParts.evolveMenu_button.element.trigger('click');
         //UI.interfaceParts.mutateMenu_button.element.trigger('click');
+
+        // This is where we open the strain select/start game prompt. Auto-start for now.
+        Simulator.start('strain-zombie');
 	}
 
    	// Function that runs on every frame, sending mouse movement from UI as coordinates to the renderer to move 3-d elements around

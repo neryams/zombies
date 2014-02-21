@@ -173,6 +173,9 @@
                 if(typeof require === 'undefined') {
                     $.getScript('js/loadModules.php?modules='+$('#s_modules').val(), onLoadModules);
                 } else {
+                    process.on('uncaughtException', function (err) {
+                        console.log('Caught exception: ' + err);
+                    });
                     Simulator.prototype.loadModules = $('#s_modules').val().split(',');
                     onLoadModules();
                 }
@@ -213,7 +216,7 @@
                         gData.points[i].adjacent[3] = gData.points[gData.points[i].adjacent[3]];
                     }
                     UI.load.endGenerator();
-                    S = new Simulator(['main'],R,UI,gConfig,gData);
+                    S = new Simulator(R,UI,gConfig,gData);
                     S.setName(event.data.generatedName);
                     tCompletion++;
                     console.timeEnd('webWorkerTransferTimer');
@@ -238,7 +241,6 @@
                 tGenerator.terminate();
                 delete tGenerator;
 
-                S.start('main');
                 UI.load.end();
                 R.animate();                
             }

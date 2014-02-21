@@ -20,6 +20,5 @@ exports.options = {
 
 	},
 	runtime: 1,
-	alwaysActive: true,
-	children: ['panic','armies']
+	children: ['event-panic','event-armies']
 };
