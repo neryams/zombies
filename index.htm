@@ -40,6 +40,12 @@
               return undefined;
            },
         });
+
+        // Reset require cache for testing
+        if(typeof global !== 'undefined')
+            for (key in global.require.cache) 
+                if (global.require.cache.hasOwnProperty(key)) 
+                    delete global.require.cache[key];
     </script>
 </head>
 <body>
