@@ -676,7 +676,7 @@ Simulator.prototype.tick = function() {
 	if(this.paused)
 		return false;
 
-	var i,j,n,spread_rand,rand,target,current,chance,chances,direction,distance,strength = {},
+	var i,j,n,spread_rand,rand,target,current,chance,chances,direction,distance,passData = {},
 		S = this,
 		simplifyAt = 2000,
 		simplifyCof = 1;
@@ -734,24 +734,24 @@ Simulator.prototype.tick = function() {
 			
 			// Run main modules on each horde
 			if(debugMenu.console) {
-				debugMenu.console.reportOutput(current, this.strain.id, this.strain.process(current,target,strength));
+				debugMenu.console.reportOutput(current, this.strain.id, this.strain.process(current,target,passData));
 			} else {
-				this.strain.process(current,target,strength);
+				this.strain.process(current,target,passData);
 			}
 
 			// Run infect modules on each horde
 			for(j = 0; j < this.activeModules.infect.length; j++) {
-				this.activeModules.infect[j].process(current,target,strength);
+				this.activeModules.infect[j].process(current,target,passData);
 				if(debugMenu.console)
-					debugMenu.console.reportModule(current, this.activeModules.infect[j].id, strength);
+					debugMenu.console.reportModule(current, this.activeModules.infect[j].id, passData);
 			}
 
 			// Run spread modules on each horde
 			for(j = 0; j < this.activeModules.spread.length; j++) {
 				if(debugMenu.console)
-					debugMenu.console.reportOutput(current, this.activeModules.spread[j].id, this.activeModules.spread[j].process(current,strength));
+					debugMenu.console.reportOutput(current, this.activeModules.spread[j].id, this.activeModules.spread[j].process(current,passData));
 				else
-					this.activeModules.spread[j].process(current,strength);
+					this.activeModules.spread[j].process(current,passData);
 			}
 
 			// Update nearby square populations
@@ -837,7 +837,7 @@ Simulator.prototype.rendererDecal = function(id, lat, lng, size, texture) {
 				infect
 					current: current square
 					target: target square
-					strength: object that is passed to every module and is used by the strain to do final operations. All values styart at zero.
+					passData: object that is passed to every module and is used by the strain to do final operations. All values styart at zero.
 						encounterProbability
 						zombieStrength
 						humanStrength

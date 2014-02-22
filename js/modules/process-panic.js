@@ -2,10 +2,10 @@
 	Process Panic: Add panic to location
 */
 exports.type = 'infect';
-exports.run = function(current,target,strength) {
+exports.run = function(current,target,passData) {
 	// Contact infection on self tile
-	if(strength.panic > 0) {
-		current.location.panic += strength.panic;
+	if(passData.panic > 0) {
+		current.location.panic += passData.panic;
 	}
 };
 exports.options = {

@@ -2,9 +2,9 @@
 	Aggression: allows zombies to kill people
 */
 exports.type = 'infect';
-exports.run = function(current,target,strength) {
-	strength.zombieStrength = this.zombieStartStrength;
-	strength.panic = this.panic;
+exports.run = function(current,target,passData) {
+	passData.zombieStrength = this.zombieStartStrength;
+	passData.panic = this.panic;
 };
 exports.options = {
 	init: function() {

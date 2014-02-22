@@ -2,10 +2,10 @@
 	Viral Infection: Vanilla infection module that allows the zombie virus to infect people contagioiusly over the air and water.
 */
 exports.type = 'infect';
-exports.run = function(current,target,strength) {
-	strength.transferStrength += this.transferStrength;
-	strength.transferChance += this.transferChance;
-	strength.panic += this.panic;
+exports.run = function(current,target,passData) {
+	passData.transferStrength += this.transferStrength;
+	passData.transferChance += this.transferChance;
+	passData.panic += this.panic;
 };
 exports.options = {
 	init: function() {
@@ -16,7 +16,7 @@ exports.options = {
 		this.S.addUpgrades(this,
 			{cost: 2000,paths:['infect-bite'], name:'Respiratory Infection', onUpgrade: function() {
 				this.activate();
-				this.val('transferChance',0.05);
+				this.val('transferChance',1);
 				this.val('transferStrength',1);
 			}, description:'Unlocks evolutions for the zombie virus to infect healthy people through the air. Air infection does not need a zombie in the square to infect, can infect large numbers of people independent of the number of zombies in the area.'},
 			{cost: 1500, paths:['transfer-air_0'], name:'Coughing', gene:{size: 4, shape: 's', color: 'green'}, onUpgrade: function() {

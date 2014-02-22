@@ -15,10 +15,10 @@ debugMenu.console.updateTarget = function(self,target) {
 	else
 		return false;
 }
-debugMenu.console.reportModule = function(self,name,strength) {
+debugMenu.console.reportModule = function(self,name,passData) {
 	var consoleId = '_'+self.id;
 	if(debugMenu.console[consoleId])
-		debugMenu.console[consoleId].updateStrength(self,name,strength);
+		debugMenu.console[consoleId].updatePassData(self,name,passData);
 	else
 		return false;
 }
@@ -32,7 +32,7 @@ debugMenu.console.reportOutput = function(self,name,string) {
 debugMenu.console.newTick = function() {
 	for (var point in debugMenu.console) 
 		if(debugMenu.console.hasOwnProperty(point) && debugMenu.console[point].debugWindow) {
-			delete debugMenu.console[point].lastStrength;
+			delete debugMenu.console[point].lastPassData;
 			debugMenu.console[point].debugBody.find('.debugConsole').empty();
 			debugMenu.console[point].debugBody.find('.pointInfo .selfInfo').empty();
 			debugMenu.console[point].debugBody.find('.pointInfo .hordes').empty();
@@ -129,7 +129,7 @@ function Debugger(horde) {
 Debugger.prototype = {
 	pause: false,
 	selectedPoint: null,
-	lastStrength: null,
+	lastPassData: null,
 	watchModules: {},
 	desiredHorde: 0
 }
@@ -175,20 +175,20 @@ Debugger.prototype.getHordeDebugConsole = function(id) {
     }
     return consoleRoot;
 } 
-Debugger.prototype.updateStrength = function(self,name,strength) {
+Debugger.prototype.updatePassData = function(self,name,passData) {
 	var moduleId = name.split('.',1)[0];
 	var moduleInfo = $('<table></table>');
 	moduleInfo.append($('<tr></tr>').html('<th colspan="4">'+name+'</th>'));
-	if(this.lastStrength === null)
-		this.lastStrength = {};
-    for (var item in strength) 
-        if(strength.hasOwnProperty(item)) {
-			if(this.lastStrength[item] === undefined)
-				this.lastStrength[item] = 0;
+	if(this.lastPassData === null)
+		this.lastPassData = {};
+    for (var item in passData) 
+        if(passData.hasOwnProperty(item)) {
+			if(this.lastPassData[item] === undefined)
+				this.lastPassData[item] = 0;
 
-			moduleInfo.append($('<tr></tr>').html('<td>s.'+item+'</td><td>'+this.lastStrength[item].toPrecision(3)+'</td><td class="to"></td><td>'+strength[item].toPrecision(3)+'</td>'));
+			moduleInfo.append($('<tr></tr>').html('<td>s.'+item+'</td><td>'+this.lastPassData[item].toPrecision(3)+'</td><td class="to"></td><td>'+passData[item].toPrecision(3)+'</td>'));
 
-        	this.lastStrength[item] = strength[item];
+        	this.lastPassData[item] = passData[item];
         }
 
     var moduleContainer = $('<td class="module"></td>').append(moduleInfo);

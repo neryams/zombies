@@ -2,13 +2,13 @@
 	Process Transfer: infect healthy people passively over the air.
 */
 exports.type = 'infect';
-exports.run = function(current,target,strength) {
+exports.run = function(current,target,passData) {
 	// If target has population, infect some of them
 	if(target.total_pop > 0) {
 		var rand = Math.random();
 
-		if(strength.transferChance) {
-			var totalInfected = Math.round(rand * strength.transferChance);
+		if(passData.transferChance) {
+			var totalInfected = Math.round(rand * passData.transferChance);
 			if(target.total_pop < totalInfected)
 				totalInfected = target.total_pop;
 

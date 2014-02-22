@@ -2,10 +2,10 @@
 	Base Movement: upgrades to make zombies move faster
 */
 exports.type = 'infect';
-exports.run = function(current,target,strength) {
-	strength.mobility = this.speed;
-	strength.encounterProbability = 1 + this.burstSpeed;
-	strength.panic += this.panic;
+exports.run = function(current,target,passData) {
+	passData.mobility = this.speed;
+	passData.encounterProbability = 1 + this.burstSpeed;
+	passData.panic += this.panic;
 };
 exports.options = {
 	init: function() {

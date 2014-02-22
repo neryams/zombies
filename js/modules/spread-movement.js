@@ -3,12 +3,12 @@
 	Zombies walking around, distance probability distribution function based in movement strength (Speed). mobility being in km/h, and radius of planet being 6378.1 km
 */
 exports.type = 'spread';
-exports.run = function(current,strength) {
-	if(strength.mobility > 0) {
+exports.run = function(current,passData) {
+	if(passData.mobility > 0) {
 		var currentLocation = current.location;
 		if(current.movement === undefined || current.movement === null)
 			current.movement = 0;
-	    current.movement += strength.mobility;
+	    current.movement += passData.mobility;
 
 		// If zombies can smell humans, get the movement weighting values in an array
 		//if(this.humanSense > 0) {

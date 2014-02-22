@@ -2,7 +2,7 @@
 	PanicAttrib: Module for applying local panic to country and world panic.
 */
 exports.type = 'spread';
-exports.run = function(current,strength) {
+exports.run = function(current,passData) {
 	this.S.countries[current.location.country].panic += current.location.panic;
 	this.S.properties.panic += current.location.panic;
 	current.location.panic /= 2;

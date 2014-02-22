@@ -2,17 +2,17 @@
 	Climate: Module to change the infect and killing rate (overall zombie strength) based on the climate. Zombies like the climate that they start in.
 */
 exports.type = 'infect';
-exports.run = function(current,target,strength) {
+exports.run = function(current,target,passData) {
 	var tempAdjust = 1 / (Math.pow((this.idealTemp - target.temperature)/(this.rangeTemp),2) + 1);
 	var precAdjust = 1 / (Math.pow((this.idealWet - target.precipitation)/(this.rangeWet),2) + 1);
-	strength.spreadChance   *= tempAdjust * precAdjust * 1.5;
+	passData.spreadChance   *= tempAdjust * precAdjust * 1.5;
 
 	var tempAdjust = 1 / (Math.pow((this.idealTemp - current.location.temperature)/(this.rangeTemp),2) + 1);
 	var precAdjust = 1 / (Math.pow((this.idealWet - current.location.precipitation)/(this.rangeWet),2) + 1);
-	strength.infectChance   *= tempAdjust * precAdjust * 1.5;
-	strength.zombieStrength *= tempAdjust * precAdjust * 1.5;
-	strength.mobility *= tempAdjust * precAdjust;
-	strength.encounterProbability *= tempAdjust * precAdjust;
+	passData.infectChance   *= tempAdjust * precAdjust * 1.5;
+	passData.zombieStrength *= tempAdjust * precAdjust * 1.5;
+	passData.mobility *= tempAdjust * precAdjust;
+	passData.encounterProbability *= tempAdjust * precAdjust;
 };
 exports.options = {
 	onStart: function(startSquare) {

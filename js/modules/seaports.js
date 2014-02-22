@@ -3,7 +3,7 @@
 */
 exports.type = 'event';
 exports.run = function() {
-	var interval,i,strength = {};
+	var interval,i;
 
 	// Check the ships that are currently moving
 	for(i = 0; i < this.ships.length; i++) {
@@ -25,12 +25,6 @@ exports.run = function() {
 				
 				this.ships[i].to.infected += transferCount;
 				this.ships[i].from.infected -= transferCount;
-				/*
-				strength.infect = 0;
-				for(j = 0; j < this.S.activeModules.infect.length; j++)
-					this.S.activeModules.infect[j].process(this.ships[i].from,this.ships[i].to,strength);
-				this.S.strain.process(this.ships[i].from,this.ships[i].to,strength,Math.random());
-				*/
 			}
 			this.ships[i].progressBar.val(this.getShipDate(this.S.date,this.ships[i].interval));
 			this.ships[i].timeLeft = -1;
