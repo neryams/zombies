@@ -676,7 +676,7 @@ Simulator.prototype.tick = function() {
 	if(this.paused)
 		return false;
 
-	var i,j,n,spread_rand,rand,target,current,chance,chances,direction,distance,passData = {},
+	var i,j,n,spread_rand,rand,target,current,chances,direction,distance,passData = {},
 		S = this,
 		simplifyAt = 2000,
 		simplifyCof = 1;
@@ -703,29 +703,57 @@ Simulator.prototype.tick = function() {
 			currentLocation = current.location;
 			this.pointsToWatch[currentLocation.id] = true;
 
-			chances = this.bakedValues.latCumChance[Math.floor(Math.abs(currentLocation.lat))];
+			var latId = Math.floor(Math.abs(currentLocation.lat));
+			chances = this.bakedValues.latCumChance[latId];
 			if(debugMenu.watch == current.id) {
 				console.log(current);
 				debugger;
 			}
 
 			rand = Math.random();
-			if(rand < chances[0])
-				target = currentLocation.adjacent[0];
-			else if(rand < chances[1])
-				target = currentLocation.adjacent[1];
-			else if(rand < chances[2])
-				target = currentLocation.adjacent[2];
-			else if(rand < chances[3])
-				target = currentLocation.adjacent[3];
-			else if(rand < chances[4])
-				target = currentLocation.adjacent[0].adjacent[1];
-			else if(rand < chances[5])
-				target = currentLocation.adjacent[2].adjacent[1];
-			else if(rand < chances[6])
-				target = currentLocation.adjacent[2].adjacent[3];
-			else
-				target = currentLocation.adjacent[0].adjacent[3];
+
+			passData.rand = Math.random();
+			passData.randNorm = (rand*2 + (rand*10%1)*2 + (rand*100%1)*2) / 3 - 1;
+			if(rand > 0.5) {
+				target = currentLocation;
+				passData.targetDistance = 0;
+			}
+			else {
+				rand *= 2;
+
+				if(rand < chances[0]){
+					target = currentLocation.adjacent[0];
+					passData.targetDistance = this.bakedValues.latDistances[latId][0];
+				}
+				else if(rand < chances[1]){
+					target = currentLocation.adjacent[1];
+					passData.targetDistance = this.bakedValues.latDistances[latId][1];
+				}
+				else if(rand < chances[2]){
+					target = currentLocation.adjacent[2];
+					passData.targetDistance = this.bakedValues.latDistances[latId][2];
+				}
+				else if(rand < chances[3]){
+					target = currentLocation.adjacent[3];
+					passData.targetDistance = this.bakedValues.latDistances[latId][3];
+				}
+				else if(rand < chances[4]){
+					target = currentLocation.adjacent[0].adjacent[1];
+					passData.targetDistance = this.bakedValues.latDistances[latId][4];
+				}
+				else if(rand < chances[5]){
+					target = currentLocation.adjacent[2].adjacent[1];
+					passData.targetDistance = this.bakedValues.latDistances[latId][5];
+				}
+				else if(rand < chances[6]){
+					target = currentLocation.adjacent[2].adjacent[3];
+					passData.targetDistance = this.bakedValues.latDistances[latId][6];
+				}
+				else{
+					target = currentLocation.adjacent[0].adjacent[3];
+					passData.targetDistance = this.bakedValues.latDistances[latId][7];
+				}
+			}
 
 			this.pointsToWatch[target.id] = true;
 

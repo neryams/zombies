@@ -7,8 +7,7 @@ exports.run = function(current,target,passData) {
 	var totalStrength = passData.zombieStrength + passData.humanStrength;
 
 	if(passData.encounterProbability && totalStrength > 0) {
-		var rand = Math.random();
-		var self_encounters = Math.round(((rand*2 + (rand*10%1)*2 + (rand*100%1)*2)/3) * (passData.encounterProbability));
+		var self_encounters = Math.round(passData.randNorm * (passData.encounterProbability));
 		var humanLosses = Math.round(self_encounters*(passData.zombieStrength/totalStrength));
 		var zombieLosses = self_encounters - humanLosses;
 		var totalInfected = Math.round(humanLosses * passData.infectChance);

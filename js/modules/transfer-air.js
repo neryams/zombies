@@ -17,7 +17,7 @@ exports.options = {
 			{cost: 2000,paths:['infect-bite'], name:'Respiratory Infection', onUpgrade: function() {
 				this.activate();
 				this.val('transferChance',1);
-				this.val('transferStrength',1);
+				this.val('transferStrength',2);
 			}, description:'Unlocks evolutions for the zombie virus to infect healthy people through the air. Air infection does not need a zombie in the square to infect, can infect large numbers of people independent of the number of zombies in the area.'},
 			{cost: 1500, paths:['transfer-air_0'], name:'Coughing', gene:{size: 4, shape: 's', color: 'green'}, onUpgrade: function() {
 				this.val('panic',0.5,'+');

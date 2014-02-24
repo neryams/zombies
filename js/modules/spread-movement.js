@@ -33,7 +33,7 @@ exports.run = function(current,passData) {
 
 		// Get the random numbers for the movement.
 		// randAngle is the randomly picked direction, where 0-7 are adjacent squares clockwise from top
-	    var rand = Math.sqrt(Math.random()),
+	    var rand = Math.sqrt(passData.rand),
 			randAngle = Math.random()*8, // modify this to point towards more people
 			chances = this.getChances(currentLocation.lat, current.movement);
 
