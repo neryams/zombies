@@ -300,6 +300,9 @@ function Simulator(R, UI, gConfig, gData) {
 
 	Horde.prototype.pointsToWatch = this.pointsToWatch;
 	this.hordes = [];
+	this.hordes.sizeSort = function (a, b) {
+		return b.size - a.size;
+	};
 	this.hordes.toAdd = [];
 	this.hordes.total = function() {
 		var result = [],
@@ -316,13 +319,12 @@ function Simulator(R, UI, gConfig, gData) {
 	}
 	this.hordes.sortPush = function(horde) {
 		this.toAdd.push(horde);
-	}
+	};
 	this.hordes.addAllNew = function() {
 		if(this.toAdd.length) {
 			// Sort the new hordes biggest to smallest
-			this.toAdd.sort(function (a, b) {
-				return b.size - a.size;
-			});
+			this.toAdd.sort(this.sizeSort);
+			this.sort(this.sizeSort);
 			var newHordes = [];
 			while(this.length > 0 || this.toAdd.length > 0) {
 				// If new hordes list is empty, add the rest of the originals reverse order
@@ -796,6 +798,7 @@ Simulator.prototype.tick = function() {
 				this.activeModules.event[j].process();
 		}
 
+		// Update all the points in the renderer that may have been affected 
 		// Iterate over the sparse array
 		for (var point in this.pointsToWatch) {
 			// If item is array index
