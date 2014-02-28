@@ -327,6 +327,8 @@ function Simulator(R, UI, gConfig, gData) {
 			this.sort(this.sizeSort);
 			var newHordes = [];
 			while(this.length > 0 || this.toAdd.length > 0) {
+				var n = newHordes.length;
+
 				// If new hordes list is empty, add the rest of the originals reverse order
 				if(!this.toAdd.length)
 					newHordes.push(this.pop());
@@ -338,10 +340,17 @@ function Simulator(R, UI, gConfig, gData) {
 					newHordes.push(this.pop());
 				else
 					newHordes.push(this.toAdd.pop());
+
+				if(newHordes[n].location.hordes.length > 0)
+					newHordes[n].location.hordes.length = 0;
 			}
 			// Reverse the sorted combined arrays back onto the hordes array
-			while(newHordes.length > 0)
+			while(newHordes.length > 0) {
+				var n = this.length;
 				this.push(newHordes.pop());
+				this[n].id = n;
+				this[n].location.hordes.push(n);
+			}
 		}
 	}
 }

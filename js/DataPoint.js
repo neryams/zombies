@@ -8,6 +8,7 @@ function DataPoint(i,config) {
 		this.lng = i%config.w + 0.5;
 		this.id = i;		
 	}
+	this.hordes = []
 }
 DataPoint.prototype = {
 	id: 0,
@@ -26,7 +27,8 @@ DataPoint.prototype = {
 	height: 0,
 	country: 0,
 	panic: 0,
-	adjacent:[]
+	adjacent:[],
+	hordes:[]
 }
 DataPoint.prototype.updateNearbyPop = function () {
 	if(!this.nearby_pop)

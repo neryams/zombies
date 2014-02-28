@@ -142,6 +142,8 @@ Debugger.prototype.updateTarget = function(self,target) {
 					return undefined;
 				else if(key == 'army') 
 					return {size: value.size, experience: value.experience, nationality: value.nationality};
+				else if(key == 'hordes') 
+					return value.join(',');
 				else
 					return value;
 			}, '  ').replace(/ /g, '&nbsp;').replace(/\n/g, '<br />');

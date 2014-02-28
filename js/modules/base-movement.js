@@ -9,11 +9,11 @@ exports.run = function(current,target,passData) {
 };
 exports.options = {
 	init: function() {
-		this.speed = 3; // movement speed of zombies in kph. Average walking speed is 4.5-5.5 kph so they start pretty slow
+		this.speed = 1.5; // movement speed of zombies in kph. Average walking speed is 4.5-5.5 kph so they start pretty slow
 		this.burstSpeed = 0;
 		this.panic = 0;
 		var speedUpgrade = function() {
-			this.val('speed',1.2,'+');
+			this.val('speed',1.5,'+');
 			this.val('panic',1,'+');
 		}
 		this.S.addUpgrades(this,
@@ -27,8 +27,8 @@ exports.options = {
 			{cost: 8000,paths:['base-movement_2'],name:'Ravenous Sprint', onUpgrade: function() {
 				this.val('panic',20,'+');
 				this.val('speed',0.5,'+');
-				this.val('burstSpeed',20);
-			}, description:'Zombies can sprint. Results in abject terror and a large increase in deadliness.', gene:{size: 6, shape: 'c', color: 'red'}}
+				this.val('burstSpeed',15);
+			}, description:'Zombies can sprint. Results in terror and a large increase in deadliness.', gene:{size: 6, shape: 'c', color: 'red'}}
 		);
 	},
 	runtime: 1,
