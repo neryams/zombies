@@ -1,0 +1,344 @@
+/*
+ * Common interface elements
+ */
+
+.dataField {
+	z-index: 11;
+	position: absolute;	
+	color: white;
+	font-size: small;
+	font-family: monospace;
+}
+.dataField .dataField {
+	position: static;	
+}
+
+.dataField-progressBar {
+	height: 60px;
+	width: 100%;
+}
+.dataField-progressBar h3{
+	font-size: small;
+	font-weight: normal;
+}
+.dataField-progressBar .progress {
+	width: 188px;
+	height: 10px;
+	float: left;
+	position: relative;
+	background: #222277;
+}
+.dataField-progressBar .progress div {
+	width: 188px;
+	height: 10px;
+	background: #9999ff;
+}
+.dataField-progressBar .date {
+	margin-left: 1em;
+	background: transparent;
+}
+.dataField-progressBar .date div {
+	background: transparent;
+}
+.draggable, canvas.draggable {
+	width: 1000px;
+	height: 1000px;
+	top: -200px;
+	left: -100px;
+	position: absolute;
+	z-index: 20;
+}
+.draggable {
+	z-index: 21;
+}
+canvas.draggable {
+	background-image: url('../ui/hash.gif');
+}
+
+
+/*
+ * Permanant Interface
+ */
+
+.stats {
+	left: 0px;
+	top: 0px;
+	height: 300px;
+	width: 200px;
+	padding: 12px;
+}
+.stats a {
+	color: #6666ff;
+}
+.stats h1 {
+	font-size: 1.5rem;
+}
+.stats h3 {
+	font-size: 1rem;
+	margin-top: 1rem;
+}
+
+.main_menu {
+	left: 0px;
+	bottom: 0px;
+	width: 200px;
+	padding: 12px;
+}
+.main_menu .dataViewList {
+	position: absolute;
+	margin-top: 8px;
+}
+.main_menu .dataViewList a {
+	margin-bottom: 1px;
+	padding-top: 0.25rem;
+	padding-bottom: 0.25rem;
+	opacity: 0.8;
+}
+
+.sidebar {
+	position: absolute;
+	height: 100%;
+	width: 190px;
+	right: 0;
+	display: table;
+}
+.sidebar .money_panel {
+	z-index: 24;
+	position: absolute;
+	top: 0;
+	right: 0;
+	padding-right: 16px;
+	color: white;
+	font-size: small;
+}
+.sidebar .money_panel span {
+	float: right;
+	font-size: 200%;
+}
+.sidebar>.dataField {
+	display: table-row;
+}
+
+.monitor {
+	width: 100%;
+}
+.monitor>div {
+	width: 210px;
+}
+.monitor .monitorControl {
+	height: 20%;
+	margin: 12px;
+	position: fixed;
+	top: 0;
+	right: 0;
+	padding-top: 4.5em;
+}
+.monitor .monitorView {
+	height: 80%;
+	width: 210px;
+	margin-right: 12px;
+	position: fixed;
+	bottom: 0;
+	right: 0;
+	border-top: 1px solid white;
+}
+.monitor .monitorView>div {
+	height: 100%;
+	width: 210px;
+}
+
+
+.shipping {
+	overflow-y: scroll;
+	overflow-x: hidden;
+}
+.shipping h3 {
+	width: 100%;
+}
+
+.news p {
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+}
+
+.bottom_stats {
+	height: 80px;
+	width: 100%;
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	z-index: 10;
+}
+.bottom_stats .dataField-progressBar {
+	width: 300px;
+	position: absolute;
+	bottom: 0;
+	left: 50%;
+	margin-left: -150px;
+}
+.bottom_stats .dataField-progressBar .progress, .bottom_stats .dataField-progressBar .progress div {
+	width: 300px;
+	height: 10px;
+}
+
+
+/*
+ * Evolution skill tree
+ */
+
+.evolution>h3 {
+	margin-left: 16px;
+	z-index: 24;
+	position: absolute;
+	top: 0;
+	left: 0;
+}
+.evolution>div div {
+	width: 30px;
+	height: 30px;
+	border-radius: 15px;
+	margin-left: -15px;
+	margin-top: -15px;
+	position: absolute;
+	z-index: 22;
+	background-image: url('../ui/evol_sprite_unavail.png');
+}
+.evolution>div .available {
+	background-image: url('../ui/evol_sprite_avail.png');
+}
+.evolution>div .active {
+	background-image: url('../ui/evol_sprite_active.png');
+}
+
+.alert {
+	width: 400px;
+	height: 300px;
+	margin-left: -200px;
+	margin-top: -150px;
+	background-image: url('../ui/hash.gif');
+}
+
+
+/*
+ * Mutation Menu
+ */
+
+.toolbox {
+	width: 800px;
+	float: left;
+	height: 600px;
+}
+.toolbox #tb_board {
+	float: left;
+	background-color: #151515;
+	margin-left: 5px;
+	margin-top: 5px;
+	width: 335px;
+	height: 334px;
+	display: table;
+}
+.toolbox #tb_board>div {
+	display: table-cell;
+	vertical-align: middle;
+}
+.toolbox #tb_board .grid {
+	background-image: url('../ui/grid.gif');
+	margin: 0 auto;
+	position: relative;
+	overflow: hidden;
+}
+.toolbox #tb_gene {
+	display: none;
+}
+.toolbox .geneBlock.active {
+	padding: 10px;
+	margin-left: 5px;
+	margin-top: 5px;
+	background-color: #151515;
+	float: left;
+	width: 88px;
+	height: 88px;
+	display: table;
+	position: static;
+}
+.toolbox .geneBlock.active:nth-child(2n) {
+	width: 89px;
+}
+.toolbox .geneBlock.active p.image {
+	display: table-row;
+	text-align: center;
+	vertical-align: middle;
+}
+.toolbox .geneBlock>img {
+	float: left;
+}
+.toolbox .geneBlock.active p.image img {
+	margin: 10px;
+}
+.toolbox .geneBlock.active p.name{
+	color: white;
+	margin: 0;
+	font-size: small;
+	text-align: center;
+	display: table-row;
+	height: 1px;
+}
+.toolbox .geneBlock.active.used {
+	opacity: 0.3;
+}
+.toolbox .grid .placed {
+	position: absolute;
+	z-index: 29;
+}
+.toolbox .grid .grid_overlay {
+	z-index: 28;
+	background: #99ffff;
+	position: absolute;
+	opacity: 0.4;
+}
+
+
+/*
+ * Tooltips
+ */
+
+.tooltip {
+	z-index: 25;
+	position: absolute;
+	font-size: small;
+	padding: 8px;
+	overflow: hidden;
+	visibility: hidden;
+}
+#render_tooltip {
+	color: white;
+	background-color: black;
+	opacity: 0.8;
+	border-radius: 4px;
+}
+#tooltip {
+	color: black;
+	background-color: #ffcc00;
+}
+#tooltip table {
+	border-spacing: 6px;
+	border-collapse: separate;
+	width: 100%;
+}
+#tooltip td, #tooltip th {
+	padding: 0;
+	vertical-align: middle;
+}
+#tooltip tr th {
+	padding-bottom: 10px;
+	font-size: 130%;
+	vertical-align: top;
+	font-weight: bold;
+	text-align: left;
+}
+#tooltip td p {
+	margin-top: 0.5em;
+}
+#tooltip table td:first-child {
+	width: 4em;
+}
