@@ -96,23 +96,10 @@ exports.options = {
         }
 
 		// Shipping Schedule display button.
-        this.shippingMenu = this.S.UI.interfaceParts.monitor_view.addDataField('div',{
+        this.shippingMenu = this.S.UI.interfaceParts.sidebarAccordion.addDataField('accordion_child',{
         	title: 'ui:buttons.shipping',
-        	class: 'shipping',
-        	visible: false
+        	class: 'shipping'
         });
-        var Renderer = this.S.Renderer;
-        this.S.UI.interfaceParts.monitor_control.addDataField('button',{ 
-        		onClick: function() {
-        			if(!this.opens[0].visible) 
-            			this.opens[0].display();             				
-        			else {
-        				this.opens[0].hide();
-        				Renderer.hideArc();
-        			}
-        		},
-        		opens: [this.shippingMenu] 
-        	}).label('ui:buttons.shipping');
 
 		for(i = 1; i < this.S.countries.length; i++) {
 			//run once for every square, if the square is a capitol, then calculate frequency between it and all other cities

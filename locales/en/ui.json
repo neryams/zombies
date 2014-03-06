@@ -6,7 +6,7 @@
 			"temperature": "Temperature",
 			"rain": "Precipication",
 			"political": "Political",
-			"disable": "Disable"
+			"disable": "Disable Overlay"
 		},
 		"population": "Toggle Population",
 		"evolution": "Evolution",
@@ -19,5 +19,8 @@
 		"population_world": "World Population",
 		"population_zombies": "Zombie Population",
 		"virus_name": "Virus Name"
+	},
+	"mutation": {
+
 	}
 }

@@ -1,17 +1,21 @@
 ## Priority 1 ##
 			
-	* Do every square for each module at once, as opposed to every module for each square to reduce function calls from 30000n to n
 	
 
 ## Priority 2 ##
+
+
+
+## Priority 3 ##
+	
+	* Do every square for each module at once, as opposed to every module for each square to reduce function calls from 30000n to n
 
 	* Button for toggling mouseover debug in console
 
 	* Add human strongholds in later stages of panic.
 
+## Priority 4 ##
 
-## Priority 3 ##
-	
 	* Make floaty icons/text for when zombies are killed or perhaps for when humans are killed/converted!
 		+ Also only show the icons above a threshold of whatever is happening, like LoL healing
 
@@ -21,14 +25,7 @@
 
 	* Add tutorial function that overlays graphics and removes them on triggers
 
-
-## Priority 4 ##
-
 	* Adjust population based on latitude (points closer to poles have less area per point)
-
-	* Try to change the __proto__ in the webworker copy to something a bit less ghetto
-
-	* Speed up the generator web worker by not copying a billion element array
 
 	* Add a preview grid to evolution menu so player can see
 
@@ -46,11 +43,5 @@
 	Two styles of zombies, one where humans die and resurrect as zombies, one where humans get infected and turn  
 	Burning bodies only effective against former. for example
 
-
-
-
-
-
-Stirling's approximation and probability distribution - INTEGRAL OF (2/sqrt(2*pi*100))*e^(-x^2/(2*100)) where 100 is # steps, x is probability of landing on that spot
-
-prob = 1-erf(n/sqrt(2N)) where N is steps and n is where you want to end up going past
+	For multiplayer:
+		Humans play a dwarf fortress style game where they get attacked by waves of zombies (controlled by a real player)!

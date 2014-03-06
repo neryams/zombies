@@ -32,24 +32,35 @@ function DataField(id,type,options,parent) {
 	if(id) {
 		this.interfaceParts[id] = this;
 		this.id = id;
-		className = ' dataField-'+id;
+		className += ' dataField-'+id;
 	}
 
 	this.children = [];
-	if(type)
+	if(type) {
 		this.dataType = type;
+		className += ' dataField-'+type;
+	}
 
 	if(this.dataType == 'text')
-		newElement = $('<span></span>');
+		newElement = $(i18n.t('dom:interface.dataField.text'));
 	else if(this.dataType == 'p')
-		newElement = $('<p></p>');
+		newElement = $(i18n.t('dom:interface.dataField.paragraph'));
 	else if(this.dataType == 'progressBar')
-		newElement = $('<div class="progress"><div></div></div>');
+		newElement = $(i18n.t('dom:interface.dataField.progressBar'));
+	else if(this.dataType == 'button')
+		newElement = fullElement = $(i18n.t('dom:interface.dataField.default',{ element:'a', className:className+' button tiny expand' }));
+	else if(this.dataType == 'accordion') {
+		newElement = fullElement = $(i18n.t('dom:interface.dataField.default',{ element:'dl', className:className+' accordion' })).attr('data-accordion','');
+	}
+	else if(this.dataType == 'accordion_child') {
+		newElement = $(i18n.t('dom:interface.dataField.default',{ element:'div', className:className }));
+		fullElement = $(i18n.t('dom:interface.dataField.default',{ element:'dd' })).append(newElement);		
+	}
 	else 
-		newElement = fullElement = $('<'+this.dataType+' class="dataField'+className+'"></'+this.dataType+'>');
+		newElement = fullElement = $(i18n.t('dom:interface.dataField.default',{ element:this.dataType, className:className }));
 
 	if(!fullElement)
-		fullElement = $('<div class="dataField-'+this.dataType+'"></div>').append(newElement);
+		fullElement = $(i18n.t('dom:interface.dataField.default',{ element:'div', className:className })).append(newElement);
 
 	if(parent) {
 		this.parent = parent;
@@ -70,9 +81,19 @@ function DataField(id,type,options,parent) {
 					this[key] = options[key];
 			}
 
-	if(this.title) {
-		fullElement.prepend($('<h3 data-i18n="'+this.title+'"></h3>'));
-		fullElement.i18n();
+
+	if(this.dataType == 'accordion_child') {
+		var uniqueId = 'accordion_' + Object.keys(this.interfaceParts).length;
+		fullElement.prepend($(i18n.t('dom:interface.dataField.accordionTitle',{ title:this.title, link: uniqueId})));
+		newElement.addClass('content');
+		newElement.attr('id',uniqueId);
+	} else {
+		if(this.title) {
+			if(this.parent && this.parent.dataType == 'accordion')
+				fullElement.prepend($(i18n.t('dom:interface.dataField.accordionTitle',{ title:this.title })));
+			else
+				fullElement.prepend($(i18n.t('dom:interface.dataField.title',{ title:this.title })));
+		}
 	}
 	if(this.class)
 		newElement.addClass(this.class);
@@ -91,6 +112,9 @@ function DataField(id,type,options,parent) {
 			this.opens[i].opener = this;
 	if(!this.visible)
 		this.element.css('display','none');
+
+	if(this.parent)
+		this.parent.element.foundation('reflow');
 }
 DataField.prototype = {
 	dataType: 'text',
@@ -591,11 +615,6 @@ var UserInterface = function UserInterface(Renderer,language) {
 		endGenerator: function() {
 			addDataField('stats','div',{ class: 'stats' }).addDataField('h1').label('setup:title');
 			var uiMenu = addDataField('menu','div',{ class: 'main_menu' });
-			addDataField('money','text',{
-				title: 'Evolution Points',
-				outerClass: 'money_panel',
-				dynamic: 'money'
-			});
 
 			var uiMenuDataviews = uiMenu.addDataField('div',{ visible: false, class: 'dataViewList' });
 			var uiMenuDataviewsPos = uiMenu.addDataField('button',{ 
@@ -607,7 +626,7 @@ var UserInterface = function UserInterface(Renderer,language) {
 					}, 
 					opens: [uiMenuDataviews] 
 				}).label('ui:buttons.dataviews').element.position();
-			uiMenuDataviews.addDataField('button',{ class: 'close', onClick: function() { this.parent.hide(); } }).label('ui:buttons.close');
+			uiMenuDataviews.addDataField('button',{ class: 'secondary', onClick: function() { this.parent.hide(); } }).label('ui:buttons.close');
 			uiMenuDataviews.addDataField('button',{ onClick: function() { Renderer.setVisualization('country'); this.parent.hide(); activatePlanetTooltip(function(point){ if(point.country) { return '<strong>' + gData.countries[point.country].name + '</strong>'; }});}}).label('ui:buttons.dataviews_inner.political');
 			uiMenuDataviews.addDataField('button',{ onClick: function() { Renderer.setVisualization('precipitation'); this.parent.hide(); activatePlanetTooltip(function(point){ return Math.round(point.precipitation*10)/10 + 'mm'; });}}).label('ui:buttons.dataviews_inner.rain');
 			uiMenuDataviews.addDataField('button',{ onClick: function() { Renderer.setVisualization('temperature'); this.parent.hide(); activatePlanetTooltip(function(point){ return Math.round((point.temperature - 273)*10)/10 + 'C'; });}}).label('ui:buttons.dataviews_inner.temperature');
@@ -641,7 +660,7 @@ var UserInterface = function UserInterface(Renderer,language) {
 			Evolution.prototype.mutationMenu = addDataField('mutationMenu','div',{ class: 'toolbox', title: 'Mutation', overlay: true, onHide: function() {
 				Evolution.prototype.clearGrid();
 			}});
-			Evolution.prototype.mutationMenu.element.append($('<div id="tb_board"><div><div class="grid"></div></div></div><div id="tb_gene"><p class="image"><img src="" draggable="false" /></p><p class="name"></p></div>'))
+			Evolution.prototype.mutationMenu.element.append($(i18n.t('dom:interface.mutation.menu')));
 			uiMenu.addDataField('mutationMenu_button','button',{
 					class: 'primary',
 					onClick: function() {
@@ -689,25 +708,19 @@ var UserInterface = function UserInterface(Renderer,language) {
 					}
 				}).val('Cancel');
 
-			var uiMonitor = addDataField('div',{ class: 'monitor' });
-			var uiMonitorControl = uiMonitor.addDataField('monitor_control','div',{ class: 'monitorControl' });
-			var uiMonitorView = uiMonitor.addDataField('monitor_view','div',{ class: 'monitorView', singleChild: true });
+			var uiSidebar = addDataField('div',{ class: 'sidebar' });
 
-			var uiMonitor_newsTicker = uiMonitorView.addDataField('news_ticker','div',{
-				title: 'ui:buttons.news',
-				class: 'news',
-				visible: false
+			uiSidebar.addDataField('money','text',{
+				title: 'Evolution Points',
+				outerClass: 'money_panel',
+				dynamic: 'money'
 			});
-			uiMonitorControl.addDataField('button',{ 
-					onClick: function() {
-						if(!this.opens[0].visible) 
-							this.opens[0].display();			 				
-						else
-							this.opens[0].hide();
-					},
-					opens: [uiMonitor_newsTicker]
-				}).label('ui:buttons.news');
-			uiMonitor_newsTicker.display();
+
+			uiSidebarAccordion = uiSidebar.addDataField('sidebarAccordion','accordion');
+			uiSidebarAccordion.addDataField('newsTicker','accordion_child',{
+				title: 'ui:buttons.news',
+				class: 'news'
+			});
 
 			addDataField('alert','div',{ overlay: true });
 		},
@@ -731,7 +744,7 @@ var UserInterface = function UserInterface(Renderer,language) {
 				$('#progress p').html(i18n.t("setup:loading."+this.loading.curStep));
 			}
 			this.loading.curProg = ratio*share;
-			$('#progress .progressbar div').css('width', ((this.loading.done+this.loading.curProg) * 100) + '%');
+			$('#progress .pace .pace-progress').css('width', ((this.loading.done+this.loading.curProg) * 100) + '%');
 		}
 	}
 
@@ -1069,7 +1082,7 @@ var UserInterface = function UserInterface(Renderer,language) {
 			Upgrade.prototype.Simulator = S;
 		},
 		init: function(onComplete) {
-			var preload_html = '<div id="progress"><div class="progressbar"><div></div></div><p></p></div>';
+			var preload_html = '<div id="progress"><div class="progressbar pace"><div class="pace-progress"></div></div><p></p></div>';
 			$("#ui").css('display','block').append($(preload_html));
 			onComplete();
 			/*
@@ -1107,7 +1120,7 @@ var UserInterface = function UserInterface(Renderer,language) {
 				else
 					var langStr = i18n.t('messages:'+item);
 
-				interfaceParts['news_ticker'].element.prepend($('<p>'+langStr+'</p>'));				
+				interfaceParts['newsTicker'].element.prepend($('<p>'+langStr+'</p>'));				
 			}
 		},
 		// Call with alert id followed by the data to fill the alert with, any number of parameters.
