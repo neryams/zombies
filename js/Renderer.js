@@ -167,12 +167,15 @@ var Renderer = function (scaling) {
 
     addData = function() {
         var lat, lng, color, i, element;
+        console.time('rendererSetup');
 
         for (i = 0; i < gData.points.length; i++) {
             if(gData.points[i].total_pop > 0 && !gData.points[i].water) {
                 addPoint(gData.points[i].lat, gData.points[i].lng, gData.points[i]);
             }
         }
+
+        console.timeEnd('rendererSetup');
 
         subgeo.dynamic = true;
 

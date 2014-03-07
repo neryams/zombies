@@ -111,7 +111,17 @@ function DataField(id,type,options,parent) {
 		for(var i = 0; i < this.opens.length; i++)
 			this.opens[i].opener = this;
 	if(!this.visible)
-		this.element.css('display','none');
+		newElement.css('display','none');
+	if(this.mousePriority) {
+		var that = this;
+		newElement
+			.mouseenter(function() {
+				that.UIStatus.mouse.bound = newElement;
+			})
+			.mouseleave(function() {
+				that.UIStatus.mouse.bound = null;
+			});
+	}
 
 	if(this.parent)
 		this.parent.element.foundation('reflow');
@@ -127,6 +137,9 @@ DataField.prototype = {
 	dynamic: false,
 	visible: true,
 	overlay: false,
+	mousePriority:false,
+	interfaceParts: null,
+	UIStatus: null,
 	addDataField: function(id,type,options) {
 		if(arguments.length == 1) {
 			var type = arguments[0],
@@ -588,10 +601,15 @@ Evolution.prototype.buildWeb = function(upgrade,lastTheta,depth) {
 }
 
 var UserInterface = function UserInterface(Renderer,language) {
-	var mouse = { x:0, y:0, lastx:0, lasty:0, down:false, click: false, scroll: 0 },
-		sphere_coords,visualization = '', WorldData, Simulator, 
-		status = { pauseRenderer: false, showToolTip: false, toolTipMode: '', mutateGridSize: 0 },
-		dataFieldsRoot = [], interfaceParts = {},alerts = {};
+	var sphere_coords,visualization = '', WorldData, Simulator,
+		dataFieldsRoot = [], interfaceParts = {},alerts = {}, 
+		status = { 
+			mouse: { x:0, y:0, lastx:0, lasty:0, down:false, click: false, scroll: 0, bound: null },
+			pauseRenderer: false, 
+			showToolTip: false, 
+			toolTipMode: '', 
+			mutateGridSize: 0 
+		};
 
 	DataField.prototype.interfaceParts = interfaceParts;
 	DataField.prototype.UIStatus = status;
@@ -708,7 +726,10 @@ var UserInterface = function UserInterface(Renderer,language) {
 					}
 				}).val('Cancel');
 
-			var uiSidebar = addDataField('div',{ class: 'sidebar' });
+			var uiSidebar = addDataField('div',{ 
+				class: 'sidebar', 
+				mousePriority: true 
+			});
 
 			uiSidebarStatic = uiSidebar.addDataField('sidebarStatic','div');
 			uiSidebarStatic.addDataField('money','text',{
@@ -755,11 +776,11 @@ var UserInterface = function UserInterface(Renderer,language) {
 	function activatePlanetTooltip(getPointInfo) {
 		$('#ui').off('mousemove.render_tooltip');
 		$('#ui').on('mousemove.render_tooltip', null, getPointInfo, function(event) {
-			mouse.x = event.clientX;
-			mouse.y = event.clientY;
-			sphere_coords = Renderer.getSphereCoords(mouse.x,mouse.y,200);
+			status.mouse.x = event.clientX;
+			status.mouse.y = event.clientY;
+			sphere_coords = Renderer.getSphereCoords(status.mouse.x,status.mouse.y,200);
 			if(sphere_coords && !isNaN(sphere_coords[0]) && !isNaN(sphere_coords[1]) && !status.pauseRenderer) {
-				$('#render_tooltip').css('top',mouse.y+10).css('left',mouse.x+30);
+				$('#render_tooltip').css('top',status.mouse.y+10).css('left',status.mouse.x+30);
 				//$('#tooltip').css('display','block').html('asf');
 				var point = gData.points[(Math.floor(90-sphere_coords[0])*gConfig.w + Math.floor(sphere_coords[1]))];
 				if(point != undefined && (!point.water || point.total_pop > 0)) {
@@ -826,16 +847,16 @@ var UserInterface = function UserInterface(Renderer,language) {
 	function mainUIReady() {
 		$('.draggable').on('mousedown.draggable', function (event) {
 			event.preventDefault();
-			mouse.down = true;
-			mouse.x = event.clientX;
-			mouse.y = event.clientY;
+			status.mouse.down = true;
+			status.mouse.x = event.clientX;
+			status.mouse.y = event.clientY;
 			var elements = $(this).parent().find('.draggable');
 			elements.maxPos = { top: $(this).parent().height() - elements.height(), left: $(this).parent().width() - elements.width() }
 			$(this).on('mousemove.dragging', null, elements, function (event) {
 				event.preventDefault();
 				var position = event.data.position();
-				position.left += event.clientX - mouse.x;
-				position.top += event.clientY - mouse.y;
+				position.left += event.clientX - status.mouse.x;
+				position.top += event.clientY - status.mouse.y;
 				if(position.left > 0)
 					position.left = 0;
 				else if(position.left < event.data.maxPos.left)
@@ -847,49 +868,51 @@ var UserInterface = function UserInterface(Renderer,language) {
 
 				event.data.css('left', position.left);
 				event.data.css('top', position.top);
-				mouse.x = event.clientX;
-				mouse.y = event.clientY;
+				status.mouse.x = event.clientX;
+				status.mouse.y = event.clientY;
 			})
 		});
 		$('.draggable').on('mouseup.draggable', function (event) {
-			mouse.down = false;
+			status.mouse.down = false;
 			$(this).off('mousemove.dragging');			
 		});
 		$('.draggable').on('mouseout.draggable', function (event) { $(this).trigger('mouseup'); });
 
 		$('#ui').on('mousedown.moveCamera', function (event) {
-			if(!status.pauseRenderer) {
+			if(!status.pauseRenderer && status.mouse.bound === null) {
 				event.preventDefault();
-				mouse.down = true;
-				mouse.x = mouse.lastx = event.clientX;
-				mouse.y = mouse.lasty = event.clientY;
-				mouse.click = true;
+				status.mouse.down = true;
+				status.mouse.x = status.mouse.lastx = event.clientX;
+				status.mouse.y = status.mouse.lasty = event.clientY;
+				status.mouse.click = true;
 				Renderer.stopCameraMovement();
 				$(this).on('mousemove.moveCamera', function (event) {
-					mouse.x = event.clientX;
-					mouse.y = event.clientY;
+					status.mouse.x = event.clientX;
+					status.mouse.y = event.clientY;
 					// If user moves the mouse enough, declare this mousedown as NOT a click.
-					if(Math.abs(mouse.lastx - mouse.x) + Math.abs(mouse.lasty - mouse.y) > 3)
-						mouse.click = false;
+					if(Math.abs(status.mouse.lastx - status.mouse.x) + Math.abs(status.mouse.lasty - status.mouse.y) > 3)
+						status.mouse.click = false;
 				});
 			}
 		});
 		$('#ui').on('mouseup.moveCamera', function (event) {
 			$(this).off('mousemove.moveCamera');
 			// If mouse didn't move, do the click
-			if(mouse.click)
-				Renderer.clickSphere(mouse.x,mouse.y);
-			mouse.x = mouse.lastx = mouse.y = mouse.lasty = mouse.scroll = 0;
-			mouse.click = mouse.down = false;
+			if(status.mouse.click)
+				Renderer.clickSphere(status.mouse.x,status.mouse.y);
+			status.mouse.x = status.mouse.lastx = status.mouse.y = status.mouse.lasty = status.mouse.scroll = 0;
+			status.mouse.click = status.mouse.down = false;
 		});
 		$('#ui').on('mousewheel.zoomCamera DOMMouseScroll.zoomCamera', function(event) {
-		    event.preventDefault();
-		    if (event.type == 'mousewheel') {
-		        mouse.scroll += parseInt(event.originalEvent.wheelDelta);
-		    }
-		    else if (event.type == 'DOMMouseScroll') {
-		        mouse.scroll += parseInt(event.originalEvent.detail);
-		    }
+			if(status.mouse.bound === null) {
+			    event.preventDefault();
+			    if (event.type == 'mousewheel') {
+			        status.mouse.scroll += parseInt(event.originalEvent.wheelDelta);
+			    }
+			    else if (event.type == 'DOMMouseScroll') {
+			        status.mouse.scroll += parseInt(event.originalEvent.detail);
+			    }				
+			}
 		});
 
 		// Making the gene pieces interactive, gradding them onto the grid. etc
@@ -1009,14 +1032,14 @@ var UserInterface = function UserInterface(Renderer,language) {
    	// Function that runs on every frame, sending mouse movement from UI as coordinates to the renderer to move 3-d elements around
 	Renderer.onRender(function() {
 		if(!status.pauseRenderer) {
-			if(mouse.down) {
-				Renderer.moveCamera(mouse.lastx - mouse.x, mouse.lasty - mouse.y);
-				mouse.lastx = mouse.x;
-				mouse.lasty = mouse.y;
+			if(status.mouse.down) {
+				Renderer.moveCamera(status.mouse.lastx - status.mouse.x, status.mouse.lasty - status.mouse.y);
+				status.mouse.lastx = status.mouse.x;
+				status.mouse.lasty = status.mouse.y;
 			}
-			if(mouse.scroll) {
-				Renderer.zoomCamera(-mouse.scroll);
-				mouse.scroll = 0;
+			if(status.mouse.scroll) {
+				Renderer.zoomCamera(-status.mouse.scroll);
+				status.mouse.scroll = 0;
 			}
 		} 
 		else

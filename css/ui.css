@@ -107,6 +107,7 @@ canvas.draggable {
 }
 .sidebar .accordion dd .content.active {
 	background: none;
+	overflow: scroll;
 }
 
 
