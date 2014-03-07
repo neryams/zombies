@@ -28,7 +28,7 @@ Date.locale = {
 
 function DataField(id,type,options,parent) {
 	var newElement, fullElement,
-		className = '';
+		className = 'dataField';
 	if(id) {
 		this.interfaceParts[id] = this;
 		this.id = id;
@@ -54,7 +54,7 @@ function DataField(id,type,options,parent) {
 	}
 	else if(this.dataType == 'accordion_child') {
 		newElement = $(i18n.t('dom:interface.dataField.default',{ element:'div', className:className }));
-		fullElement = $(i18n.t('dom:interface.dataField.default',{ element:'dd' })).append(newElement);		
+		fullElement = $(i18n.t('dom:interface.dataField.default',{ element:'dd', className:'' })).append(newElement);		
 	}
 	else 
 		newElement = fullElement = $(i18n.t('dom:interface.dataField.default',{ element:this.dataType, className:className }));
@@ -631,7 +631,7 @@ var UserInterface = function UserInterface(Renderer,language) {
 			uiMenuDataviews.addDataField('button',{ onClick: function() { Renderer.setVisualization('precipitation'); this.parent.hide(); activatePlanetTooltip(function(point){ return Math.round(point.precipitation*10)/10 + 'mm'; });}}).label('ui:buttons.dataviews_inner.rain');
 			uiMenuDataviews.addDataField('button',{ onClick: function() { Renderer.setVisualization('temperature'); this.parent.hide(); activatePlanetTooltip(function(point){ return Math.round((point.temperature - 273)*10)/10 + 'C'; });}}).label('ui:buttons.dataviews_inner.temperature');
 			uiMenuDataviews.addDataField('button',{ onClick: function() { Renderer.closeVisualization(); this.parent.hide(); deactivatePlanetTooltip(); } }).label('ui:buttons.dataviews_inner.disable');
-			uiMenuDataviews.element.css('top',uiMenuDataviewsPos.top - uiMenuDataviews.element.height()).css('left',uiMenuDataviewsPos.left);
+			uiMenuDataviews.element.css('top',uiMenuDataviewsPos.top - uiMenuDataviews.element.height());
 
 			uiMenu.addDataField('button',{
 					onClick: function() {
@@ -710,9 +710,9 @@ var UserInterface = function UserInterface(Renderer,language) {
 
 			var uiSidebar = addDataField('div',{ class: 'sidebar' });
 
-			uiSidebar.addDataField('money','text',{
+			uiSidebarStatic = uiSidebar.addDataField('sidebarStatic','div');
+			uiSidebarStatic.addDataField('money','text',{
 				title: 'Evolution Points',
-				outerClass: 'money_panel',
 				dynamic: 'money'
 			});
 

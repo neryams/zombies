@@ -1,7 +1,7 @@
 {
 	"interface": {
 		"dataField": {
-			"default": "<__element__ class=\"dataField__className__\"></__element__>",
+			"default": "<__element__ class=\"__className__\"></__element__>",
 			"title": "<h3>$t(__title__)</h3>",
 			"accordionTitle": "<a href=\"#__link__\">$t(__title__)</h3>",
 			"text": "<span></span>",

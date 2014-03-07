@@ -12,34 +12,6 @@
 .dataField .dataField {
 	position: static;	
 }
-
-.dataField-progressBar {
-	height: 60px;
-	width: 100%;
-}
-.dataField-progressBar h3{
-	font-size: small;
-	font-weight: normal;
-}
-.dataField-progressBar .progress {
-	width: 188px;
-	height: 10px;
-	float: left;
-	position: relative;
-	background: #222277;
-}
-.dataField-progressBar .progress div {
-	width: 188px;
-	height: 10px;
-	background: #9999ff;
-}
-.dataField-progressBar .date {
-	margin-left: 1em;
-	background: transparent;
-}
-.dataField-progressBar .date div {
-	background: transparent;
-}
 .draggable, canvas.draggable {
 	width: 1000px;
 	height: 1000px;
@@ -86,7 +58,9 @@ canvas.draggable {
 }
 .main_menu .dataViewList {
 	position: absolute;
-	margin-top: 8px;
+	margin-top: -12px;
+	padding: 12px;
+	left: 0;
 }
 .main_menu .dataViewList a {
 	margin-bottom: 1px;
@@ -98,53 +72,41 @@ canvas.draggable {
 .sidebar {
 	position: absolute;
 	height: 100%;
-	width: 190px;
+	width: 240px;
 	right: 0;
 	display: table;
 }
-.sidebar .money_panel {
-	z-index: 24;
-	position: absolute;
-	top: 0;
-	right: 0;
-	padding-right: 16px;
+.sidebar .dataField-sidebarStatic>.dataField {
+	margin-bottom: 16px;
+}
+.sidebar .dataField-money {
+	margin-right: 6px;
+	text-align: right;
 	color: white;
 	font-size: small;
 }
-.sidebar .money_panel span {
-	float: right;
+.sidebar .dataField-money span {
 	font-size: 200%;
 }
 .sidebar>.dataField {
 	display: table-row;
 }
-
-.monitor {
-	width: 100%;
-}
-.monitor>div {
-	width: 210px;
-}
-.monitor .monitorControl {
-	height: 20%;
-	margin: 12px;
-	position: fixed;
-	top: 0;
-	right: 0;
-	padding-top: 4.5em;
-}
-.monitor .monitorView {
-	height: 80%;
-	width: 210px;
-	margin-right: 12px;
-	position: fixed;
-	bottom: 0;
-	right: 0;
-	border-top: 1px solid white;
-}
-.monitor .monitorView>div {
+.sidebar .dataField-sidebarAccordion {
 	height: 100%;
-	width: 210px;
+}
+.sidebar .accordion dd>a {
+	padding: 0.2rem 0.6rem;
+	background-color: #333;
+	color: white;
+}
+.sidebar .accordion dd>a:hover {
+	background-color: #444;
+}
+.sidebar .accordion dd.active>a {
+	background-color: #008cba;
+}
+.sidebar .accordion dd .content.active {
+	background: none;
 }
 
 
@@ -159,6 +121,29 @@ canvas.draggable {
 .news p {
 	margin-top: 0.5em;
 	margin-bottom: 0.5em;
+}
+
+.dataField-progressBar {
+	height: 60px;
+	width: 100%;
+}
+.dataField-progressBar h3{
+	font-size: small;
+	font-weight: normal;
+}
+.dataField-progressBar .progress {
+	width: 188px;
+	height: 22px;
+	float: left;
+	position: relative;
+	background: #222277;
+}
+.dataField-progressBar .date {
+	margin-left: 1em;
+	background: transparent;
+}
+.dataField-progressBar .date div {
+	background: transparent;
 }
 
 .bottom_stats {
