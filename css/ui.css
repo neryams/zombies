@@ -138,9 +138,15 @@ canvas.draggable {
 	float: left;
 	position: relative;
 	background: #222277;
+	padding: 0;
+	border: 0;
+	margin-left: 1em;
+}
+.dataField-progressBar .progress>div {
+	background: #008cba;
+	height: 22px;
 }
 .dataField-progressBar .date {
-	margin-left: 1em;
 	background: transparent;
 }
 .dataField-progressBar .date div {

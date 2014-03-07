@@ -638,7 +638,7 @@ var UserInterface = function UserInterface(Renderer,language) {
 			var uiMenuDataviewsPos = uiMenu.addDataField('button',{ 
 					onClick: function() {
 						if(!this.opens[0].visible) 
-							this.opens[0].display();		   				
+							this.opens[0].display();
 						else
 							this.opens[0].hide();
 					}, 
