@@ -645,29 +645,27 @@ var Renderer = function (scaling) {
             tween.start();
         },
         displayArc: function (point1, point2) {
-            var phi,theta,x,y,z,i,j,
-                position, index, n_sub = 36;
+            var i,A,B,position,index,
+                phi1 = (90 - point1.lat) * Math.PI / 180,
+                theta1 = (180 - point1.lng) * Math.PI / 180,
+                phi2 = (90 - point2.lat) * Math.PI / 180,
+                theta2 = (180 - point2.lng) * Math.PI / 180,
+                n_sub = 24;
 
-            var start = coordToCartesian(point1.lat,point1.lng);
-            var end = coordToCartesian(point2.lat,point2.lng);
-            var points = [start];
-            var midpoint = new THREE.Vector3(0,0,0);
-            for ( i = 0; i < n_sub; i++ ) {
-                midpoint.set(0, 0, 0);
-                for (j = 0; j < n_sub - i; j++)
-                    midpoint.add(start);
-                for (j = 0; j < i + 1; j++)
-                    midpoint.add(end);
+            var d = Math.acos(Math.sin(phi1) * Math.sin(phi2) + Math.cos(phi1) * Math.cos(phi2) * Math.cos(theta1 - theta2)),
+                points = [coordToCartesian(point1.lat,point1.lng)];
 
-                if(2*(n_sub/2 - Math.abs(n_sub/2 - i - 0.5)) < 30)
-                    midpoint.setLength(200 + 2*(n_sub/2 - Math.abs(n_sub/2 - i - 0.5)));
-                else
-                    midpoint.setLength(230);
+            for(i = 1; i < n_sub; i++) {
+                var f = i/n_sub;
+                var A = Math.sin((1 - f) * d) / Math.sin(d);
+                var B = Math.sin(f * d) / Math.sin(d);
+                var x = A * Math.sin(phi1) * Math.cos(theta1) + B * Math.sin(phi2) * Math.cos(theta2),
+                    y = A * Math.cos(phi1) + B * Math.cos(phi2),
+                    z = A * Math.sin(phi1) * Math.sin(theta1) + B * Math.sin(phi2) * Math.sin(theta2);
 
-                points.push(new THREE.Vector3(0,0,0));
-                points[points.length - 1].copy(midpoint);
+                points.push(new THREE.Vector3(x,y,z).setLength(200+30*Math.sin(f*Math.PI)));
             }
-            points.push(end);
+            points.push(coordToCartesian(point2.lat,point2.lng));
 
             var spline = new THREE.Spline(points);
 
