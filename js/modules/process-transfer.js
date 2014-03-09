@@ -20,8 +20,8 @@ exports.run = function(current,target,passData) {
 				} else {
 					this.S.hordes.sortPush(new Horde(totalInfected, target));
 				}
+				this.S.modules['event-worldStats'].val('world_pop',totalInfected,'-');
 			}
-			this.S.modules['event-worldStats'].val('world_pop',totalInfected,'-');
 		}
 	}
 };

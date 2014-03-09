@@ -1,6 +1,6 @@
 ## Priority 1 ##
 			
-	
+	* Change DataPoints to have a datapointset class that uses arraybuffers DataView in the datapoints and provides get/write functions.
 
 ## Priority 2 ##
 
