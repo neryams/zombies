@@ -839,13 +839,11 @@ Simulator.prototype.tick = function() {
 	}
 }
 Simulator.prototype.updateSquare = function(target, force) {
-	var	size_pop = (target.total_pop) / this.config.max_pop,
-		size_zom = (target.infected) / this.config.max_pop;
 	if(!target.cache) {
-		this.Renderer.setData(target, size_pop, size_zom);
+		this.Renderer.setData(target, this.config.max_pop);
 		target.cache = { infected: target.infected, total_pop: target.total_pop }
 	} else if(force || (target.cache.infected != target.infected || target.cache.total_pop != target.total_pop)) {
-		this.Renderer.setData(target, size_pop, size_zom); 
+		this.Renderer.setData(target, this.config.max_pop); 
 		target.cache.infected = target.infected;
 		target.cache.total_pop = target.total_pop;
 	}
@@ -1005,5 +1003,7 @@ Module.prototype = {
 				default: this[name] = newval;
 			}
 		}
+		if(this[name] === Infinity)
+			debugger;
 	}
 }

@@ -140,14 +140,12 @@ var Renderer = function (scaling) {
         sphere.add( visualArc );
 
         // Bars to show zombies and humans
-        geometry = new THREE.CubeGeometry(0.9, 0.9, 1, 1, 1, 1, null, false, { px: true,
-              nx: true, py: true, ny: true, pz: false, nz: true});
+        geometry = new THREE.CubeGeometry(1, 1, 1);
         // Move the "position point" of the cube to the bottom so it sits on the surface of the globe.
         geometry.applyMatrix( new THREE.Matrix4().makeTranslation(0, 0, 0.5) );
         point = new THREE.Mesh(geometry); // humans
 
-        geometry = new THREE.CubeGeometry(0.9, 0.8, 1, 1, 1, 1, null, false, { px: true,
-              nx: true, py: true, ny: true, pz: false, nz: true});
+        geometry = new THREE.CubeGeometry(1, 1, 1);
         geometry.applyMatrix( new THREE.Matrix4().makeTranslation(0, 0, 0.5) );
         point2 = new THREE.Mesh(geometry); // zombies
 
@@ -563,22 +561,30 @@ var Renderer = function (scaling) {
             tween.easing(TWEEN.Easing.Cubic.Out);
             tween.start();
         },
-        setData: function(dataPoint, popLength, zomLength) {
+        setData: function(dataPoint, ratio) {
             if(!dataPoint.vertices_pop) {
                 addPoint(dataPoint.lat, dataPoint.lng, dataPoint);
                 subgeo.verticesNeedUpdate = true;
             }
-            popLength = popLength * 60 + 200;
-            if(zomLength * 60 < 0.5 && zomLength > 0)
-                zomLength = popLength + 0.5;
-            else if(zomLength > 0 && popLength <= 200) {
-                popLength = 200
-                zomLength = zomLength * 60 + popLength;
+            var popLength = 198;
+            if(dataPoint.total_pop > 0) {
+                popLength = 60 * dataPoint.total_pop / ratio + 200;
+                dataPoint.vertices_pop[0].setLength(popLength);
+                dataPoint.vertices_pop[2].setLength(popLength);
+                dataPoint.vertices_pop[5].setLength(popLength);
+                dataPoint.vertices_pop[7].setLength(popLength);
+            } else if(dataPoint.vertices_pop[0].length() >= 200) {
+                dataPoint.vertices_pop[0].setLength(popLength);
+                dataPoint.vertices_pop[2].setLength(popLength);
+                dataPoint.vertices_pop[5].setLength(popLength);
+                dataPoint.vertices_pop[7].setLength(popLength);
             }
-            else if(zomLength > 0)
-                zomLength = zomLength * 60 + popLength;
 
-            if(zomLength) {
+            var zomLength = 198;
+            if(dataPoint.infected > 0) {
+                zomLength = 60 * dataPoint.infected / ratio + 200;
+                if(zomLength < 200.1)
+                    zomLength = 200.1;
                 dataPoint.vertices_zom[1].setLength(popLength);
                 dataPoint.vertices_zom[3].setLength(popLength);
                 dataPoint.vertices_zom[4].setLength(popLength);
@@ -588,28 +594,15 @@ var Renderer = function (scaling) {
                 dataPoint.vertices_zom[5].setLength(zomLength);
                 dataPoint.vertices_zom[7].setLength(zomLength);
             } else if(dataPoint.vertices_zom[0].length() >= 200) {
-                dataPoint.vertices_zom[1].setLength(198);
-                dataPoint.vertices_zom[3].setLength(198);
-                dataPoint.vertices_zom[4].setLength(198);
-                dataPoint.vertices_zom[6].setLength(198);
-                dataPoint.vertices_zom[0].setLength(199);
-                dataPoint.vertices_zom[2].setLength(199);
-                dataPoint.vertices_zom[5].setLength(199);
-                dataPoint.vertices_zom[7].setLength(199);
+                dataPoint.vertices_zom[1].setLength(popLength);
+                dataPoint.vertices_zom[3].setLength(popLength);
+                dataPoint.vertices_zom[4].setLength(popLength);
+                dataPoint.vertices_zom[6].setLength(popLength);
+                dataPoint.vertices_zom[0].setLength(zomLength);
+                dataPoint.vertices_zom[2].setLength(zomLength);
+                dataPoint.vertices_zom[5].setLength(zomLength);
+                dataPoint.vertices_zom[7].setLength(zomLength);
             }
-
-            if(popLength > 200) {
-                dataPoint.vertices_pop[0].setLength(popLength);
-                dataPoint.vertices_pop[2].setLength(popLength);
-                dataPoint.vertices_pop[5].setLength(popLength);
-                dataPoint.vertices_pop[7].setLength(popLength);
-            } else if(dataPoint.vertices_pop[0].length() >= 200) {
-                dataPoint.vertices_pop[0].setLength(199);
-                dataPoint.vertices_pop[2].setLength(199);
-                dataPoint.vertices_pop[5].setLength(199);
-                dataPoint.vertices_pop[7].setLength(199);                    
-            }
-
         },
         setVisualization: function( layer ) {
             if(ready) {
