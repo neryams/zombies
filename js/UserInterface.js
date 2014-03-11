@@ -789,7 +789,7 @@ var UserInterface = function UserInterface(Renderer,language) {
 					$('#render_tooltip').html(event.data(point));
 
 					// Debug information to mouse over points
-					if(debugMenu.mouseOverDebugData) {
+					if(debugMenu.console.options.mouseOverDebugData) {
 						$('#render_tooltip').html(JSON.stringify(point, 
 							function(key,value) {
 								if(key == 'adjacent' || key == 'vertices_pop' || key == 'vertices_zom') 
@@ -1095,6 +1095,12 @@ var UserInterface = function UserInterface(Renderer,language) {
 		upgrades: Evolution.prototype.all,
 		addDataField: addDataField,
 		status: status,
+		toggleGlobeTooltip: function(activate) {
+			if(activate)
+				activatePlanetTooltip(getPointInfo);
+			else
+				deactivatePlanetTooltip();
+		},
 		addEvolution: function(name,runOnClick,options) {
 			var newEvolution = new Evolution(name,runOnClick,options);
 			return newEvolution;

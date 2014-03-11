@@ -110,7 +110,7 @@ exports.run = function(current,passData) {
 			}
 	    } else {
 	    	// zombie horde did not move, possibly combine with a horde in the same square
-	    	if(current.location.hordes.length > 0 && current.location.hordes[0] !== current.id && passData.rand < (1 - this.S.hordes.length / 40000)) {
+	    	if(current.location.hordes.length > 0 && current.location.hordes[0] !== current.id && passData.rand > 1 - (this.S.hordes.length / 40000)) {
 	    		current.location.hordes[0].size += current.size;
 	    		current.size = 0;
 	    	}

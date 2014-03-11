@@ -177,13 +177,14 @@ function Horde(size, location, inherit) {
 				this[key] = inherit[key];
 			}
 
-	this.id = Horde.prototype.id++;
+	this.order = this.id = Horde.prototype.id++;
 	this.size = size;
 	if(this.location !== undefined)
 		this.move(location);
 }
 Horde.prototype = {
 	id: 0,
+	order: 0,
 	size: 0,
 	location: null,
 	pointsToWatch: null,
@@ -348,7 +349,7 @@ function Simulator(R, UI, gConfig, gData) {
 			while(newHordes.length > 0) {
 				var n = this.length;
 				this.push(newHordes.pop());
-				this[n].id = n;
+				this[n].order = n;
 				this[n].location.hordes.push(n);
 			}
 		}
@@ -391,8 +392,6 @@ Simulator.prototype.start = function(strainId) {
 		that.startPoint = startSq;
 		// Create the first horde, with one zombie in it.
 		that.hordes.push(new Horde(1, startSq));
-		if(debugMenu.console)
-			debugMenu.console.watch(that.hordes[0]);
 
 		// Sort out the children for the upgrades, convert string pointers to related upgrades to actual pointers.
 		for (key in that.upgrades) {
@@ -415,6 +414,10 @@ Simulator.prototype.start = function(strainId) {
 				that.modules[id].onStart(startSq);
 
 		that.Renderer.lookAt(startSq);
+
+		if(debugMenu.active) {
+			debugMenu.setSimulator(that).newTick();
+		}
 
 		that.tick();
 	});
@@ -692,7 +695,7 @@ Simulator.prototype.tick = function() {
 		simplifyAt = 2000,
 		simplifyCof = 1;
 	if(this.strain != null) {
-		if(debugMenu.console)
+		if(debugMenu.active)
 			debugMenu.console.newTick();
 
 		// Must cache the horde length because we will be adding more in this loop and want to not do them until next time
@@ -716,10 +719,6 @@ Simulator.prototype.tick = function() {
 
 			var latId = Math.floor(Math.abs(currentLocation.lat));
 			chances = this.bakedValues.latCumChance[latId];
-			if(debugMenu.watch == current.id) {
-				console.log(current);
-				debugger;
-			}
 
 			rand = Math.random();
 
@@ -768,11 +767,11 @@ Simulator.prototype.tick = function() {
 
 			this.pointsToWatch[target.id] = true;
 
-			if(debugMenu.console) 
+			if(debugMenu.active) 
 				debugMenu.console.updateTarget(current, target);
 			
 			// Run main modules on each horde
-			if(debugMenu.console) {
+			if(debugMenu.active) {
 				debugMenu.console.reportOutput(current, this.strain.id, this.strain.process(current,target,passData));
 			} else {
 				this.strain.process(current,target,passData);
@@ -781,13 +780,13 @@ Simulator.prototype.tick = function() {
 			// Run infect modules on each horde
 			for(j = 0; j < this.activeModules.infect.length; j++) {
 				this.activeModules.infect[j].process(current,target,passData);
-				if(debugMenu.console)
+				if(debugMenu.active)
 					debugMenu.console.reportModule(current, this.activeModules.infect[j].id, passData);
 			}
 
 			// Run spread modules on each horde
 			for(j = 0; j < this.activeModules.spread.length; j++) {
-				if(debugMenu.console)
+				if(debugMenu.active)
 					debugMenu.console.reportOutput(current, this.activeModules.spread[j].id, this.activeModules.spread[j].process(current,passData));
 				else
 					this.activeModules.spread[j].process(current,passData);
@@ -801,7 +800,7 @@ Simulator.prototype.tick = function() {
 
 		// Run event modules once
 		for(j = 0; j < this.activeModules.event.length; j++) {
-			if(debugMenu.console)
+			if(debugMenu.active)
 				debugMenu.console.reportOutput(current, this.activeModules.event[j].id, this.activeModules.event[j].process());
 			else
 				this.activeModules.event[j].process();
@@ -826,7 +825,7 @@ Simulator.prototype.tick = function() {
 
 		this.hordes.addAllNew();
 
-		if(debugMenu.console && debugMenu.console.manualTicks) {
+		if(debugMenu.active && debugMenu.console.options.manualTicks) {
 			if(this.interval) {
 				clearInterval(this.interval);
 				this.interval = false;

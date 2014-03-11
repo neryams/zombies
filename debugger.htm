@@ -4,26 +4,11 @@
     <meta charset=utf-8 />
     <title>Debugger</title>
     <link rel="stylesheet" type="text/css" media="screen" href="css/debugger.css" />
+    <link rel="stylesheet" href="css/third-party/webix.css" type="text/css">
+    <script src="js/third-party/webix_debug.js" type="text/javascript"></script> 
 </head>
 <body>
-	<table class="body">
-		<tr>
-			<td class="debugOptions">
-				<div>Debug Horde: <input id="o_debugPoint"></div>
-				<div>Pause after tick: <input type="checkbox" id="o_manualTicks"></div>
-				<p><button id="o_endTurn">End Turn</button></p>
-			</td>
-			<td rowspan="2" class="pointInfo">
-				<p class="hordes">
-				</p>
-				<p class="selfInfo">
-				</p>
-			</td>
-		</tr><tr>
-			<td class="debugConsoleWindow">
-				<table><tr class="debugConsole"></tr></table>
-			</td>
-		</tr>
-	</table>
+	<div id='layout_div'></div>
+    <script src="js/Debugger.js" type="text/javascript"></script>
 </body>
 </html>

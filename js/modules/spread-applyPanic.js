@@ -7,7 +7,7 @@ exports.run = function(current,passData) {
 	this.S.properties.panic += current.location.panic;
 	current.location.panic /= 2;
 
-	if(debugMenu.console)
+	if(debugMenu.active)
 		return 'panic change: ' + (current.location.panic*2) + '<br />world panic change: ' + this.S.properties.panic + '<br />' + this.S.countries[current.location.country].name+' panic change: '+this.S.countries[current.location.country].panic;
 };
 exports.options = {

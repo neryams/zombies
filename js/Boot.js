@@ -42,44 +42,12 @@ if(typeof global !== 'undefined')
 // Global variables
 var UI,R,S,seed,debugMenu,gConfig,gData;
 
-/* Debug Commands
-    debugMenu.watchPoint : int, id of the point that you want to be printed to console when it is affected in the simulator
-    debugMenu.mouseOverDebugData : set to true to display lots of data about a point when visualizations are enabled
-*/
-debugMenu = {
-    watchPoint: false,
-    logModules: false,
-    mouseOverDebugData: false,
-    openConsole: function () {
-        if(!debugMenu.console) {
-            $.getScript('js/Debugger.js', function () {
-                console.log('Loaded Debugger. Opening console...');
-                if(S && S.startPoint)
-                    debugMenu.console.push(new Debugger(S.startPoint));
-                else
-                    debugMenu.console.push(new Debugger());
-            });
-        } else {
-            debugMenu.console.push(new Debugger());
-        }
-    } 
-};
-if(typeof global !== 'undefined')
-    global.debugMenu = debugMenu;
-
 $(function () {
     // Select Resolution closes to device pixel ratio
     var ratioSelect = $('#s_rs')
     $('option', ratioSelect).each(function() {
         if(Math.abs(parseFloat(ratioSelect.val()) - window.devicePixelRatio) > Math.abs(parseFloat($(this).attr('value')) - window.devicePixelRatio))
             ratioSelect.val($(this).attr('value'));
-    })
-    // On window close or reload, close all child windows (i.e. debug consoles)
-    $(window).unload(function() {
-        if(debugMenu.console)
-            for (var point in debugMenu.console)
-                if(debugMenu.console.hasOwnProperty(point) && debugMenu.console[point].close)
-                    debugMenu.console[point].close();
     });
 
     // Load language files
@@ -103,6 +71,7 @@ $(function () {
     $.getScript('js/third-party/seedrandom.min.js');
     $.getScript('js/third-party/tween.min.js');
     $.getScript('js/third-party/hqx.min.js');
+    $.getScript('js/DebugMenu.js');
     $.getScript('js/DataPoint.js');
     $.getScript('js/Renderer.js');
     $.getScript('js/UserInterface.js');

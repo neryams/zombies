@@ -307,6 +307,7 @@ canvas.draggable {
 	background-color: black;
 	opacity: 0.8;
 	border-radius: 4px;
+	display: block;
 }
 #tooltip {
 	color: black;

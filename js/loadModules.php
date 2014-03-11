@@ -5,7 +5,7 @@ $load_modules = explode(',',$_GET['modules']);
 /* Add debug breakpoint to all modules. 
 	Also, store the first argument as a local var for use by the value function. */
 $inject = '
-	if(debugMenu.console)
+	if(debugMenu.active)
 		if(debugMenu.console.watchModules(arguments[0])[this.id])
 			debugger;';
 

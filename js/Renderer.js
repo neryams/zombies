@@ -556,6 +556,29 @@ var Renderer = function (scaling) {
                 // If the decal already exists, animate it
             }
         },
+        drawCircle: function(lat, lng, radius, color, thickness) {
+            var radius = radius || 5,
+                color = color || 0xffffff,
+                thickness = thickness || 1,
+                segments = 32;
+            var circleGeometry = new THREE.Geometry();
+            var material = new THREE.LineBasicMaterial({ color: color, linewidth: thickness });
+
+            for (var i = 0; i <= segments; i++) {
+                var theta = (i / segments) * Math.PI * 2;
+                circleGeometry.vertices.push(
+                    new THREE.Vector3(
+                        Math.cos(theta) * radius,
+                        Math.sin(theta) * radius,
+                        0));            
+            }
+
+            var circle = new THREE.Line(circleGeometry, material);
+            circle.position = coordToCartesian(lat,lng,201);
+            circle.lookAt(sphere.position);
+
+            sphere.add( circle );
+        },
         lookAt: function (square) {
             var tween = new TWEEN.Tween(rotation).to({x: -(90 - square.lng) * Math.PI / 180, y: square.lat * Math.PI / 180, z: 0}, 2000);
             tween.easing(TWEEN.Easing.Cubic.Out);
