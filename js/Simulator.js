@@ -768,7 +768,7 @@ Simulator.prototype.tick = function() {
 			this.pointsToWatch[target.id] = true;
 
 			if(debugMenu.active) 
-				debugMenu.console.updateTarget(current, target);
+				debugMenu.console.updateInfo(current, target);
 			
 			// Run main modules on each horde
 			if(debugMenu.active) {

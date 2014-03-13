@@ -3,6 +3,34 @@ var Simulator = null,
 	Renderer = null;
 
 var Debugger = function() {
+	var buildTreeFromObject = function(data, maxDepth, name, id) {
+		if(id === undefined)
+			var id = '';
+
+		if(maxDepth < 0)
+			return { id: id, value: name };
+		else {
+			var returnData = [];
+
+			for (key in data)
+				if (data.hasOwnProperty(key)) {
+					var newId = id ? id + '.' + key : key;
+					if(typeof data[key] === 'object') {
+						returnData.push(buildTreeFromObject(data[key], maxDepth - 1, key, newId));
+					} else {
+						returnData.push({ id: newId, value: key, property: data[key] });
+					}
+				}
+
+			if(id === '')
+				return returnData;
+			else if(returnData.length > 0)
+				return { id: id, value: name, data: returnData };
+			else 
+				return { id: id, value: name };
+		}
+	}
+
 	return {
 		editHorde: function(data, rowId) {
 			if(rowId === undefined) {
@@ -11,7 +39,8 @@ var Debugger = function() {
 					uid: data.id,
 					size: data.size,
 					lat: data.location.lat,
-					lng: data.location.lng
+					lng: data.location.lng,
+					pointer: data
 				} );
 			} else {
 				var row = $$('infoHordes').getItem(rowId);
@@ -48,6 +77,22 @@ var Debugger = function() {
 	    		moduleTable.refreshColumns();
 
 	    	moduleTable.add(rowToAdd);
+		},
+		updateGlobalInfo: function(data) {
+			$$("infoGlobal").setValues(data);
+			$$('windowHeader').setValue('Simulator Active, Turn ' + data.iteration);
+		},
+		insertInfo: function(data) {
+			var infoTree = $$('infoSelected');
+			var openItems = infoTree.getOpenItems();
+			infoTree.clearAll();
+			infoTree.parse(buildTreeFromObject(data, 2));
+			for(var i = 0; i < openItems.length; i++) {
+				infoTree.open(openItems[i]);
+			}
+		},
+		insertTarget: function() {
+
 		}
 	}
 }
@@ -61,7 +106,7 @@ webix.ui({
 		    view:"toolbar",
 		    id:"mainToolbar",
 		    cols:[
-		    	{ id:"turnNumber", view:"label", label:'0' },
+		    	{ id:"windowHeader", view:"label", label:'0' },
 		    	{},
 		        { view:"toggle", offLabel:"Enable Mouseover Debug", onLabel:"Disable Mouseover Debug", width:200, align:"center", 
     				on:{'onChange': function() {
@@ -90,7 +135,12 @@ webix.ui({
 		{cols:[
 			{
 				id:"infoGlobal",
-				template:"column 1",
+				view: "property",
+				elements:[
+					{ label:"Horde Count", type:"text", id:"hordeCount"},
+					{ label:"Iteration", type:"text", id:"iteration"}
+				],
+				editable: false,
 				width:250,
 				minWidth:150,
 				maxWidth:250
@@ -114,8 +164,11 @@ webix.ui({
 							select: "row",
 							on:{
 								onSelectChange:function(){
-									var selected = $$('infoHordes').getItem($$('infoHordes').getSelectedId().id);
-									Renderer.highlightSquare(selected.lat,selected.lng)
+									if($$('infoHordes').getSelectedId()){										
+										var selected = $$('infoHordes').getItem($$('infoHordes').getSelectedId().id);
+										Renderer.highlightSquare(selected.lat,selected.lng);
+										Console.options.activeHorde = selected.pointer;
+									}
 								}
 							},
 							columns:[
@@ -144,7 +197,11 @@ webix.ui({
 			},
 			{
 				id:"infoSelected",
-				template:"column 3"
+				view:"treetable",
+				columns: [
+			        { id:"value", header:"Property", template:"{common.treetable()} #value#", fillspace:true},
+			        { id:"property", header:"Value",  width:200}
+				]
 			}
 		]}
 	]

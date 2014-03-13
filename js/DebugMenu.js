@@ -63,18 +63,26 @@ debugMenu = {
 						this.window.ui.editHorde(this.S.hordes[i], this.simulatorLinks.hordes[this.S.hordes[i].id]);
 				}
 				if(this.options.activeHorde === null)
-					this.options.activeHorde = this.S.hordes[i].id;
+					this.options.activeHorde = this.S.hordes[i];
 			}
 			if(!this.window.$$('infoHordes').config.disabled)
 				this.window.$$('infoHordes').refresh();
-			this.window.$$('turnNumber').setValue(this.S.iteration);
+
+			this.window.ui.updateGlobalInfo({
+				iteration: this.S.iteration,
+				hordeCount: this.S.hordes.length
+			});
+
 			this.window.ui.clearModules();
 		},
-		updateTarget: function(current, target) {
-
+		updateInfo: function(current, target) {
+			if(this.options.activeHorde.id == current.id) {
+				this.window.ui.insertInfo(current);
+				this.window.ui.insertTarget(target);				
+			}
 		},
 		reportModule: function(current, moduleId, passData) {
-			if(this.options.activeHorde == current.id) {
+			if(this.options.activeHorde.id == current.id) {
 				this.window.ui.addModulePassData(moduleId, passData);
 			}
 		},
