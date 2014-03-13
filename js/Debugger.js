@@ -34,7 +34,8 @@ var Debugger = function() {
 	return {
 		editHorde: function(data, rowId) {
 			if(rowId === undefined) {
-				var rowId = $$('infoHordes').add( {
+				var hordeTable = $$('infoHordes');
+				var rowId = hordeTable.add( {
 					id: 'hordeRow'+data.id,
 					uid: data.id,
 					size: data.size,
@@ -42,6 +43,8 @@ var Debugger = function() {
 					lng: data.location.lng,
 					pointer: data
 				} );
+				if(Console.options.activeHorde === null)
+					hordeTable.select(rowId);
 			} else {
 				var row = $$('infoHordes').getItem(rowId);
 				if(row) {
@@ -83,6 +86,11 @@ var Debugger = function() {
 			$$('windowHeader').setValue('Simulator Active, Turn ' + data.iteration);
 		},
 		insertInfo: function(data) {
+			if(Console.options.manualTicks)
+				$$('infoHordes').enable();
+			else
+				$$('infoHordes').disable();
+
 			var infoTree = $$('infoSelected');
 			var openItems = infoTree.getOpenItems();
 			infoTree.clearAll();
@@ -116,12 +124,8 @@ webix.ui({
 		        { view:"toggle", offLabel:"Freeze", onLabel:"Resume", width:100, align:"center", 
     				on:{'onChange': function() {
     					Console.options.manualTicks = !!this.getValue();
-    					if(Console.options.manualTicks) {
-    						$$('infoHordes').enable();
-    					} else { 
-    						$$('infoHordes').disable();
+    					if(!Console.options.manualTicks)
 		        			Simulator.endTurn();
-    					}
 		        	}}
 		        },
 		        { view:"button", id:"endTickButton", value:"End Turn", width:100, align:"center", click: function() {
@@ -168,6 +172,8 @@ webix.ui({
 										var selected = $$('infoHordes').getItem($$('infoHordes').getSelectedId().id);
 										Renderer.highlightSquare(selected.lat,selected.lng);
 										Console.options.activeHorde = selected.pointer;
+										Console.updateInfo(selected.pointer);
+										ui.clearModules();
 									}
 								}
 							},

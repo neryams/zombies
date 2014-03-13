@@ -53,20 +53,17 @@ debugMenu = {
 			}
 		},
 		newTick: function() {
-			for(i = 0, n = this.S.hordes.length; i < n; i++) {
-				if(this.S.hordes[i].size == 0) {
-					this.window.ui.removeHorde(this.simulatorLinks.hordes[this.S.hordes[i].id]);
-				} else {
-					if(this.simulatorLinks.hordes[this.S.hordes[i].id] === undefined && this.S.hordes[i].size > 0) 
-						this.simulatorLinks.hordes[this.S.hordes[i].id] = this.window.ui.editHorde(this.S.hordes[i]);
-					else 
-						this.window.ui.editHorde(this.S.hordes[i], this.simulatorLinks.hordes[this.S.hordes[i].id]);
+			if(this.options.manualTicks)
+				for(i = 0, n = this.S.hordes.length; i < n; i++) {
+					if(this.S.hordes[i].size == 0) {
+						this.window.ui.removeHorde(this.simulatorLinks.hordes[this.S.hordes[i].id]);
+					} else {
+						if(this.simulatorLinks.hordes[this.S.hordes[i].id] === undefined && this.S.hordes[i].size > 0) 
+							this.simulatorLinks.hordes[this.S.hordes[i].id] = this.window.ui.editHorde(this.S.hordes[i]);
+						else 
+							this.window.ui.editHorde(this.S.hordes[i], this.simulatorLinks.hordes[this.S.hordes[i].id]);
+					}
 				}
-				if(this.options.activeHorde === null)
-					this.options.activeHorde = this.S.hordes[i];
-			}
-			if(!this.window.$$('infoHordes').config.disabled)
-				this.window.$$('infoHordes').refresh();
 
 			this.window.ui.updateGlobalInfo({
 				iteration: this.S.iteration,
@@ -78,7 +75,8 @@ debugMenu = {
 		updateInfo: function(current, target) {
 			if(this.options.activeHorde.id == current.id) {
 				this.window.ui.insertInfo(current);
-				this.window.ui.insertTarget(target);				
+				if(target)
+					this.window.ui.insertTarget(target);				
 			}
 		},
 		reportModule: function(current, moduleId, passData) {
