@@ -89,6 +89,8 @@ var Debugger = function() {
 				$$('infoHordes').enable();
 			else
 				$$('infoHordes').disable();
+
+			$$('hordeToolbarCount').setValue($$('infoHordes').count() + ' Hordes');
 		},
 		insertInfo: function(data) {
 			var infoTree = $$('infoSelected');
@@ -115,7 +117,8 @@ var Debugger = function() {
 			if(hordeTable.getFirstId()) {
 				hordeTable.select(hordeTable.getFirstId());
 				$$('hordeToolbarHeader').setValue('Showing only Hordes on ' + lat + ', ' + lng);
-				$$('hordeButtonClearFilter').enable();				
+				$$('hordeButtonClearFilter').enable();
+				$$('hordeToolbarCount').setValue(hordeTable.count() + ' Hordes');
 			} else {
 				ui.clearHordeFilter();
 				hordeTable.select(selected);
@@ -128,11 +131,12 @@ var Debugger = function() {
 			hordeTable.filter('','', false);
 			$$('hordeToolbarHeader').setValue('');
 			$$('hordeButtonClearFilter').disable();
-			
+
 			if(selected) {
 				hordeTable.select(selected);
 				hordeTable.showItem(selected);
 			}
+			$$('hordeToolbarCount').setValue(hordeTable.count() + ' Hordes');
 		}
 	}
 }
@@ -197,6 +201,7 @@ webix.ui({
 								    id:"hordeToolbar",
 								    cols:[
 								    	{ id:"hordeToolbarHeader", view:"label", label:'' },
+								    	{ id:"hordeToolbarCount", view:"label", label:'' },
 								    	{},
 								        { view:"button", id:"hordeButtonClearFilter", disabled: true, value:"Clear Filter", width:100, align:"center", click: function() {
 								        	ui.clearHordeFilter();
@@ -221,10 +226,10 @@ webix.ui({
 										}
 									},
 									columns:[
-										{ id:"uid",      header: "Horde ID", width:100, sort:"int"},
-										{ id:"lat", width: 100, header: ["Latitude",{content:"numberFilter"}]},
-										{ id:"lng", width: 100, header: ["Longitude",{content:"numberFilter"}]},
-										{ id:"size",     header: "Size", fillspace:true, sort:"int"}
+										{ id:"uid", header: "Horde ID", width:100, sort:"int"},
+										{ id:"lat", width: 100, header: "Latitude"},
+										{ id:"lng", width: 100, header: "Longitude"},
+										{ id:"size",header: "Size", fillspace:true, sort:"int"}
 									]
 								}
 							]
