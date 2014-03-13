@@ -28,9 +28,10 @@ debugMenu = {
     simulator: {
     	S: null,
     	endTurn: function() {
-			this.S.tick();
+    		if(this.S)
+				this.S.tick();
     	},
-    	toggleGlobeTooltop: function(activate) {
+    	toggleGlobeTooltip: function(activate) {
     		this.S.UI.toggleGlobeTooltip(activate);
     	}
     },
@@ -86,6 +87,9 @@ debugMenu = {
 		},
 		reportOutput: function(current, moduleId, result) {
 
+		},
+		filterLocation: function(lat,lng) {
+			this.window.ui.filterHordes(null,lat,lng);
 		}
 	}
 };

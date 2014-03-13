@@ -101,6 +101,38 @@ var Debugger = function() {
 		},
 		insertTarget: function() {
 
+		},
+		filterHordes: function(id,lat,lng) {
+			var hordeTable = $$('infoHordes');
+			// Get selected row as string
+			var selected = hordeTable.getSelectedId(false,true);
+
+			if(lat)
+				hordeTable.filter('#lat#',lat, false);
+			if(lng)
+				hordeTable.filter('#lng#',lng, true);
+
+			if(hordeTable.getFirstId()) {
+				hordeTable.select(hordeTable.getFirstId());
+				$$('hordeToolbarHeader').setValue('Showing only Hordes on ' + lat + ', ' + lng);
+				$$('hordeButtonClearFilter').enable();				
+			} else {
+				ui.clearHordeFilter();
+				hordeTable.select(selected);
+				hordeTable.showItem(selected);
+			}
+		},
+		clearHordeFilter: function() {
+			var hordeTable = $$('infoHordes');
+			var selected = hordeTable.getSelectedId(false,true);
+			hordeTable.filter('','', false);
+			$$('hordeToolbarHeader').setValue('');
+			$$('hordeButtonClearFilter').disable();
+			
+			if(selected) {
+				hordeTable.select(selected);
+				hordeTable.showItem(selected);
+			}
 		}
 	}
 }
@@ -108,7 +140,6 @@ var Debugger = function() {
 var ui = Debugger();
 
 webix.ui({
-	container:"layout_div",
 	rows:[
 		{
 		    view:"toolbar",
@@ -156,32 +187,46 @@ webix.ui({
 			    view:"tabview",
 			    animate:false,
 				minWidth:500,
-				width:700,
 			    cells:[
 			        {
 						header:"Hordes",
 						body:{
-			            	id:"infoHordes",
-							view:"datatable",
-							disabled: true,
-							resizeColumn:true,
-							select: "row",
-							on:{
-								onSelectChange:function(){
-									if($$('infoHordes').getSelectedId()){										
-										var selected = $$('infoHordes').getItem($$('infoHordes').getSelectedId().id);
-										Renderer.highlightSquare(selected.lat,selected.lng);
-										Console.options.activeHorde = selected.pointer;
-										Console.updateInfo(selected.pointer);
-										ui.clearModules();
-									}
+							rows:[
+								{
+								    view:"toolbar",
+								    id:"hordeToolbar",
+								    cols:[
+								    	{ id:"hordeToolbarHeader", view:"label", label:'' },
+								    	{},
+								        { view:"button", id:"hordeButtonClearFilter", disabled: true, value:"Clear Filter", width:100, align:"center", click: function() {
+								        	ui.clearHordeFilter();
+								        }}
+								    ]
+								},
+								{
+					            	id:"infoHordes",
+									view:"datatable",
+									disabled: true,
+									resizeColumn:true,
+									select: "row",
+									on:{
+										onSelectChange:function(){
+											if($$('infoHordes').getSelectedId()){										
+												var selected = $$('infoHordes').getItem($$('infoHordes').getSelectedId().id);
+												Renderer.highlightSquare(selected.lat,selected.lng);
+												Console.options.activeHorde = selected.pointer;
+												Console.updateInfo(selected.pointer);
+												ui.clearModules();
+											}
+										}
+									},
+									columns:[
+										{ id:"uid",      header: "Horde ID", width:100, sort:"int"},
+										{ id:"lat", width: 100, header: ["Latitude",{content:"numberFilter"}]},
+										{ id:"lng", width: 100, header: ["Longitude",{content:"numberFilter"}]},
+										{ id:"size",     header: "Size", fillspace:true, sort:"int"}
+									]
 								}
-							},
-							columns:[
-								{ id:"uid",      header: "Horde ID", width:100, sort:"int"},
-								{ id:"lat", width: 100, header: ["Latitude",{content:"numberFilter"}]},
-								{ id:"lng", width: 100, header: ["Longitude",{content:"numberFilter"}]},
-								{ id:"size",     header: "Size", fillspace:true, sort:"int"}
 							]
 						}
 			        },
@@ -205,10 +250,11 @@ webix.ui({
 				id:"infoSelected",
 				view:"treetable",
 				minWidth:150,
+				width:200,
 				resizeColumn:true,
 				columns: [
-			        { id:"value", header:"Property", template:"{common.treetable()} #value#", fillspace:true},
-			        { id:"property", header:"Value",  width:100}
+			        { id:"value", header:"Property", template:"{common.treetable()} #value#",  width:100},
+			        { id:"property", header:"Value", fillspace:true}
 				]
 			}
 		]}

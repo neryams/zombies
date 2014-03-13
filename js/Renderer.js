@@ -536,6 +536,7 @@ var Renderer = function (scaling) {
             var dimensionalSpot = sphereCoords[2]; // Sphere intersection point
             if(sphereCoords) {
                 console.log(sphereCoords);
+                return sphereCoords;
             } else
                 return false;
         },
