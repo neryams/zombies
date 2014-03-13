@@ -73,14 +73,14 @@ debugMenu = {
 			this.window.ui.clearModules();
 		},
 		updateInfo: function(current, target) {
-			if(this.options.activeHorde.id == current.id) {
+			if(this.options.activeHorde && this.options.activeHorde.id == current.id) {
 				this.window.ui.insertInfo(current);
 				if(target)
 					this.window.ui.insertTarget(target);				
 			}
 		},
 		reportModule: function(current, moduleId, passData) {
-			if(this.options.activeHorde.id == current.id) {
+			if(this.options.activeHorde && this.options.activeHorde.id == current.id) {
 				this.window.ui.addModulePassData(moduleId, passData);
 			}
 		},

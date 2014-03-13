@@ -8,7 +8,7 @@ var Debugger = function() {
 			var id = '';
 
 		if(maxDepth < 0)
-			return { id: id, value: name };
+			return { id: id, value: name, property: data.toString() };
 		else {
 			var returnData = [];
 
@@ -94,7 +94,7 @@ var Debugger = function() {
 			var infoTree = $$('infoSelected');
 			var openItems = infoTree.getOpenItems();
 			infoTree.clearAll();
-			infoTree.parse(buildTreeFromObject(data, 2));
+			infoTree.parse(buildTreeFromObject(data, 3));
 			for(var i = 0; i < openItems.length; i++) {
 				infoTree.open(openItems[i]);
 			}
@@ -145,8 +145,8 @@ webix.ui({
 					{ label:"Iteration", type:"text", id:"iteration"}
 				],
 				editable: false,
-				width:250,
-				minWidth:150,
+				width:200,
+				minWidth:125,
 				maxWidth:250
 			},
 			{
@@ -155,8 +155,8 @@ webix.ui({
 			{
 			    view:"tabview",
 			    animate:false,
-				minWidth:300,
-				width:500,
+				minWidth:500,
+				width:700,
 			    cells:[
 			        {
 						header:"Hordes",
@@ -204,9 +204,11 @@ webix.ui({
 			{
 				id:"infoSelected",
 				view:"treetable",
+				minWidth:150,
+				resizeColumn:true,
 				columns: [
 			        { id:"value", header:"Property", template:"{common.treetable()} #value#", fillspace:true},
-			        { id:"property", header:"Value",  width:200}
+			        { id:"property", header:"Value",  width:100}
 				]
 			}
 		]}
