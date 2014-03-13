@@ -556,7 +556,10 @@ var Renderer = function (scaling) {
                 // If the decal already exists, animate it
             }
         },
-        drawCircle: function(lat, lng, radius, color, thickness) {
+        drawCircle: function(id, lat, lng, radius, color, thickness) {
+            if(decals[id] !== undefined)
+                sphere.remove( decals[id] );
+
             var radius = radius || 5,
                 color = color || 0xffffff,
                 thickness = thickness || 1,
@@ -573,11 +576,11 @@ var Renderer = function (scaling) {
                         0));            
             }
 
-            var circle = new THREE.Line(circleGeometry, material);
-            circle.position = coordToCartesian(lat,lng,201);
-            circle.lookAt(sphere.position);
+            decals[id] = new THREE.Line(circleGeometry, material);
+            decals[id].position = coordToCartesian(lat,lng,201);
+            decals[id].lookAt(sphere.position);
 
-            sphere.add( circle );
+            sphere.add( decals[id] );
         },
         lookAt: function (square) {
             var tween = new TWEEN.Tween(rotation).to({x: -(90 - square.lng) * Math.PI / 180, y: square.lat * Math.PI / 180, z: 0}, 2000);

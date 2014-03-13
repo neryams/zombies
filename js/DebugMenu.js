@@ -22,7 +22,7 @@ debugMenu = {
     renderer: {
     	R: null,
     	highlightSquare: function(lat,lng) {
-    		R.drawCircle(lat, lng, 3, 0xff00ff, 2);
+    		R.drawCircle('debugHighlight', lat, lng, 3, 0xff00ff, 2);
     	}
     },
     simulator: {
