@@ -84,13 +84,13 @@ var Debugger = function() {
 		updateGlobalInfo: function(data) {
 			$$("infoGlobal").setValues(data);
 			$$('windowHeader').setValue('Simulator Active, Turn ' + data.iteration);
-		},
-		insertInfo: function(data) {
+
 			if(Console.options.manualTicks)
 				$$('infoHordes').enable();
 			else
 				$$('infoHordes').disable();
-
+		},
+		insertInfo: function(data) {
 			var infoTree = $$('infoSelected');
 			var openItems = infoTree.getOpenItems();
 			infoTree.clearAll();
