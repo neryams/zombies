@@ -55,6 +55,24 @@ var Debugger = function() {
 			} 
 			return rowId;
 		},
+		editPoint: function(data) {
+			var pointsTable = $$('infoPoints'),
+				rowId = 'point'+data.id;
+			if(!pointsTable.getItem(rowId))
+				pointsTable.add( {
+					id: rowId,
+					lat: data.lat,
+					lng: data.lng,
+					infected: data.infected,
+					population: data.total_pop,
+					pointer: data
+				} );
+			else {
+				var row = pointsTable.getItem(rowId);
+				row.infected = data.infected;
+				row.population = data.total_pop;
+			}
+		},
 		removeHorde: function(rowId) {
 			var hordeTable = $$('infoHordes');
 			if(hordeTable.getItem(rowId))
@@ -106,23 +124,27 @@ var Debugger = function() {
 		},
 		filterHordes: function(id,lat,lng) {
 			var hordeTable = $$('infoHordes');
-			// Get selected row as string
-			var selected = hordeTable.getSelectedId(false,true);
+			if(hordeTable.count() > 0) {
+				// Get selected row as string
+				var selected = hordeTable.getSelectedId(false,true);
 
-			if(lat)
-				hordeTable.filter('#lat#',lat, false);
-			if(lng)
-				hordeTable.filter('#lng#',lng, true);
+				if(lat)
+					hordeTable.filter('#lat#',lat, false);
+				if(lng)
+					hordeTable.filter('#lng#',lng, true);
 
-			if(hordeTable.getFirstId()) {
-				hordeTable.select(hordeTable.getFirstId());
-				$$('hordeToolbarHeader').setValue('Showing only Hordes on ' + lat + ', ' + lng);
-				$$('hordeButtonClearFilter').enable();
-				$$('hordeToolbarCount').setValue(hordeTable.count() + ' Hordes');
-			} else {
-				ui.clearHordeFilter();
-				hordeTable.select(selected);
-				hordeTable.showItem(selected);
+				if(hordeTable.getFirstId()) {
+					hordeTable.select(hordeTable.getFirstId());
+					$$('hordeToolbarHeader').setValue('Showing only Hordes on ' + lat + ', ' + lng);
+					$$('hordeButtonClearFilter').enable();
+					$$('hordeToolbarCount').setValue(hordeTable.count() + ' Hordes');
+				} else {
+					ui.clearHordeFilter();
+					if(selected) {
+						hordeTable.select(selected);
+						hordeTable.showItem(selected);
+					}
+				}
 			}
 		},
 		clearHordeFilter: function() {
@@ -137,6 +159,20 @@ var Debugger = function() {
 				hordeTable.showItem(selected);
 			}
 			$$('hordeToolbarCount').setValue(hordeTable.count() + ' Hordes');
+		},
+		selectSquare: function(lat, lng, ignoreInsert) {
+			var pointsTable = $$('infoPoints')
+			if(lat && lng && pointsTable.count() > 0) {
+				pointsTable.filter('#lat#',lat, false);
+				pointsTable.filter('#lng#',lng, true);	
+				pointsTable.select(pointsTable.getFirstId());	
+				var selected = pointsTable.getSelectedId(false,true);
+				pointsTable.filter('','', false);
+				pointsTable.select(selected);
+				pointsTable.showItem(selected);
+			}
+			if(!ignoreInsert)
+				ui.insertInfo(pointsTable.getItem(selected).pointer);
 		}
 	}
 }
@@ -215,12 +251,12 @@ webix.ui({
 									resizeColumn:true,
 									select: "row",
 									on:{
-										onSelectChange:function(){
-											if($$('infoHordes').getSelectedId()){										
-												var selected = $$('infoHordes').getItem($$('infoHordes').getSelectedId().id);
-												Renderer.highlightSquare(selected.lat,selected.lng);
+										onSelectChange: function(){
+											if($$('infoHordes').getSelectedId()) {
+												var selected = $$('infoHordes').getItem($$('infoHordes').getSelectedId(false,true));
 												Console.options.activeHorde = selected.pointer;
-												Console.updateInfo(selected.pointer);
+												ui.insertInfo(selected.pointer);
+												ui.selectSquare(selected.lat,selected.lng, true);
 												ui.clearModules();
 											}
 										}
@@ -243,6 +279,30 @@ webix.ui({
 							resizeColumn:true,
 							columns:[
 								{ id:"module", header: "Module", width: 150 }
+							]
+						}
+			        },
+			        {
+						header:"Globe Points",
+						body:{
+			            	id:"infoPoints",
+							view:"datatable",
+							resizeColumn:true,
+							select: "row",
+							on:{
+								onSelectChange:function(){
+									if($$('infoPoints').getSelectedId()){
+										var selected = $$('infoPoints').getItem($$('infoPoints').getSelectedId(false,true));
+										Renderer.highlightSquare(selected.lat,selected.lng);
+									}
+								}
+							},
+							columns:[
+								{ id:"lat", width: 100, header: "Latitude"},
+								{ id:"lng", width: 100, header: "Longitude"},
+								{ id:"population", width: 150, header: "Population", sort:"int"},
+								{ id:"infected", width: 150, header: "Infected", sort:"int"},
+								{ id:"country", header: "Country", fillspace:true}
 							]
 						}
 			        }

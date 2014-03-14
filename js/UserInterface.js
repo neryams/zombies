@@ -901,7 +901,7 @@ var UserInterface = function UserInterface(Renderer,language) {
 			if(status.mouse.click) {
 				var sphereCoords = Renderer.clickSphere(status.mouse.x,status.mouse.y);
 				if(sphereCoords && debugMenu.active)
-					debugMenu.console.filterLocation(Math.round(sphereCoords[0] - 0.5) + 0.5, Math.round(sphereCoords[1] - 0.5) + 0.5);
+					debugMenu.console.selectSquare(Math.round(sphereCoords[0] - 0.5) + 0.5, Math.round(sphereCoords[1] - 0.5) + 0.5);
 			}
 			status.mouse.x = status.mouse.lastx = status.mouse.y = status.mouse.lasty = status.mouse.scroll = 0;
 			status.mouse.click = status.mouse.down = false;

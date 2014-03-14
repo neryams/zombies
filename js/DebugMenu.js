@@ -38,8 +38,10 @@ debugMenu = {
     console: {
     	window: null,
     	S: null,
-    	simulatorLinks: {
-    		hordes: {}
+    	simulatorCache: {
+    		hordes: {},
+    		pointsInfected: [],
+    		pointsPopulation: []
     	},
     	options: {
 			manualTicks: false,
@@ -54,17 +56,28 @@ debugMenu = {
 			}
 		},
 		newTick: function() {
-			if(this.options.manualTicks)
+			if(this.options.manualTicks) {
 				for(i = 0, n = this.S.hordes.length; i < n; i++) {
 					if(this.S.hordes[i].size == 0) {
-						this.window.ui.removeHorde(this.simulatorLinks.hordes[this.S.hordes[i].id]);
+						this.window.ui.removeHorde(this.simulatorCache.hordes[this.S.hordes[i].id]);
 					} else {
-						if(this.simulatorLinks.hordes[this.S.hordes[i].id] === undefined && this.S.hordes[i].size > 0) 
-							this.simulatorLinks.hordes[this.S.hordes[i].id] = this.window.ui.editHorde(this.S.hordes[i]);
+						if(this.simulatorCache.hordes[this.S.hordes[i].id] === undefined && this.S.hordes[i].size > 0) 
+							this.simulatorCache.hordes[this.S.hordes[i].id] = this.window.ui.editHorde(this.S.hordes[i]);
 						else 
-							this.window.ui.editHorde(this.S.hordes[i], this.simulatorLinks.hordes[this.S.hordes[i].id]);
+							this.window.ui.editHorde(this.S.hordes[i], this.simulatorCache.hordes[this.S.hordes[i].id]);
 					}
 				}
+				for(i = 0, n = this.S.points.length; i < n; i++) {
+					if(!this.S.points.water)
+						if(this.simulatorCache.pointsInfected[i] === undefined || 
+							this.S.points[i].infected == this.simulatorCache.pointsInfected[i] ||
+							this.S.points[i].total_pop == this.simulatorCache.pointsPopulation[i]) {
+								this.window.ui.editPoint(this.S.points[i]);
+								this.simulatorCache.pointsInfected[i] = this.S.points[i].infected;
+								this.simulatorCache.pointsPopulation[i] = this.S.points[i].total_pop;
+						}
+				}
+			}
 
 			this.window.ui.updateGlobalInfo({
 				iteration: this.S.iteration,
@@ -88,8 +101,9 @@ debugMenu = {
 		reportOutput: function(current, moduleId, result) {
 
 		},
-		filterLocation: function(lat,lng) {
+		selectSquare: function(lat,lng) {
 			this.window.ui.filterHordes(null,lat,lng);
+			this.window.ui.selectSquare(lat,lng);
 		}
 	}
 };
