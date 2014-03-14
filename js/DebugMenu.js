@@ -68,7 +68,7 @@ debugMenu = {
 					}
 				}
 				for(i = 0, n = this.S.points.length; i < n; i++) {
-					if(!this.S.points.water)
+					if(!this.S.points[i].water && !this.S.points[i].polar)
 						if(this.simulatorCache.pointsInfected[i] === undefined || 
 							this.S.points[i].infected == this.simulatorCache.pointsInfected[i] ||
 							this.S.points[i].total_pop == this.simulatorCache.pointsPopulation[i]) {
