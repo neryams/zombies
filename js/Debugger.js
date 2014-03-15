@@ -124,6 +124,14 @@ var Debugger = function() {
 				infoTree.open(openItems[i]);
 			}
 		},
+		updateInfo: function() {
+			var selectedTabView = $$(ui.selectedTab);
+			if(selectedTabView.getSelectedId()) {
+				var selected = selectedTabView.getItem(selectedTabView.getSelectedId(false,true));
+				if(selected.pointer)
+					ui.insertInfo(selected.pointer)
+			}
+		},
 		insertTarget: function() {
 
 		},
@@ -190,16 +198,21 @@ webix.ui({
 		    cols:[
 		    	{ id:"windowHeader", view:"label", label:'0' },
 		    	{},
-		        { view:"toggle", offLabel:"Enable Mouseover Debug", onLabel:"Disable Mouseover Debug", width:200, align:"center", 
-    				on:{'onChange': function(newval) {
-    					Console.options.mouseOverDebugData = !!newval; // 1 -> true
-		        	}}
-		        },
 		        { view:"toggle", offLabel:"Freeze", onLabel:"Resume", width:100, align:"center",
     				on:{'onChange': function(newval) {
     					Console.options.manualTicks = !!newval;
     					if(!Console.options.manualTicks)
 		        			Simulator.endTurn();
+		        	}}
+		        },
+		        { view:"toggle", offLabel:"Enable Mouseover Debug", onLabel:"Disable Mouseover Debug", width:180, align:"center", 
+    				on:{'onChange': function(newval) {
+    					Console.options.mouseOverDebugData = !!newval; // 1 -> true
+		        	}}
+		        },
+		        { id:"profileTick", view:"toggle", offLabel:"Profile Next Turn", onLabel:"Stop Profiling", width:125, align:"center",
+    				on:{'onChange': function(newval) {
+    					Console.options.profileTick = !!newval;
 		        	}}
 		        },
 		        { view:"button", id:"endTickButton", value:"End Turn", width:100, align:"center", click: function() {

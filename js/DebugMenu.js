@@ -46,7 +46,8 @@ debugMenu = {
     	options: {
 			manualTicks: false,
     		mouseOverDebugData: false,
-			activeHorde: null
+			activeHorde: null,
+			profileTick: false
     	},
 		close: function() {
 			if(this.window) {
@@ -78,6 +79,7 @@ debugMenu = {
 						}
 				}
 			}
+			this.window.ui.updateInfo();
 
 			this.window.ui.updateGlobalInfo({
 				iteration: this.S.iteration,
@@ -86,9 +88,8 @@ debugMenu = {
 
 			this.window.ui.clearModules();
 		},
-		updateInfo: function(current, target) {
+		updateTarget: function(current, target) {
 			if(this.options.activeHorde && this.options.activeHorde.id == current.id) {
-				this.window.ui.insertInfo(current);
 				if(target)
 					this.window.ui.insertTarget(target);				
 			}
@@ -104,6 +105,11 @@ debugMenu = {
 		selectSquare: function(lat,lng) {
 			this.window.ui.filterHordes(null,lat,lng);
 			this.window.ui.selectSquare(lat,lng);
+		},
+		disableProfileTick: function() {
+			if(this.window.$$('profileTick').getValue())
+				this.window.$$('profileTick').toggle();
+			this.options.profileTick = false;
 		}
 	}
 };

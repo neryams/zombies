@@ -695,8 +695,11 @@ Simulator.prototype.tick = function() {
 		simplifyAt = 2000,
 		simplifyCof = 1;
 	if(this.strain != null) {
-		if(debugMenu.active)
-			debugMenu.console.newTick();
+		if(debugMenu.active) {
+			if(debugMenu.console.options.profileTick)
+  				console.profile("Tick "+this.iteration);
+        	console.time('tickTime');
+		}
 
 		// Must cache the horde length because we will be adding more in this loop and want to not do them until next time
 		for(i = 0, n = this.hordes.length; i < n; i+=simplifyCof) {
@@ -768,7 +771,7 @@ Simulator.prototype.tick = function() {
 			this.pointsToWatch[target.id] = true;
 
 			if(debugMenu.active) 
-				debugMenu.console.updateInfo(current, target);
+				debugMenu.console.updateTarget(current, target);
 			
 			// Run main modules on each horde
 			if(debugMenu.active) {
@@ -797,6 +800,13 @@ Simulator.prototype.tick = function() {
 				current.location.updateNearbyPop();
 			}
 		}
+		if(debugMenu.active) {
+        	console.timeEnd('tickTime');
+			if(debugMenu.console.options.profileTick) {
+  				console.profileEnd();
+  				debugMenu.console.disableProfileTick();
+			}
+		}
 
 		// Run event modules once
 		for(j = 0; j < this.activeModules.event.length; j++) {
@@ -821,7 +831,6 @@ Simulator.prototype.tick = function() {
 		this.UIData['gridSize'] = this.properties.gridSize;
 		this.UIData['iteration'] = this.iteration;
 		this.UI.updateUI(this.UIData);
-		this.iteration++;
 
 		this.hordes.addAllNew();
 
@@ -834,7 +843,10 @@ Simulator.prototype.tick = function() {
 			if(!this.interval)
 				this.interval = setInterval( (function(self) { return function() {self.tick()}} )(this), 500);
 		}
+		if(debugMenu.active)
+			debugMenu.console.newTick();
 
+		this.iteration++;
 	}
 }
 Simulator.prototype.updateSquare = function(target, force) {
