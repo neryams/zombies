@@ -109,10 +109,12 @@ var Debugger = function() {
 			if(Console.options.manualTicks) {
 				$$('infoHordes').enable();
 				$$('infoPoints').enable();
+		        $$('endTickButton').enable();
 			}
 			else {
 				$$('infoHordes').disable();
 				$$('infoPoints').disable();
+		        $$('endTickButton').disable();
 			}
 
 			$$('hordeToolbarCount').setValue($$('infoHordes').count() + ' Hordes found');
@@ -179,12 +181,17 @@ var Debugger = function() {
 			var pointsTable = $$('infoPoints')
 			if(lat && lng && pointsTable.count() > 0) {
 				pointsTable.filter('#lat#',lat, false);
-				pointsTable.filter('#lng#',lng, true);	
-				pointsTable.select(pointsTable.getFirstId());	
-				var selected = pointsTable.getSelectedId(false,true);
-				pointsTable.filter('','', false);
-				pointsTable.select(selected);
-				pointsTable.showItem(selected);
+				pointsTable.filter('#lng#',lng, true);
+
+				if(pointsTable.getFirstId()) {
+					pointsTable.select(pointsTable.getFirstId());	
+					var selected = pointsTable.getSelectedId(false,true);
+					pointsTable.filter('','', false);
+					pointsTable.select(selected);
+					pointsTable.showItem(selected);
+				}
+				else
+					pointsTable.filter('','', false);
 			}
 		}
 	}
@@ -203,10 +210,14 @@ webix.ui({
 		        { view:"toggle", offLabel:"Freeze", onLabel:"Resume", width:100, align:"center",
     				on:{'onChange': function(newval) {
     					Console.options.manualTicks = !!newval;
-    					if(!Console.options.manualTicks)
+    					if(!Console.options.manualTicks) {
 		        			Simulator.endTurn();
+    					}
 		        	}}
 		        },
+		        { view:"button", id:"endTickButton", disabled: true, value:"End Turn", width:100, align:"center", click: function() {
+		        	Simulator.endTurn();
+		        }},
 		        { view:"toggle", offLabel:"Enable Mouseover Debug", onLabel:"Disable Mouseover Debug", width:180, align:"center", 
     				on:{'onChange': function(newval) {
     					Console.options.mouseOverDebugData = !!newval; // 1 -> true
@@ -217,9 +228,6 @@ webix.ui({
     					Console.options.profileTick = !!newval;
 		        	}}
 		        },
-		        { view:"button", id:"endTickButton", value:"End Turn", width:100, align:"center", click: function() {
-		        	Simulator.endTurn();
-		        }},
 		        { view:"button", id:"closeButton", value:"Close", width:100, align:"center", click: function() {
 		        	Console.close();
 		        }}
@@ -328,6 +336,7 @@ webix.ui({
 										if($$('infoPoints').getSelectedId()){
 											var selected = $$('infoPoints').getItem($$('infoPoints').getSelectedId(false,true));
 											Renderer.highlightSquare(selected.lat,selected.lng);
+											Console.options.activePoint = selected.pointer;
 											if(ui.selectedTab != 'infoHordes')
 												ui.insertInfo(selected.pointer);
 										}

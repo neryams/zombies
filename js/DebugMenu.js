@@ -47,6 +47,7 @@ debugMenu = {
 			manualTicks: false,
     		mouseOverDebugData: false,
 			activeHorde: null,
+			activePoint: null,
 			profileTick: false
     	},
 		close: function() {
@@ -61,17 +62,6 @@ debugMenu = {
 		},
 		newTick: function() {
 			if(this.options.manualTicks) {
-				for(i = 0, n = this.S.hordes.length; i < n; i++) {
-					if(this.S.hordes[i].size == 0) {
-						this.window.ui.removeHorde(this.simulatorCache.hordes[this.S.hordes[i].id]);
-					} else {
-						if(this.simulatorCache.hordes[this.S.hordes[i].id] === undefined && this.S.hordes[i].size > 0) 
-							this.simulatorCache.hordes[this.S.hordes[i].id] = this.window.ui.editHorde(this.S.hordes[i]);
-						else 
-							this.window.ui.editHorde(this.S.hordes[i], this.simulatorCache.hordes[this.S.hordes[i].id]);
-					}
-				}
-				this.window.$$('infoHordes').refresh();
 				for(i = 0, n = this.S.points.length; i < n; i++) {
 					if(!this.S.points[i].water && !this.S.points[i].polar)
 						if(this.simulatorCache.pointsInfected[i] === undefined || 
@@ -83,7 +73,26 @@ debugMenu = {
 						}
 				}
 				this.window.$$('infoPoints').refresh();
+				for(i = 0, n = this.S.hordes.length; i < n; i++) {
+					if(this.S.hordes[i].size == 0) {
+						this.window.ui.removeHorde(this.simulatorCache.hordes[this.S.hordes[i].id]);
+					} else {
+						if(this.simulatorCache.hordes[this.S.hordes[i].id] === undefined && this.S.hordes[i].size > 0) 
+							this.simulatorCache.hordes[this.S.hordes[i].id] = this.window.ui.editHorde(this.S.hordes[i]);
+						else 
+							this.window.ui.editHorde(this.S.hordes[i], this.simulatorCache.hordes[this.S.hordes[i].id]);
+					}
+				}
+				this.window.$$('infoHordes').refresh();
 			}
+
+			// If the active horde moved while in horde view mode, update selected square
+			if(this.options.activeHorde && this.options.activePoint && 
+					this.window.ui.selectedTab == 'infoHordes' &&
+					this.options.activePoint.id != this.options.activeHorde.location.id) {
+				this.window.ui.selectSquare(this.options.activeHorde.location.lat,this.options.activeHorde.location.lng);
+			}
+
 			this.window.ui.updateInfo();
 
 			this.window.ui.updateGlobalInfo({
