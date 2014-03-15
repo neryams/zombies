@@ -350,7 +350,7 @@ function Simulator(R, UI, gConfig, gData) {
 				var n = this.length;
 				this.push(newHordes.pop());
 				this[n].order = n;
-				this[n].location.hordes.push(n);
+				this[n].location.hordes.push(this[n]);
 			}
 		}
 	}
