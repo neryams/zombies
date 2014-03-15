@@ -696,6 +696,8 @@ Simulator.prototype.tick = function() {
 		simplifyCof = 1;
 	if(this.strain != null) {
 		if(debugMenu.active) {
+			debugMenu.console.initTick();
+			
 			if(debugMenu.console.options.profileTick)
   				console.profile("Tick "+this.iteration);
         	console.time('tickTime');

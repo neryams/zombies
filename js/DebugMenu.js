@@ -56,6 +56,9 @@ debugMenu = {
         		debugMenu.active = false;
 			}
 		},
+		initTick: function() {
+			this.window.ui.clearModules();
+		},
 		newTick: function() {
 			if(this.options.manualTicks) {
 				for(i = 0, n = this.S.hordes.length; i < n; i++) {
@@ -68,16 +71,18 @@ debugMenu = {
 							this.window.ui.editHorde(this.S.hordes[i], this.simulatorCache.hordes[this.S.hordes[i].id]);
 					}
 				}
+				this.window.$$('infoHordes').refresh();
 				for(i = 0, n = this.S.points.length; i < n; i++) {
 					if(!this.S.points[i].water && !this.S.points[i].polar)
 						if(this.simulatorCache.pointsInfected[i] === undefined || 
-							this.S.points[i].infected == this.simulatorCache.pointsInfected[i] ||
-							this.S.points[i].total_pop == this.simulatorCache.pointsPopulation[i]) {
+							this.S.points[i].infected != this.simulatorCache.pointsInfected[i] ||
+							this.S.points[i].total_pop != this.simulatorCache.pointsPopulation[i]) {
 								this.window.ui.editPoint(this.S.points[i]);
 								this.simulatorCache.pointsInfected[i] = this.S.points[i].infected;
 								this.simulatorCache.pointsPopulation[i] = this.S.points[i].total_pop;
 						}
 				}
+				this.window.$$('infoPoints').refresh();
 			}
 			this.window.ui.updateInfo();
 
@@ -85,8 +90,6 @@ debugMenu = {
 				iteration: this.S.iteration,
 				hordeCount: this.S.hordes.length
 			});
-
-			this.window.ui.clearModules();
 		},
 		updateTarget: function(current, target) {
 			if(this.options.activeHorde && this.options.activeHorde.id == current.id) {

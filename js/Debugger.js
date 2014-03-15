@@ -34,8 +34,8 @@ var Debugger = function() {
 	return {
 		selectedTab: 'infoHordes',
 		editHorde: function(data, rowId) {
+			var hordeTable = $$('infoHordes');
 			if(rowId === undefined) {
-				var hordeTable = $$('infoHordes');
 				var rowId = hordeTable.add( {
 					id: 'hordeRow'+data.id,
 					uid: data.id,
@@ -47,7 +47,7 @@ var Debugger = function() {
 				if(Console.options.activeHorde === null)
 					hordeTable.select(rowId);
 			} else {
-				var row = $$('infoHordes').getItem(rowId);
+				var row = hordeTable.getItem(rowId);
 				if(row) {
 					row.size = data.size;
 					row.lat = data.location.lat;
@@ -58,7 +58,7 @@ var Debugger = function() {
 		},
 		editPoint: function(data) {
 			var pointsTable = $$('infoPoints'),
-				rowId = 'point'+data.id;
+				rowId = 'pointRow'+data.id;
 			if(!pointsTable.getItem(rowId))
 				pointsTable.add( {
 					id: rowId,
@@ -70,8 +70,10 @@ var Debugger = function() {
 				} );
 			else {
 				var row = pointsTable.getItem(rowId);
-				row.infected = data.infected;
-				row.population = data.total_pop;
+				if(row) {
+					row.infected = data.infected;
+					row.population = data.total_pop;
+				}
 			}
 		},
 		removeHorde: function(rowId) {
@@ -260,6 +262,7 @@ webix.ui({
 	    					}
 			        	}}
 					},{
+        				css:"mainView",
 						animate: false,
 						cells:[
 					        {
@@ -308,6 +311,7 @@ webix.ui({
 					        {
 				            	id:"infoModules",
 								view:"datatable",
+        						css:"contentTooltip",
 								resizeColumn:true,
 								columns:[
 									{ id:"module", header: "Module", width: 150, fillspace:true }
@@ -358,3 +362,7 @@ webix.ui({
 		]}
 	]
 }).show();
+
+$('.mainView').on('mouseover.addTooltip', '.contentTooltip td div', function() {
+	$(this).attr('title',$(this).html());
+});
