@@ -645,7 +645,7 @@ var UserInterface = function UserInterface(Renderer,language) {
 					opens: [uiMenuDataviews] 
 				}).label('ui:buttons.dataviews').element.position();
 			uiMenuDataviews.addDataField('button',{ class: 'secondary', onClick: function() { this.parent.hide(); } }).label('ui:buttons.close');
-			uiMenuDataviews.addDataField('button',{ onClick: function() { Renderer.setVisualization('country'); this.parent.hide(); activatePlanetTooltip(function(point){ if(point.country) { return '<strong>' + gData.countries[point.country].name + '</strong>'; }});}}).label('ui:buttons.dataviews_inner.political');
+			uiMenuDataviews.addDataField('button',{ onClick: function() { Renderer.setVisualization('country'); this.parent.hide(); activatePlanetTooltip(function(point){ if(point.country) { return '<strong>' + point.country.name + '</strong>'; }});}}).label('ui:buttons.dataviews_inner.political');
 			uiMenuDataviews.addDataField('button',{ onClick: function() { Renderer.setVisualization('precipitation'); this.parent.hide(); activatePlanetTooltip(function(point){ return Math.round(point.precipitation*10)/10 + 'mm'; });}}).label('ui:buttons.dataviews_inner.rain');
 			uiMenuDataviews.addDataField('button',{ onClick: function() { Renderer.setVisualization('temperature'); this.parent.hide(); activatePlanetTooltip(function(point){ return Math.round((point.temperature - 273)*10)/10 + 'C'; });}}).label('ui:buttons.dataviews_inner.temperature');
 			uiMenuDataviews.addDataField('button',{ onClick: function() { Renderer.closeVisualization(); this.parent.hide(); deactivatePlanetTooltip(); } }).label('ui:buttons.dataviews_inner.disable');
@@ -782,7 +782,8 @@ var UserInterface = function UserInterface(Renderer,language) {
 			if(sphere_coords && !isNaN(sphere_coords[0]) && !isNaN(sphere_coords[1]) && !status.pauseRenderer) {
 				$('#render_tooltip').css('top',status.mouse.y+10).css('left',status.mouse.x+30);
 				//$('#tooltip').css('display','block').html('asf');
-				var point = gData.points[(Math.floor(90-sphere_coords[0])*gConfig.w + Math.floor(sphere_coords[1]))];
+				var point = Renderer.coordsToPoint(sphere_coords[0],sphere_coords[1]);
+
 				if(point != undefined && (!point.water || point.total_pop > 0)) {
 					if($('#render_tooltip').css('visibility') != 'visible')
 						$('#render_tooltip').css('visibility','visible');

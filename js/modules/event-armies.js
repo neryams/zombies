@@ -11,8 +11,8 @@ exports.options = {
 	init: function() {
 		module = this;
 		this.armies = [];
-		this.Army = function(nationality) {
-			this.nationality = nationality;
+		this.Army = function(country) {
+			this.nationality = country;
 			this.location = this.S.countries[nationality].capitol;
 			this.S.rendererDecal('army'+nationality+'marker', this.location.lat, this.location.lng, 10, 'gun');
 
@@ -34,7 +34,7 @@ exports.options = {
 			this.location.total_pop -= this.size;
 			do {
 				i--;
-				if(this.S.points[i].country == this.nationality) {
+				if(this.S.points[i].country.id == this.nationality.id) {
 					if(this.S.points[i].id == this.location.id)
 						to_move = Math.ceil((this.S.points[i].total_pop - this.size) * portion * 0.005); // base 0.5% of the population in the army
 					else
@@ -50,14 +50,14 @@ exports.options = {
 		}
 
 		this.createArmy = function(country) {
-			this.S.countries[country].army = new this.Army(country)
-			this.armies.push(this.S.countries[country].army);
-			this.S.countries[country].army.enlist(1);
+			country.army = new this.Army(country)
+			this.armies.push(country.army);
+			country.army.enlist(1);
 			return true;
 		}
 
 		this.boostArmy = function(val, country) {
-			this.S.countries[country].army.enlist(val);
+			country.army.enlist(val);
 			return true;
 		}
 	},

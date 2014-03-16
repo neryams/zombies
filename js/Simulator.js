@@ -215,7 +215,7 @@ Horde.prototype = {
 if(typeof global !== 'undefined')
     global.Horde = Horde;
 
-function Simulator(R, UI, gConfig, gData) {
+function Simulator(R, UI, generatorConfig, generatorData) {
 	// Game and virus properties!
 	this.properties = { 
 		virus_name: '', 
@@ -278,9 +278,9 @@ function Simulator(R, UI, gConfig, gData) {
 
 	if(this.points == undefined) {
 		if(R != undefined) {
-			Simulator.prototype.points = gData.points;
-			Simulator.prototype.countries = gData.countries;
-			Simulator.prototype.config = gConfig;
+			Simulator.prototype.points = generatorData.points;
+			Simulator.prototype.countries = generatorData.countries;
+			Simulator.prototype.config = generatorConfig;
 			Simulator.prototype.Renderer = R;
 			Simulator.prototype.UI = UI;
 			Simulator.prototype.populatedPoints = [];
