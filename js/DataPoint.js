@@ -1,14 +1,15 @@
 function DataPoint(i,config) {
-	if(typeof i == "object") {
+	if(typeof i == 'object') {
 		for (var key in i)
-    		if (i.hasOwnProperty(key)) 
+			if(i.hasOwnProperty(key))
 				this[key] = i[key];
 	} else {
 		this.lat = config.h / 2 - Math.floor(i/config.w) - 0.5;
 		this.lng = i%config.w + 0.5;
-		this.id = i;		
+		this.id = i;
 	}
-	this.hordes = []
+	this.hordes = [];
+	this.renderer = {};
 }
 DataPoint.prototype = {
 	id: 0,
@@ -29,7 +30,7 @@ DataPoint.prototype = {
 	panic: 0,
 	adjacent:[],
 	hordes:[]
-}
+};
 DataPoint.prototype.updateNearbyPop = function () {
 	if(!this.nearby_pop)
 		this.nearby_pop = [this.total_pop];
@@ -38,38 +39,38 @@ DataPoint.prototype.updateNearbyPop = function () {
 
 	// Calculate the averaged populations of squares for finding groups of people etc
 	if(this.nearby_pop[this.nearby_pop.length-1] > 0) {
-		target = this;
+		var steps,target = this;
 
 		var total_pop = this.total_pop;
-		for (j = 1; j <= 15; j++) {
+		for (var j = 1; j <= 15; j++) {
 			target = target.adjacent[0];
 			steps = j;
 			do {
 				target = target.adjacent[1];
 				total_pop += target.total_pop;
-			} while (--steps)
+			} while (--steps);
 			steps = j*2;
 			do {
 				target = target.adjacent[2];
 				total_pop += target.total_pop;
-			} while (--steps)
+			} while (--steps);
 			steps = j*2;
 			do {
 				target = target.adjacent[3];
 				total_pop += target.total_pop;
-			} while (--steps)
+			} while (--steps);
 			steps = j*2;
 			do {
 				target = target.adjacent[0];
 				total_pop += target.total_pop;
-			} while (--steps)
+			} while (--steps);
 			steps = j;
 			do {
 				target = target.adjacent[1];
 				total_pop += target.total_pop;
-			} while (--steps)
+			} while (--steps);
 
 			this.nearby_pop[j] = total_pop;
 		}
 	}
-}
+};

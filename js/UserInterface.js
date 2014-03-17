@@ -791,9 +791,9 @@ var UserInterface = function UserInterface(Renderer,language) {
 
 					// Debug information to mouse over points
 					if(debugMenu.console.options.mouseOverDebugData) {
-						$('#render_tooltip').html(JSON.stringify(point, 
+						$('#render_tooltip').html(JSON.stringify(point,
 							function(key,value) {
-								if(key == 'adjacent' || key == 'vertices_pop' || key == 'vertices_zom') 
+								if(key == 'adjacent' || key == 'renderer') 
 									return undefined;
 								else if(key == 'army') 
 									return {size: value.size, experience: value.experience, nationality: value.nationality};

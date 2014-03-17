@@ -181,6 +181,7 @@ function Horde(size, location, inherit) {
 	this.size = size;
 	if(this.location !== undefined)
 		this.move(location);
+	this.renderer = {};
 }
 Horde.prototype = {
 	id: 0,
@@ -715,6 +716,7 @@ Simulator.prototype.tick = function() {
 			}
 			current = this.hordes[i];
 			if(current.size < 1) {
+				this.Renderer.updateHorde(current, true);
 				current = this.hordes[i] = this.hordes.pop(); // don't use splice here, very expensive for huge array. Just swap element to remove with last.
 				n--;
 			}
@@ -800,6 +802,12 @@ Simulator.prototype.tick = function() {
 			// Update nearby square populations
 			if(this.iteration%10 == current.id%10) {
 				current.location.updateNearbyPop();
+			}
+
+			if(!current.renderer.cacheLat || current.renderer.cacheLat != current.location.lat || current.renderer.cacheLng != current.location.lng) {
+				this.Renderer.updateHorde(current);
+				current.renderer.cacheLat = current.location.lat;
+				current.renderer.cacheLng = current.location.lng;
 			}
 		}
 		if(debugMenu.active) {

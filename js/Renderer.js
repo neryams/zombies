@@ -6,8 +6,12 @@
 /* exported Renderer */
 var Renderer = function (scaling) {
     // Initialize variables
-    var Camera, Scene, Sphere, SceneRenderer, DataBarsMesh, DataBarsGeometry, DataBarMesh, point2,
+    var Camera, Scene, Sphere, SceneRenderer, DataBarsMesh, DataBarsGeometry, DataBarMesh,
         Simulator,
+        hordeSystem = {
+            length: 0,
+            particles: null
+        },
         WindowConfig = {
             windowX: 0,
             windowY: 0,
@@ -191,10 +195,6 @@ var Renderer = function (scaling) {
         geometry.applyMatrix( new THREE.Matrix4().makeTranslation(0, 0, 0.5) );
         DataBarMesh = new THREE.Mesh(geometry); // humans
 
-        geometry = new THREE.CubeGeometry(1, 1, 1);
-        geometry.applyMatrix( new THREE.Matrix4().makeTranslation(0, 0, 0.5) );
-        point2 = new THREE.Mesh(geometry); // zombies
-
         Camera.lookAt( Scene.position );
         //Camera.position.x = -100;
 
@@ -208,7 +208,9 @@ var Renderer = function (scaling) {
         DataBarsGeometry = new THREE.Geometry();
         DataBarsGeometry.dynamic = true;
 
+        addHordeParticles();
         addData();
+
         ready = true;
     },
 
@@ -217,7 +219,7 @@ var Renderer = function (scaling) {
         console.time('rendererSetup');
 
         for (i = 0; i < Simulator.points.length; i++) {
-            if(Simulator.points[i].total_pop > 0 && !Simulator.points[i].water) {
+            if(!Simulator.points[i].water && !Simulator.points[i].polar) {
                 addPoint(Simulator.points[i].lat, Simulator.points[i].lng, Simulator.points[i]);
             }
         }
@@ -237,42 +239,85 @@ var Renderer = function (scaling) {
         var phi = (90 - lat) * Math.PI / 180,
             theta = (180 - lng) * Math.PI / 180,
             color = new THREE.Color(),
-            infectColor = new THREE.Color(),
             element = datapoint.total_pop / generatorConfig.max_pop;
             //element = (Simulator.points[i].temperature - 220) / 100;
 
         color.setHSL( ( 0.6 - ( element * 0.3 ) ), 1.0, 0.5 );
-        infectColor.setHSL( 0, 1.0, 0.45 );
-        var size = element * 60 + 2;
 
         DataBarMesh.position.x = 198 * Math.sin(phi) * Math.cos(theta);
         DataBarMesh.position.y = 198 * Math.cos(phi);
         DataBarMesh.position.z = 198 * Math.sin(phi) * Math.sin(theta);
 
-        point2.position.copy(DataBarMesh.position);
-
         DataBarMesh.lookAt(Sphere.position);
-        point2.lookAt(Sphere.position);
 
         if(element > 0)
-            DataBarMesh.scale.z = -size;
+            DataBarMesh.scale.z = element * -60 - 2;
         else
             DataBarMesh.scale.z = -1;
-        point2.scale.z = -1;
 
         var i;
         for (i = 0; i < DataBarMesh.geometry.faces.length; i++)
             DataBarMesh.geometry.faces[i].color = color;
-        for (i = 0; i < point2.geometry.faces.length; i++)
-            point2.geometry.faces[i].color = infectColor;
 
         THREE.GeometryUtils.merge(DataBarsGeometry, DataBarMesh);
         // Last 8 points in merged geometry should be the vertices of the moving bar
-        datapoint.vertices_pop = DataBarsGeometry.vertices.slice(-8);
+        datapoint.renderer.vertices_pop = DataBarsGeometry.vertices.slice(-8);
+    },
 
-        THREE.GeometryUtils.merge(DataBarsGeometry, point2);
-        // Last 8 points in merged geometry should be the vertices of the moving bar
-        datapoint.vertices_zom = DataBarsGeometry.vertices.slice(-8);
+    addHordeParticles = function() {
+        var particleCount = 40000,
+            particles = new THREE.Geometry(),
+            pMaterial = new THREE.ParticleBasicMaterial({
+                size: 1,
+                map: THREE.ImageUtils.loadTexture(
+                    'ui/zombie_basic.png'
+                ),
+                transparent: true,
+                depthWrite: false
+            });
+
+        // now create the individual particles
+        for (var p = 0; p < particleCount; p++) {
+            var particle = new THREE.Vector3();
+
+            // add it to the geometry
+            particles.vertices.push(particle);
+        }
+
+        // create the particle system
+        var particleSystem = new THREE.ParticleSystem(particles, pMaterial);
+        //particleSystem.sortParticles = true;
+
+        // add it to the scene
+        Sphere.add(particleSystem);
+        hordeSystem.particles = particles;
+    },
+
+    updateHorde = function(horde, remove) {
+        if(remove && horde.renderer.particleVertex) {
+            hordeSystem.length--;
+
+            // Replace this vector with the last vector in the array
+            hordeSystem.particles.vertices[hordeSystem.length].index = horde.renderer.particleVertex.index;
+            hordeSystem.particles.vertices[horde.renderer.particleVertex.index] = hordeSystem.particles.vertices[hordeSystem.length];
+
+            horde.renderer.particleVertex.index = hordeSystem.length;
+            hordeSystem.particles.vertices[hordeSystem.length] = horde.renderer.particleVertex;
+            horde.renderer.particleVertex.set(0,0,0);
+            delete horde.renderer.particleVertex;
+        } else {
+            if(horde.renderer.particleVertex) {
+                horde.renderer.particleVertex.copy(coordToCartesian(horde.location.lat-0.5+Math.random(), horde.location.lng-0.5+Math.random()));
+            } else {
+                var currentParticle = hordeSystem.particles.vertices[hordeSystem.length];
+                currentParticle.copy(coordToCartesian(horde.location.lat-0.5+Math.random(), horde.location.lng-0.5+Math.random()));
+                currentParticle.index = hordeSystem.length;
+                hordeSystem.length++;
+
+                horde.renderer.particleVertex = currentParticle;
+            }
+        }
+        hordeSystem.particles.verticesNeedUpdate = true;
     },
 
     render = function() {
@@ -537,6 +582,7 @@ var Renderer = function (scaling) {
         animate: animate,
         getSphereCoords: getSphereCoords,
         resize: resize,
+        updateHorde: updateHorde,
         coordsToPoint: function(lat,lng) {
             return Simulator.points[(Math.floor(90-lat)*generatorConfig.w + Math.floor(lng))];
         },
@@ -615,46 +661,20 @@ var Renderer = function (scaling) {
             tween.start();
         },
         setData: function(dataPoint, ratio) {
-            if(!dataPoint.vertices_pop) {
-                addPoint(dataPoint.lat, dataPoint.lng, dataPoint);
-                DataBarsGeometry.verticesNeedUpdate = true;
-            }
             var popLength = 198;
-            if(dataPoint.total_pop > 0) {
-                popLength = 60 * dataPoint.total_pop / ratio + 200;
-                dataPoint.vertices_pop[0].setLength(popLength);
-                dataPoint.vertices_pop[2].setLength(popLength);
-                dataPoint.vertices_pop[5].setLength(popLength);
-                dataPoint.vertices_pop[7].setLength(popLength);
-            } else if(dataPoint.vertices_pop[0].length() >= 200) {
-                dataPoint.vertices_pop[0].setLength(popLength);
-                dataPoint.vertices_pop[2].setLength(popLength);
-                dataPoint.vertices_pop[5].setLength(popLength);
-                dataPoint.vertices_pop[7].setLength(popLength);
-            }
-
-            var zomLength = 198;
-            if(dataPoint.infected > 0) {
-                zomLength = 60 * dataPoint.infected / ratio + 200;
-                if(zomLength < 200.1)
-                    zomLength = 200.1;
-                dataPoint.vertices_zom[1].setLength(popLength);
-                dataPoint.vertices_zom[3].setLength(popLength);
-                dataPoint.vertices_zom[4].setLength(popLength);
-                dataPoint.vertices_zom[6].setLength(popLength);
-                dataPoint.vertices_zom[0].setLength(zomLength);
-                dataPoint.vertices_zom[2].setLength(zomLength);
-                dataPoint.vertices_zom[5].setLength(zomLength);
-                dataPoint.vertices_zom[7].setLength(zomLength);
-            } else if(dataPoint.vertices_zom[0].length() >= 200) {
-                dataPoint.vertices_zom[1].setLength(popLength);
-                dataPoint.vertices_zom[3].setLength(popLength);
-                dataPoint.vertices_zom[4].setLength(popLength);
-                dataPoint.vertices_zom[6].setLength(popLength);
-                dataPoint.vertices_zom[0].setLength(zomLength);
-                dataPoint.vertices_zom[2].setLength(zomLength);
-                dataPoint.vertices_zom[5].setLength(zomLength);
-                dataPoint.vertices_zom[7].setLength(zomLength);
+            if(dataPoint.renderer.vertices_pop !== undefined) {
+                if(dataPoint.total_pop > 0) {
+                    popLength = 60 * dataPoint.total_pop / ratio + 200;
+                    dataPoint.renderer.vertices_pop[0].setLength(popLength);
+                    dataPoint.renderer.vertices_pop[2].setLength(popLength);
+                    dataPoint.renderer.vertices_pop[5].setLength(popLength);
+                    dataPoint.renderer.vertices_pop[7].setLength(popLength);
+                } else if(dataPoint.renderer.vertices_pop[0].length() >= 200) {
+                    dataPoint.renderer.vertices_pop[0].setLength(popLength);
+                    dataPoint.renderer.vertices_pop[2].setLength(popLength);
+                    dataPoint.renderer.vertices_pop[5].setLength(popLength);
+                    dataPoint.renderer.vertices_pop[7].setLength(popLength);
+                }
             }
         },
         setVisualization: function( layer ) {
