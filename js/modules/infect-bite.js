@@ -2,7 +2,7 @@
 	Bite: infect healthy people that are in the same square as the zombie. 
 */
 exports.type = 'infect';
-exports.run = function(current,target,passData) {
+exports.run = function(current,passData) {
 	passData.infectChance = this.infectPower;
 	passData.panic += this.panic;
 };

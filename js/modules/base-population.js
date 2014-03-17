@@ -2,7 +2,7 @@
 	Population: Module to change the infect rate based on population density
 */
 exports.type = 'infect';
-exports.run = function(current,target,passData) {
+exports.run = function(current,passData) {
 	var lat = Math.floor(Math.abs(current.location.lat));
 	var area = this.S.bakedValues.latDistances[lat][0] * this.S.bakedValues.latDistances[lat][1]; // square km
 	passData.encounterProbability *= Math.sqrt((current.size + current.location.total_pop) / area);

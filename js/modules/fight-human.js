@@ -2,7 +2,7 @@
 	Resistance: Module to make humans kill zombies
 */
 exports.type = 'infect';
-exports.run = function(current,target,passData) {
+exports.run = function(current,passData) {
 	if(current.location.total_pop > 0 && current.location.cache) {
 		if(!current.location.humanStrength)
 			current.location.humanStrength = 0;

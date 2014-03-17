@@ -2,13 +2,13 @@
 	Climate: Module to change the infect and killing rate (overall zombie strength) based on the climate. Zombies like the climate that they start in.
 */
 exports.type = 'infect';
-exports.run = function(current,target,passData) {
-	var tempAdjust = 1 / (Math.pow((this.idealTemp - target.temperature)/(this.rangeTemp),2) + 1);
-	var precAdjust = 1 / (Math.pow((this.idealWet - target.precipitation)/(this.rangeWet),2) + 1);
+exports.run = function(current,passData) {
+	var tempAdjust = 1 / (Math.pow((this.idealTemp - passData.target.temperature)/(this.rangeTemp),2) + 1);
+	var precAdjust = 1 / (Math.pow((this.idealWet - passData.target.precipitation)/(this.rangeWet),2) + 1);
 	passData.spreadChance   *= tempAdjust * precAdjust * 1.5;
 
-	var tempAdjust = 1 / (Math.pow((this.idealTemp - current.location.temperature)/(this.rangeTemp),2) + 1);
-	var precAdjust = 1 / (Math.pow((this.idealWet - current.location.precipitation)/(this.rangeWet),2) + 1);
+	tempAdjust = 1 / (Math.pow((this.idealTemp - current.location.temperature)/(this.rangeTemp),2) + 1);
+	precAdjust = 1 / (Math.pow((this.idealWet - current.location.precipitation)/(this.rangeWet),2) + 1);
 	passData.infectChance   *= tempAdjust * precAdjust * 1.5;
 	passData.zombieStrength *= tempAdjust * precAdjust * 1.5;
 	passData.mobility *= tempAdjust * precAdjust;
@@ -24,15 +24,15 @@ exports.options = {
 	init: function() {
 		var warmAcc = function() {
 			this.val('idealTemp',6,'+');
-			this.val('rangeTemp',3,'+');			
+			this.val('rangeTemp',3,'+');
 		};
 		var coldAcc = function() {
 			this.val('idealTemp',6,'-');
-			this.val('rangeTemp',3,'+');			
+			this.val('rangeTemp',3,'+');
 		};
 		var wetAcc = function() {
 			this.val('idealWet',10,'+');
-			this.val('rangeWet',10,'+');			
+			this.val('rangeWet',10,'+');
 		};
 		this.S.addUpgrades(this,
 			{cost: 200,paths:['strain'],name:'Heat Affinity I', onUpgrade: warmAcc, description:'Zombies become stronger in warmth.', gene:{size: 3, shape: 'r', color: 'yellow'}},

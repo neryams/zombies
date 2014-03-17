@@ -2,7 +2,7 @@
 	STRAIN - Simple virus. Infects  or kills healthy people, raises panic based on infected. 1 evo point per tick.
 */
 exports.type = 'strain';
-exports.run = function(current,target,passData) {
+exports.run = function(current,passData) {
 	passData.encounterProbability = 0;
 	passData.zombieStrength = 0;
 	passData.humanStrength = 0;

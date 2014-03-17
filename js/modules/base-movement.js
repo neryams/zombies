@@ -2,7 +2,7 @@
 	Base Movement: upgrades to make zombies move faster
 */
 exports.type = 'infect';
-exports.run = function(current,target,passData) {
+exports.run = function(current,passData) {
 	passData.mobility = this.speed;
 	passData.encounterProbability = 1 + this.burstSpeed;
 	passData.panic += this.panic;
@@ -15,7 +15,7 @@ exports.options = {
 		var speedUpgrade = function() {
 			this.val('speed',1.5,'+');
 			this.val('panic',1,'+');
-		}
+		};
 		this.S.addUpgrades(this,
 			{cost: 1000,paths:['infect-bite'],name:'Hunched Walk', onUpgrade: speedUpgrade, description:'Zombies move and spread faster, are slightly more deadly, and make people panic. All movement boosts synergize with biting.', gene:{size: 4, shape: 's', color: 'grey'}},
 			{cost: 2000,paths:['base-movement_0'],name:'Upright Walk', onUpgrade: speedUpgrade, description:'Zombies move spread even faster, are slightly more deadly, and make people panic. All movement boosts synergize with biting.', gene:{size: 4, shape: 's', color: 'grey'}},

@@ -2,7 +2,7 @@
 	Viral Infection: Vanilla infection module that allows the zombie virus to infect people contagioiusly over the air and water.
 */
 exports.type = 'infect';
-exports.run = function(current,target,passData) {
+exports.run = function(current,passData) {
 	passData.transferStrength += this.transferStrength;
 	passData.transferChance += this.transferChance;
 	passData.panic += this.panic;
