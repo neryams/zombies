@@ -432,10 +432,10 @@ var Renderer = function (scaling) {
                 save = true; break;
             case 'country':
                 setColor = function(i,val,opacity) {
-                    if(val > 0) {
-                        pix[i*4] = Simulator.countries[val].color[0]*opacity;
-                        pix[i*4+1] = Simulator.countries[val].color[1]*opacity;
-                        pix[i*4+2] = Simulator.countries[val].color[2]*opacity;
+                    if(val !== null) {
+                        pix[i*4] = val.color[0]*opacity;
+                        pix[i*4+1] = val.color[1]*opacity;
+                        pix[i*4+2] = val.color[2]*opacity;
                     }
                 };
                 organizeColor = function(i) {
