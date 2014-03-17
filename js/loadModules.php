@@ -19,7 +19,7 @@ if(is_dir('modules') && !empty($_GET['modules'])) {
 	while (($file = readdir($dir)) !== false) {
 		$module_name = preg_replace('/(.+?)(\.[^.]*$|$)/','$1',$file);
 		if (is_file($file)) {
-			echo preg_replace("/(exports\.run\s+=\s+.*? {)/","$1 $inject", file_get_contents($file)) . ";\n";
+			echo file_get_contents($file);
 			// Add debugger script
 			echo "SimulatorModules['$module_name'] = new Module(exports.type,exports.run,exports.options);\n";
 		}
