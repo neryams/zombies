@@ -790,7 +790,7 @@ Simulator.prototype.tick_module = function(process, moduleName, options) {
 				break;
 		}
 		var current = this.hordes[i];
-		var result = process(current, current.passData);
+		var result = process(current, current.passData, simplifyCof);
 
 		if(debugMenu.active && options.reportPassData)
 			debugMenu.console.reportModule(current, moduleName, current.passData);
@@ -928,16 +928,11 @@ Simulator.prototype.rendererDecal = function(id, lat, lng, size, texture) {
 					Affects other modules by changing their data.  Useful for activating, modifying or deactivating modules based on world events or infection upgrades.
 		processFunction -- function | function that performs tasks at intervals depending on the type of the module
 			parameters
-				infect
+				strain, infect --
 					current: current square
-					target: target square
-					passData: object that is passed to every module and is used by the strain to do final operations. All values styart at zero.
-						encounterProbability
-						zombieStrength
-						humanStrength
-						infectChance
-						spreadChance
-						mobility
+					passData: object that is passed to every module and should be used by final modules to affect squares and hordes
+					multiple: results should be multiplied by this value, number of times module has been skipped
+
 		options -- object | Optional. Sets other options.
 			Valid options:
 				dependencies -- array | List of modules that should be loaded before this one. If they are not loaded, they will be initialized before this one is.

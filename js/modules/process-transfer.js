@@ -2,7 +2,7 @@
 	Process Transfer: infect healthy people passively over the air.
 */
 exports.type = 'infect';
-exports.run = function(current,passData) {
+exports.run = function(current,passData, multiplier) {
 	// If passData.target has population, infect some of them
 	if(passData.target.total_pop > 0) {
 		if(passData.transferChance) {
@@ -11,6 +11,7 @@ exports.run = function(current,passData) {
 				totalInfected = passData.target.total_pop;
 
 			if(totalInfected > 0) {
+				totalInfected *= multiplier;
 				passData.target.total_pop -= totalInfected;
 
 				// If the infect target is the current location, add infected to current horde sometimes.

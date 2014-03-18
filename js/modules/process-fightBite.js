@@ -2,7 +2,7 @@
 	Process Bite: infect healthy people passively over the air.
 */
 exports.type = 'infect';
-exports.run = function(current,passData) {
+exports.run = function(current,passData, multiplier) {
 	// Contact infection on self tile
 	var totalStrength = passData.zombieStrength + passData.humanStrength;
 
@@ -14,6 +14,8 @@ exports.run = function(current,passData) {
 		var totalKilled = humanLosses - totalInfected;
 
 		if(totalInfected > 0 || totalKilled > 0) {
+			totalInfected *= multiplier;
+			totalKilled *= multiplier;
 			// Update the population record on the square
 			current.location.total_pop -= totalInfected;
 			current.location.total_pop -= totalKilled;
