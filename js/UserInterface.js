@@ -48,7 +48,7 @@ function DataField(id,type,options,parent) {
 	else if(this.dataType == 'progressBar')
 		newElement = $(i18n.t('dom:interface.dataField.progressBar'));
 	else if(this.dataType == 'button')
-		newElement = fullElement = $(i18n.t('dom:interface.dataField.default',{ element:'a', className:className+' button tiny expand' }));
+		newElement = fullElement = $(i18n.t('dom:interface.dataField.default',{ element:'a', className:className+' button tiny' }));
 	else if(this.dataType == 'accordion') {
 		newElement = fullElement = $(i18n.t('dom:interface.dataField.default',{ element:'dl', className:className+' accordion' })).attr('data-accordion','');
 	}
@@ -335,6 +335,12 @@ function Evolution(name,levels,options) {
 
 			// Copy a image elemnt for the user interface and put the gene image into it.
 			this.all[currentId].gene.imageElement = $('<img />').attr('src', this.imageCanvas.toDataURL());
+		}
+
+		// Add gene graphic to evolution panel icons
+		if(this.all[currentId].gene) {
+			var geneGraphic = this.all[currentId].gene.imageElement.clone();
+			currentElement.append(geneGraphic.css('bottom',this.imageCanvas.height/-2).css('right',this.imageCanvas.height/-2));
 		}
 
 		// Mouseover tooltip for evolution
@@ -700,7 +706,7 @@ var UserInterface = function UserInterface(Renderer,language) {
 					onClick: function() {
 						Evolution.prototype.clearGrid();
 					}
-				});
+				}).val('Clear');
 			mutationMenu_controls.addDataField('mutationMenu_submit','button',{ 
 					class: 'primary',
 					onHover: function() {

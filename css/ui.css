@@ -17,7 +17,7 @@
 	height: 1000px;
 	top: -200px;
 	left: -100px;
-	position: absolute;
+	position: absolute !important;
 	z-index: 20;
 }
 .draggable {
@@ -56,13 +56,18 @@ canvas.draggable {
 	width: 200px;
 	padding: 12px;
 }
+.main_menu a.button {
+	width: 100%;
+	padding-left: 0;
+	padding-right: 0;
+}
 .main_menu .dataViewList {
 	position: absolute;
 	margin-top: -12px;
 	padding: 12px;
 	left: 0;
 }
-.main_menu .dataViewList a {
+.main_menu .dataViewList a.button {
 	margin-bottom: 1px;
 	padding-top: 0.25rem;
 	padding-bottom: 0.25rem;
@@ -200,6 +205,19 @@ canvas.draggable {
 }
 .evolution>div .active {
 	background-image: url('../ui/evol_sprite_active.png');
+}
+.evolution>div div img {
+	max-width: none;
+	opacity: 0.25;
+	position: absolute;
+	right: 0;
+	bottom: 0;
+}
+.evolution>div .available img {
+	opacity: 0.65;
+}
+.evolution>div .active img {
+	opacity: 1;
 }
 
 .alert {
