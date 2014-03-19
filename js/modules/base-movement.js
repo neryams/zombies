@@ -32,5 +32,6 @@ exports.options = {
 		);
 	},
 	runtime: 1,
+	dependencies: ['infect-bite'],
 	children: ['fight-movement','spread-movement']
 };

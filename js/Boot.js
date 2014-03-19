@@ -1,6 +1,7 @@
 /* global Renderer*/
 /* global Simulator */
 /* global UserInterface */
+/* global MainInterface */
 /* global DataPoint */
 /* global debugMenu: true */
 
@@ -81,31 +82,62 @@ $(function () {
     $.getScript('js/Renderer.js');
     $.getScript('js/UserInterface.js');
     $.getScript('js/Simulator.js');
+    $.getScript('js/MainInterface.js');
 
     // On form submit, load the game
     $('form').on('submit', function (event) {
-        var tGenerator = new Worker('js/Generator.js'),
-            tCompletion = 0,
+        event.preventDefault();
+
+        var generatorWorker = new Worker('js/Generator.js'),
+            loadingState = 0,
             generatorConfig,
-            UI;
-        tGenerator.addEventListener('message', function(event) {
-            var gStart = function(completeSteps) {
+            generatorTexture,
+            UI,MI,
+            userConfig = {
+                seed: $('#s_seed').val(),
+                tx_w: $('#s_tx').val(),
+                language: $('#s_lng').val(),
+                resolution: $('#s_rs').val()
+            },
+            onLoadModules = function () {
+                // Open debug menu by default.
+                debugMenu.openConsole();
+
+                R = Renderer(userConfig.resolution);
+                UI = UserInterface(R);
+
+                MI = MainInterface(UI,R);
+                MI.load.start();
+                generatorWorker.postMessage(userConfig);
+                R.init();
+            },
+            checkLoadingState = function(completeSteps) {
                 if(completeSteps == 3) {
                     // Function also initializes UI.
                     UI.setSimulator(S);
-                    tGenerator.terminate();
+                    generatorWorker.terminate();
 
-                    UI.load.end();
-                    R.animate();
+                    MI.load.end();
+
+                    MI.strainPrompt(null, function(strain) {
+                        S.start(strain);
+                        R.animate();
+                    });
+
+                    // Let window render
+                    setTimeout(function() {
+                        R.simulatorStart(generatorTexture,generatorConfig,S);
+                    }, 50);
                 }
             };
-            
+
+        generatorWorker.addEventListener('message', function(event) {
             switch (event.data.cmd) {
                 case 'progress':
                     if(!event.data.progress)
-                        UI.load.progress();
+                        MI.load.progress();
                     else
-                        UI.load.progress(event.data.progress,event.data.share);
+                        MI.load.progress(event.data.progress,event.data.share);
                     break;
                 case 'ready':
                     generatorConfig = event.data.config;
@@ -124,50 +156,29 @@ $(function () {
                         gData.points[i].adjacent[3] = gData.points[gData.points[i].adjacent[3]];
                         gData.points[i].country = gData.countries[gData.points[i].country];
                     }
-                    UI.load.endGenerator();
+                    console.timeEnd('webWorkerTransferTimer');
+                    MI.load.endGenerator();
                     S = new Simulator(R,UI,generatorConfig,gData);
                     S.setName(event.data.generatedName);
-                    tCompletion++;
-                    console.timeEnd('webWorkerTransferTimer');
-                    gStart(tCompletion);
+                    loadingState++;
+                    checkLoadingState(loadingState);
                     break;
                 case 'texture':
-                    R.init(new Float32Array(event.data.texture),generatorConfig,S);
-                    tCompletion++;
-                    gStart(tCompletion);
+                    generatorTexture = new Float32Array(event.data.texture);
+                    loadingState++;
+                    checkLoadingState(loadingState);
                     break;
                 case 'complete':
-                    tCompletion++;
-                    gStart(tCompletion);
+                    loadingState++;
+                    checkLoadingState(loadingState);
                     break;
             }
         }, false);
-
-        event.preventDefault();
-
-        var userConfig = {
-            seed: $('#s_seed').val(),
-            tx_w: $('#s_tx').val(),
-            language: $('#s_lng').val(),
-            resolution: $('#s_rs').val()
-        };
 
         // Load the rest of the language files
         $.i18n.loadNamespaces(['ui', 'messages', 'dom'], function() {
             $.i18n.setDefaultNamespace('messages');
         });
-
-        var onLoadModules = function () {
-            $('#setup').remove();
-
-            R = Renderer(userConfig.resolution);
-            UI = UserInterface(R);
-
-            UI.init(function() {
-                UI.load.start();
-                tGenerator.postMessage(userConfig);
-            });
-        };
 
         // Load the chosen modules first, then initiate the game 
         // If this is not running in node, load modules form server
@@ -177,9 +188,6 @@ $(function () {
             Simulator.prototype.loadModules = $('#s_modules').val().split(',');
             onLoadModules();
         }
-
-        // Open debug menu by default.
-        debugMenu.openConsole();
         return false;
     });
 });

@@ -1,20 +1,16 @@
 /*
-	UI handlers and functions. 
+	UI handlers and functions.
 	Interfaces with Renderer object to get coordinates on sphere, create 3d elements etc. Should be created within document.onready
 	Dependencies: jQuery, Renderer.js, Three.js
-	Parameters: 
+	Parameters:
 		Renderer -- Reference to the Renderer object so that the UI can send commands to it
 */
+/* exported UserInterface */
 
-function bind(scope, fn) {
-	return function () {
-		fn.apply(scope, arguments);
-	};
-}
-Date.prototype.getMonthName = function(lang) {
+Date.prototype.getMonthName = function() {
 	return i18n.t('ui:dates.month_names.'+this.getMonth());
 };
-Date.prototype.getMonthNameShort = function(lang) {
+Date.prototype.getMonthNameShort = function() {
 	return i18n.t('ui:dates.month_names_short.'+this.getMonth());
 };
 
@@ -46,9 +42,9 @@ function DataField(id,type,options,parent) {
 	}
 	else if(this.dataType == 'accordion_child') {
 		newElement = $(i18n.t('dom:interface.dataField.default',{ element:'div', className:className }));
-		fullElement = $(i18n.t('dom:interface.dataField.default',{ element:'dd', className:'' })).append(newElement);		
+		fullElement = $(i18n.t('dom:interface.dataField.default',{ element:'dd', className:'' })).append(newElement);
 	}
-	else 
+	else
 		newElement = fullElement = $(i18n.t('dom:interface.dataField.default',{ element:this.dataType, className:className }));
 
 	if(!fullElement)
@@ -57,9 +53,9 @@ function DataField(id,type,options,parent) {
 	if(parent) {
 		this.parent = parent;
 		parent.children.push(this);
-		parent.element.append(fullElement);		
+		parent.element.append(fullElement);
 	} else {
-		$('#ui').append(fullElement);		
+		$('#ui').append(fullElement);
 	}
 	
 	this.element = newElement;
@@ -67,10 +63,10 @@ function DataField(id,type,options,parent) {
 	if(options)
 		for (var key in options)
 			if (options.hasOwnProperty(key)) {
-				if(typeof(options[key]) === "function")
-					this[key] = bind(this, options[key]);
-				else
-					this[key] = options[key];
+				this[key] = options[key];
+
+				if(typeof(options[key]) === 'function')
+					this[key].bind(this);
 			}
 
 
@@ -92,9 +88,9 @@ function DataField(id,type,options,parent) {
 	if(this.outerClass)
 		fullElement.addClass(this.outerClass);
 	if(this.onClick)
-		fullElement.on('click',this.onClick);
+		fullElement.on('click',this.onClick.bind(this));
 	if(this.onHover)
-		fullElement.on('mouseover',this.onHover);
+		fullElement.on('mouseover',this.onHover.bind(this));
 	if(this.overlay) {
 		fullElement.addClass('overlay');
 		this.visible = false;
@@ -134,23 +130,26 @@ DataField.prototype = {
 	UIStatus: null,
 	addDataField: function(id,type,options) {
 		if(arguments.length == 1) {
-			var type = arguments[0],
-				id = null;
+			type = arguments[0];
+			id = null;
 		}
+
 		// If second parameter is not a string and there are only two arguments, ID got left out
-		if(arguments.length == 2 && !arguments[1].substring) { 
-			var options = arguments[1],
-				type = arguments[0],
-				id = null;
+		if(arguments.length == 2 && !arguments[1].substring) {
+			options = arguments[1];
+			type = arguments[0];
+			id = null;
 		}
 		var newDataField = new DataField(id,type,options,this);
 		return newDataField;
 	},
 	display: function(recursive) {
+		var i;
+
 		if(this.onDisplay)
 			this.onDisplay();
 		if(this.parent && this.parent.singleChild)
-			for(var i = 0; i < this.parent.children.length; i++)
+			for(i = 0; i < this.parent.children.length; i++)
 				this.parent.children[i].hide();
 		if(this.opener)
 			this.opener.element.addClass('selected');
@@ -161,7 +160,7 @@ DataField.prototype = {
 					this.interfaceParts[key].hide();
 				}
 			var that = this;
-			$('#ui_mask').css('visibility','visible').on('click.closeOverlay', function (event) {
+			$('#ui_mask').css('visibility','visible').on('click.closeOverlay', function () {
 				that.hide();
 			});
 			this.UIStatus.pauseRenderer = true;
@@ -172,14 +171,14 @@ DataField.prototype = {
 		this.element.css('display','');
 		this.visible = true;
 		if(recursive)
-			for(var i = 0; i < this.children.length; i++)
+			for(i = 0; i < this.children.length; i++)
 				this.children[i].display(true);
 		return this;
 	},
 	hide: function() {
 		if(this.onHide)
 			this.onHide();
-		this.element.css('display','none');	
+		this.element.css('display','none');
 		this.visible = false;
 		if(this.opener)
 			this.opener.element.removeClass('selected');
@@ -215,10 +214,10 @@ DataField.prototype = {
 			this.element.html(value);
 		return this;
 	}
-}
+};
 
 function Evolution(name,levels,options) {
-	var i,j,position,evol = this;
+	var i,j,evol = this;
 
 	// Inherit the DataField class
 	DataField.call( this, null, 'div', options, this.evolveMenu );
@@ -227,8 +226,51 @@ function Evolution(name,levels,options) {
 
 	// Clear classes from the original element so it may be cloned for all the levels of the evolution object
 	this.element.attr('class','');
+
+	var evolutionTooltip = function(event) {
+		var data = event.data.all[$(this).data('id')];
+		var toolTipContent = $('<table/>');
+		toolTipContent.append($('<tr><th colspan="2">'+data.name+'</th></tr><tr><td>Cost</td><td>'+data.cost+'</td></tr>'));
+		if(data.gene)
+			toolTipContent = toolTipContent.append($('<tr><td>Gene</td></tr>').append($('<td/>').append(data.gene.imageElement)));
+
+		toolTipContent.append($('<tr><td colspan="2">'+data.description+'</td></tr>'));
+		evol.showToolTip(toolTipContent,$(this),200);
+	};
+
+	var evolutionSelect = function(event) {
+		var i, upgradeId = $(this).data('id'),
+			upgrade = event.data.evolution.all[upgradeId],
+			selectedUpgrades = event.data.evolution.selectedUpgrades;
+
+		// User is buying the upgrade
+		if(!upgrade.selected) {
+			if(upgrade.available) {
+				selectedUpgrades.push(upgradeId);
+				upgrade.selected = true;
+				evol.UIStatus.money -= upgrade.cost;
+				evol.interfaceParts.money.val(evol.UIStatus.money);
+			}
+		// User is undoing the purchase
+		} else {
+			for(i = 0; i < upgrade.children.length; i++)
+				if(upgrade.children[i].selected)
+					upgrade.children[i].element.triggerHandler('click');
+			for(i = 0; i < selectedUpgrades.length; i++)
+				if(selectedUpgrades[i] == upgrade.id) {
+					selectedUpgrades.splice(i,1);
+					evol.UIStatus.money += upgrade.cost;
+					evol.interfaceParts.money.val(evol.UIStatus.money);
+					delete upgrade.selected;
+					upgrade.element.removeClass('active');
+					break;
+				}
+		}
+		upgrade.evolution.refresh();
+	};
+
 	for(i = 0; i < levels.length; i++) {
-		var currentId = levels[i].id
+		var currentId = levels[i].id;
 
 		// Create the evolution upgrade button in the menu
 			// Clone a div element for each level so it can be treated as a separate evolution
@@ -242,7 +284,8 @@ function Evolution(name,levels,options) {
 				color: levels[i].gene.color,
 				height: levels[i].gene.height,
 				width: levels[i].gene.width,
-			}
+			};
+			
 		this.all[currentId].evolution = this;
 		this.all[currentId].element = currentElement;
 		this.all[currentId].children = [];
@@ -250,7 +293,7 @@ function Evolution(name,levels,options) {
 		// Draw gene shape image, (the tetris peices)
 		if(this.all[currentId].gene) {
 			// Get canvas for drawing the image
-			var imageCtx = this.imageCanvas.getContext("2d"),
+			var imageCtx = this.imageCanvas.getContext('2d'),
 				currPoint;
 			// Clear the last gene graphic and set the canvas size to the final shape size
 			this.imageCanvas.height = this.SQUARE_SIZE * this.all[currentId].gene.height;
@@ -259,28 +302,28 @@ function Evolution(name,levels,options) {
 			// Drawing styles
 			switch(this.all[currentId].gene.color) {
 				case 'red':
-					imageCtx.fillStyle = "rgba(120, 0, 0, 255)";
-					imageCtx.strokeStyle = "rgba(255, 0, 0, 255)";
+					imageCtx.fillStyle = 'rgba(120, 0, 0, 255)';
+					imageCtx.strokeStyle = 'rgba(255, 0, 0, 255)';
 					break;
-				case 'green': 
-					imageCtx.fillStyle = "rgba(30, 150, 30, 255)";
-					imageCtx.strokeStyle = "rgba(0, 220, 0, 255)";
+				case 'green':
+					imageCtx.fillStyle = 'rgba(30, 150, 30, 255)';
+					imageCtx.strokeStyle = 'rgba(0, 220, 0, 255)';
 					break;
-				case 'blue': 
-					imageCtx.fillStyle = "rgba(0, 30, 220, 255)";
-					imageCtx.strokeStyle = "rgba(20, 80, 255, 255)";
+				case 'blue':
+					imageCtx.fillStyle = 'rgba(0, 30, 220, 255)';
+					imageCtx.strokeStyle = 'rgba(20, 80, 255, 255)';
 					break;
-				case 'yellow': 
-					imageCtx.fillStyle = "rgba(220, 150, 0, 255)";
-					imageCtx.strokeStyle = "rgba(255, 255, 0, 255)";
+				case 'yellow':
+					imageCtx.fillStyle = 'rgba(220, 150, 0, 255)';
+					imageCtx.strokeStyle = 'rgba(255, 255, 0, 255)';
 					break;
-				case 'purple': 
-					imageCtx.fillStyle = "rgba(170, 0, 160, 255)";
-					imageCtx.strokeStyle = "rgba(255, 0, 220, 255)";
+				case 'purple':
+					imageCtx.fillStyle = 'rgba(170, 0, 160, 255)';
+					imageCtx.strokeStyle = 'rgba(255, 0, 220, 255)';
 					break;
-				case 'grey': 
-					imageCtx.fillStyle = "rgba(160, 180, 180, 255)";
-					imageCtx.strokeStyle = "rgba(230, 230, 230, 255)";
+				case 'grey':
+					imageCtx.fillStyle = 'rgba(160, 180, 180, 255)';
+					imageCtx.strokeStyle = 'rgba(230, 230, 230, 255)';
 					break;
 			}
 			imageCtx.lineWidth = 1;
@@ -288,23 +331,23 @@ function Evolution(name,levels,options) {
 			// array for removing points that are not on the outside
 			var borders = [];
 			// For each point, draw a square at the coordinates
-			for(var j = 0; j < this.all[currentId].gene.shape.length; j++) {
+			for(j = 0; j < this.all[currentId].gene.shape.length; j++) {
 				currPoint = this.all[currentId].gene.shape[j];
 				imageCtx.beginPath();
 				imageCtx.rect(currPoint.x*this.SQUARE_SIZE, currPoint.y*this.SQUARE_SIZE, this.SQUARE_SIZE, this.SQUARE_SIZE);
 				imageCtx.fill();
 				borders[currPoint.y*this.all[currentId].gene.width + currPoint.x] = j;
 			}
-			for(var j = 0; j < borders.length; j++) {
+			for(j = 0; j < borders.length; j++) {
 				if(borders[j] !== undefined) {
 					currPoint = this.all[currentId].gene.shape[borders[j]];
-					if(borders[j - 1] === undefined || currPoint.x == 0) {
+					if(borders[j - 1] === undefined || currPoint.x === 0) {
 						imageCtx.beginPath();
 						imageCtx.moveTo(currPoint.x*this.SQUARE_SIZE + 0.5,currPoint.y*this.SQUARE_SIZE );
 						imageCtx.lineTo(currPoint.x*this.SQUARE_SIZE + 0.5,(currPoint.y+1)*this.SQUARE_SIZE );
 						imageCtx.stroke();
 					}
-					if(borders[j - this.all[currentId].gene.width] === undefined || currPoint.y == 0) {
+					if(borders[j - this.all[currentId].gene.width] === undefined || currPoint.y === 0) {
 						imageCtx.beginPath();
 						imageCtx.moveTo(currPoint.x*this.SQUARE_SIZE ,currPoint.y*this.SQUARE_SIZE + 0.5);
 						imageCtx.lineTo((currPoint.x+1)*this.SQUARE_SIZE ,currPoint.y*this.SQUARE_SIZE + 0.5);
@@ -336,48 +379,10 @@ function Evolution(name,levels,options) {
 		}
 
 		// Mouseover tooltip for evolution
-		currentElement.on('mouseover.evolutionTooltip', this, function(event) {
-			var data = event.data.all[$(this).data('id')];
-			var toolTipContent = $('<table/>');
-			toolTipContent.append($('<tr><th colspan="2">'+data.name+'</th></tr><tr><td>Cost</td><td>'+data.cost+'</td></tr>'));
-			if(data.gene)
-				toolTipContent = toolTipContent.append($('<tr><td>Gene</td></tr>').append($('<td/>').append(data.gene.imageElement)));
-
-			toolTipContent.append($('<tr><td colspan="2">'+data.description+'</td></tr>'));
-			evol.showToolTip(toolTipContent,$(this),200);
-		});
+		currentElement.on('mouseover.evolutionTooltip', this, evolutionTooltip);
 
 		// Click event for evolution in the upgrade menu
-		currentElement.on('click.evolutionSelect', { Simulator: this.Simulator, evolution: this },function(event) {
-			var i, upgradeId = $(this).data('id'),
-				upgrade = event.data.evolution.all[upgradeId],
-				selectedUpgrades = event.data.evolution.selectedUpgrades;
-
-			// User is buying the upgrade
-			if(!upgrade.selected) {
-				if(upgrade.available) {
-					selectedUpgrades.push(upgradeId);
-					upgrade.selected = true;
-					evol.UIStatus.money -= upgrade.cost;
-					evol.interfaceParts.money.val(evol.UIStatus.money);
-				}
-			// User is undoing the purchase
-			} else {
-				for(i = 0; i < upgrade.children.length; i++)
-					if(upgrade.children[i].selected)
-						upgrade.children[i].element.triggerHandler('click');
-				for(i = 0; i < selectedUpgrades.length; i++)
-					if(selectedUpgrades[i] == upgrade.id) {
-						selectedUpgrades.splice(i,1);
-						evol.UIStatus.money += upgrade.cost;
-						evol.interfaceParts.money.val(evol.UIStatus.money);
-						delete upgrade.selected;
-						upgrade.element.removeClass('active');
-						break;
-					}
-			}
-			upgrade.evolution.refresh();
-		});
+		currentElement.on('click.evolutionSelect', { Simulator: this.Simulator, evolution: this }, evolutionSelect);
 
 	}
 	this.element.remove();
@@ -399,18 +404,18 @@ Evolution.prototype.imageCanvas.height = 100;
 Evolution.prototype.refresh = function() {
 	var available = this.Simulator.availableUpgrades(this.selectedUpgrades);
 	this.evolveMenu.element.find('.available').removeClass('available');
-	for (key in this.all)
+	for (var key in this.all)
 		if (this.all.hasOwnProperty(key)) {
 			this.all[key].available = false;
 			if(this.all[key].active || this.all[key].selected)
 				this.all[key].element.addClass('active');
 		}
 
-	for(i = 0; i < available.length; i++) {
+	for(var i = 0; i < available.length; i++) {
 		this.all[available[i]].element.addClass('available');
 		this.all[available[i]].available = true;
 	}
-}
+};
 /*
 for (key in this.all)
 	if (this.all.hasOwnProperty(key) && this.all[key].cost < money && this.all[key].available) {
@@ -419,7 +424,7 @@ for (key in this.all)
 	}*/
 
 Evolution.prototype.buyEvolutions = function() {
-	var upgrade, 
+	var upgrade,
 		success = this.Simulator.purchaseUpgrades(this.selectedUpgrades.slice(0));
 	while(this.selectedUpgrades.length) {
 		upgrade = this.all[this.selectedUpgrades.pop()];
@@ -429,7 +434,7 @@ Evolution.prototype.buyEvolutions = function() {
 			// Draw gene shape image
 			if(upgrade.gene) {
 				// Copy a gene for the user interface and put the gene into it.
-				current = $('#tb_gene',this.mutationMenu.element).clone().removeAttr('id').addClass('active geneBlock gene_'+upgrade.id).data('geneId',upgrade.id);
+				var current = $('#tb_gene',this.mutationMenu.element).clone().removeAttr('id').addClass('active geneBlock gene_'+upgrade.id).data('geneId',upgrade.id);
 				$('img',current).replaceWith(upgrade.gene.imageElement.clone());
 				$('.name',current).html(upgrade.name);
 				upgrade.gene.element = current;
@@ -440,7 +445,7 @@ Evolution.prototype.buyEvolutions = function() {
 		delete upgrade.selected;
 	}
 	this.evolveMenu.element.find('.available').removeClass('available');
-}
+};
 
 Evolution.prototype.refreshGenes = function() {
 	var i,j,n;
@@ -448,15 +453,15 @@ Evolution.prototype.refreshGenes = function() {
 		var geneElement = $('.geneBlock.active.gene_'+this.mutation[i].upgrade),
 			geneImage = geneElement.find('img'),
 			currentUpgrade = this.all[this.mutation[i].upgrade],
-			overlayPosition = geneImage.parents('.overlay').offset(),
+			//overlayPosition = geneImage.parents('.overlay').offset(),
 			gridElement = $('#tb_board .grid'),
-			gridElementPosition = gridElement.offset(),
+			//gridElementPosition = gridElement.offset(),
 			gridSquareSize = this.SQUARE_SIZE;
 
 		currentUpgrade.gene.placement = this.mutation[i].placement;
 		currentUpgrade.gene.used = true;
 
-		element = geneElement.clone(true).removeClass('active').empty().append(geneImage.clone());
+		var element = geneElement.clone(true).removeClass('active').empty().append(geneImage.clone());
 		element.css('left',currentUpgrade.gene.placement.x*gridSquareSize)
 			.css('top',currentUpgrade.gene.placement.y*gridSquareSize).addClass('placed').appendTo(gridElement);
 		geneElement.addClass('used');
@@ -465,10 +470,10 @@ Evolution.prototype.refreshGenes = function() {
 			this.grid[currentUpgrade.gene.shape[j].x + currentUpgrade.gene.placement.x][currentUpgrade.gene.shape[j].y + currentUpgrade.gene.placement.y] = currentUpgrade;
 		}
 	}
-}
+};
 Evolution.prototype.mutate = function() {
 	this.mutation.length = 0;
-	for (key in this.all)
+	for (var key in this.all)
 		if (this.all.hasOwnProperty(key) && this.all[key].gene) {
 			if(this.all[key].gene.used) {
 				this.all[key].gene.active = this.mutation.length;
@@ -484,12 +489,12 @@ Evolution.prototype.mutate = function() {
 			console.error('mutation not valid!');
 
 	this.mutationMenu.hide();
-}
+};
 Evolution.prototype.cleanMutation = function() {
 	this.clearGrid();
-}
+};
 Evolution.prototype.clearGrid = function() {
-	for (key in this.all)
+	for (var key in this.all)
 		if (this.all.hasOwnProperty(key) && this.all[key].gene && this.all[key].gene.used) {
 			this.all[key].gene.used = false;
 			delete this.all[key].gene.placement;
@@ -499,7 +504,7 @@ Evolution.prototype.clearGrid = function() {
 	}
 	$('.geneBlock.placed').remove();
 	$('.geneBlock.active').removeClass('used');
-}
+};
 
 Evolution.prototype.buildWeb = function(upgrade,lastTheta,depth) {
 	// Figure out where to put the starting points.
@@ -508,13 +513,12 @@ Evolution.prototype.buildWeb = function(upgrade,lastTheta,depth) {
 		evolutionBg.width = this.evolveMenu.element.width();
 		evolutionBg.height = this.evolveMenu.element.height();
 	}
-	var bgCtx = evolutionBg.getContext("2d");
-	/*bgCtx.fillStyle = "rgba(30, 30, 30, 255)";
+	var bgCtx = evolutionBg.getContext('2d');
+	/*bgCtx.fillStyle = 'rgba(30, 30, 30, 255)';
 	bgCtx.fillRect(0, 0, evolutionBg.width, evolutionBg.height);*/
 
-	var i,key,current,target,position,childUpgrades,theta,
-		shiftPosition = {}, arrow_separation = 0.03;
-	if(upgrade == undefined) {
+	var i,key,current,target,position,childUpgrades,theta;
+	if(upgrade === undefined) {
 		childUpgrades = [];
 		for (key in this.all)
 			if (this.all.hasOwnProperty(key)) {
@@ -522,7 +526,7 @@ Evolution.prototype.buildWeb = function(upgrade,lastTheta,depth) {
 				if(!current.paths.length)
 					childUpgrades.push(current);
 				else
-					for(i = 0; i < current.paths.length; i++) 
+					for(i = 0; i < current.paths.length; i++)
 						this.all[current.paths[i]].children.push(current);
 			}
 		position = {left:500,top:500};
@@ -530,24 +534,24 @@ Evolution.prototype.buildWeb = function(upgrade,lastTheta,depth) {
 		position = upgrade.position;
 		childUpgrades = upgrade.children;
 	}
-	if(depth == undefined)
+	if(depth === undefined)
 		depth = 0;
 
 	for(i = 0; i < childUpgrades.length; i++) {
 		current = childUpgrades[i];
 		// Switch going up and down
-		if(current.position == undefined) {
-			if(lastTheta == undefined) {
+		if(current.position === undefined) {
+			if(lastTheta === undefined) {
 				theta = 0;
-				current.position = { top: position.top, left: position.left}			
+				current.position = { top: position.top, left: position.left};
 			}
-			else 
+			else
 			{
 				theta = lastTheta + 2*Math.PI*(Math.ceil(i/2)/childUpgrades.length)/depth*(1 - i%2*2);
-				current.position = { top: position.top + Math.round(75*Math.sin(theta)), left: position.left + Math.round(75*Math.cos(theta))}
+				current.position = { top: position.top + Math.round(75*Math.sin(theta)), left: position.left + Math.round(75*Math.cos(theta))};
 			}
 
-			current.element.css('top', current.position.top).css('left', current.position.left);			
+			current.element.css('top', current.position.top).css('left', current.position.left);
 		}
 		
 		if(current.children.length) {
@@ -555,7 +559,8 @@ Evolution.prototype.buildWeb = function(upgrade,lastTheta,depth) {
 				this.buildWeb(current,theta,depth+1);
 			else
 				this.buildWeb(current,theta,depth);
-			for(j = 0; j < current.children.length; j++) {
+			//var shiftPosition = {}, arrow_separation = 0.03
+			for(var j = 0; j < current.children.length; j++) {
 				// Link the children of this object together both visually and symbolically
 				target = current.children[j];
 
@@ -593,185 +598,27 @@ Evolution.prototype.buildWeb = function(upgrade,lastTheta,depth) {
 				bgCtx.moveTo(current.position.left, current.position.top);
 				bgCtx.lineTo(target.position.left, target.position.top);
 				bgCtx.stroke();
-			}			
+			}
 		}
 	}
-}
+};
 
-var UserInterface = function UserInterface(Renderer,language) {
-	var sphere_coords,visualization = '', WorldData, Simulator,
-		dataFieldsRoot = [], interfaceParts = {},alerts = {}, 
-		status = { 
+var UserInterface = function UserInterface(Renderer) {
+	var sphere_coords,
+		dataFieldsRoot = [], interfaceParts = {},
+		status = {
 			mouse: { x:0, y:0, lastx:0, lasty:0, down:false, click: false, scroll: 0, bound: null },
-			pauseRenderer: false, 
-			showToolTip: false, 
-			toolTipMode: '', 
-			mutateGridSize: 0 
+			pauseRenderer: false,
+			showToolTip: false,
+			toolTipMode: '',
+			mutateGridSize: 0
 		};
 
-	DataField.prototype.interfaceParts = interfaceParts;
-	DataField.prototype.UIStatus = status;
-
 	/*
-		Functions for generating the loading bar
-		Parameters:
-			ratio -- float | how much of the current portion is done
-			share -- float | how big the current portion is out of 1
-		If called without parameters, it advances the current step text immediately. If called with a ratio of 0, it starts the load.
-	*/
-	var load = {
-		loading: {
-			done: 0, curProg: 0, curShare: 0, curStep: 0
-		},
-		start: function() {
-			$('#setup').css('display','none');
-			$('#progress').css('display','block');
-			$('#progress p').html(i18n.t("setup:loading.0"));
-		},
-		endGenerator: function() {
-			addDataField('stats','div',{ class: 'stats' }).addDataField('h1').label('setup:title');
-			var uiMenu = addDataField('menu','div',{ class: 'main_menu' });
-
-			var uiMenuDataviews = uiMenu.addDataField('div',{ visible: false, class: 'dataViewList' });
-			var uiMenuDataviewsPos = uiMenu.addDataField('button',{ 
-					onClick: function() {
-						if(!this.opens[0].visible) 
-							this.opens[0].display();
-						else
-							this.opens[0].hide();
-					}, 
-					opens: [uiMenuDataviews] 
-				}).label('ui:buttons.dataviews').element.position();
-			uiMenuDataviews.addDataField('button',{ class: 'secondary', onClick: function() { this.parent.hide(); } }).label('ui:buttons.close');
-			uiMenuDataviews.addDataField('button',{ onClick: function() { Renderer.setVisualization('country'); this.parent.hide(); activatePlanetTooltip(function(point){ if(point.country) { return '<strong>' + point.country.name + '</strong>'; }});}}).label('ui:buttons.dataviews_inner.political');
-			uiMenuDataviews.addDataField('button',{ onClick: function() { Renderer.setVisualization('precipitation'); this.parent.hide(); activatePlanetTooltip(function(point){ return Math.round(point.precipitation*10)/10 + 'mm'; });}}).label('ui:buttons.dataviews_inner.rain');
-			uiMenuDataviews.addDataField('button',{ onClick: function() { Renderer.setVisualization('temperature'); this.parent.hide(); activatePlanetTooltip(function(point){ return Math.round((point.temperature - 273)*10)/10 + 'C'; });}}).label('ui:buttons.dataviews_inner.temperature');
-			uiMenuDataviews.addDataField('button',{ onClick: function() { Renderer.closeVisualization(); this.parent.hide(); deactivatePlanetTooltip(); } }).label('ui:buttons.dataviews_inner.disable');
-			uiMenuDataviews.element.css('top',uiMenuDataviewsPos.top - uiMenuDataviews.element.height());
-
-			uiMenu.addDataField('button',{
-					onClick: function() {
-						Renderer.togglePopDisplay();
-					}
-				}).label('ui:buttons.population');
-
-			var evolveMenuOuter = addDataField('evolveMenu','div',{ class: 'evolution', title: 'Evolution', overlay: true, onHide: function() {
-				Evolution.prototype.buyEvolutions();
-			} });
-			Evolution.prototype.evolveMenuBg = evolveMenuOuter.addDataField('canvas',{ class: 'draggable' });
-			Evolution.prototype.evolveMenu = evolveMenuOuter.addDataField('div',{ class: 'draggable' });
-			uiMenu.addDataField('evolveMenu_button','button',{
-					class: 'primary',
-					onClick: function() {
-						if(!this.opens[0].visible) {
-							Evolution.prototype.refresh();
-							this.opens[0].display();
-						}
-						else
-							this.opens[0].hide();
-					}, 
-					opens: [evolveMenuOuter]
-				}).label('ui:buttons.evolution');
-
-			Evolution.prototype.mutationMenu = addDataField('mutationMenu','div',{ class: 'toolbox', title: 'Mutation', overlay: true, onHide: function() {
-				Evolution.prototype.clearGrid();
-			}});
-			Evolution.prototype.mutationMenu.element.append($(i18n.t('dom:interface.mutation.menu')));
-			uiMenu.addDataField('mutationMenu_button','button',{
-					class: 'primary',
-					onClick: function() {
-						if(!this.opens[0].visible) {
-							Evolution.prototype.refreshGenes();
-							this.opens[0].display();
-						}
-						else
-							this.opens[0].hide();
-					}, 
-					opens: [Evolution.prototype.mutationMenu]
-				}).label('ui:buttons.mutation');
-			var mutationMenu_controls = Evolution.prototype.mutationMenu.addDataField('div',{ class: 'menu' });
-			mutationMenu_controls.addDataField('mutationMenu_clear','button',{
-					class: 'icon',
-					onHover: function() { 
-						this.showToolTip( 'Clear the mutation grid.' );
-					},
-					onClick: function() {
-						Evolution.prototype.clearGrid();
-					}
-				}).val('Clear');
-			mutationMenu_controls.addDataField('mutationMenu_submit','button',{ 
-					class: 'primary',
-					onHover: function() {
-						var totalPrice = 0;
-						for (key in Evolution.prototype.all)
-							if (Evolution.prototype.all.hasOwnProperty(key) && Evolution.prototype.all[key].gene && Evolution.prototype.all[key].gene.used)
-								if(Evolution.prototype.all[key].gene.active === undefined || !Evolution.prototype.mutation[Evolution.prototype.all[key].gene.active].placement.equals(Evolution.prototype.all[key].gene.placement)) 
-									totalPrice += Evolution.prototype.all[key].cost;
-
-						this.showToolTip( 'Mutate your infection for <span class="strong">'+totalPrice+'</span> evolution points' );
-					},
-					onClick: function() {
-						Evolution.prototype.mutate();
-					}
-				}).val('Mutate');
-			mutationMenu_controls.addDataField('mutationMenu_cancel','button',{ 
-					class: 'secondary',
-					onHover: function() {
-						this.showToolTip( 'Revert all changes.' );
-					},
-					onClick: function() {
-						Evolution.prototype.mutationMenu.hide();
-					}
-				}).val('Cancel');
-
-			var uiSidebar = addDataField('div',{ 
-				class: 'sidebar', 
-				mousePriority: true 
-			});
-
-			uiSidebarStatic = uiSidebar.addDataField('sidebarStatic','div');
-			uiSidebarStatic.addDataField('money','text',{
-				title: 'Evolution Points',
-				dynamic: 'money'
-			});
-
-			uiSidebarAccordion = uiSidebar.addDataField('sidebarAccordion','accordion');
-			uiSidebarAccordion.addDataField('newsTicker','accordion_child',{
-				title: 'ui:buttons.news',
-				class: 'news'
-			});
-
-			addDataField('alert','div',{ overlay: true });
-		},
-		end: function() {
-			$('#setup,#progress').remove();
-			$('#container').css('display','block');
-
-			$("#ui").append($('<div id="render_tooltip" class="tooltip"></div><div id="tooltip" class="tooltip"></div>'));
-
-			mainUIReady();
-			Evolution.prototype.buildWeb();
-		},
-		progress: function(ratio, share) {
-			if(ratio == undefined) {
-				ratio = share = 0;
-			}
-			if(this.loading.curProg > ratio*share || this.loading.curShare == 0 || share == 0) { // A new loading portion started
-				this.loading.done += this.loading.curShare;
-				this.loading.curShare = share;
-				this.loading.curStep++;
-				$('#progress p').html(i18n.t("setup:loading."+this.loading.curStep));
-			}
-			this.loading.curProg = ratio*share;
-			$('#progress .pace .pace-progress').css('width', ((this.loading.done+this.loading.curProg) * 100) + '%');
-		}
-	}
-
-	/* 
 		Parameter is a function that takes one paramater, a function that takes a dataPoint and returns a string.
 		You will call this function to set up a tooltip that returns a property of a point on the planet
-	*/ 
-	function activatePlanetTooltip(getPointInfo) {
+	*/
+	var activatePlanetTooltip = function(getPointInfo) {
 		$('#ui').off('mousemove.render_tooltip');
 		$('#ui').on('mousemove.render_tooltip', null, getPointInfo, function(event) {
 			status.mouse.x = event.clientX;
@@ -782,7 +629,7 @@ var UserInterface = function UserInterface(Renderer,language) {
 				//$('#tooltip').css('display','block').html('asf');
 				var point = Renderer.coordsToPoint(sphere_coords[0],sphere_coords[1]);
 
-				if(point != undefined && (!point.water || point.total_pop > 0)) {
+				if(point !== undefined && (!point.water || point.total_pop > 0)) {
 					if($('#render_tooltip').css('visibility') != 'visible')
 						$('#render_tooltip').css('visibility','visible');
 					$('#render_tooltip').html(event.data(point));
@@ -791,9 +638,9 @@ var UserInterface = function UserInterface(Renderer,language) {
 					if(debugMenu.console.options.mouseOverDebugData) {
 						$('#render_tooltip').html(JSON.stringify(point,
 							function(key,value) {
-								if(key == 'adjacent' || key == 'renderer') 
+								if(key == 'adjacent' || key == 'renderer')
 									return undefined;
-								else if(key == 'army') 
+								else if(key == 'army')
 									return {size: value.size, experience: value.experience, nationality: value.nationality};
 								else
 									return value;
@@ -804,275 +651,42 @@ var UserInterface = function UserInterface(Renderer,language) {
 					if($('#render_tooltip').css('visibility') != 'hidden')
 						$('#render_tooltip').css('visibility','hidden');
 			}
-			else 
+			else
 				if($('#render_tooltip').css('visibility') != 'hidden')
 					$('#render_tooltip').css('visibility','hidden');
-		})
-	}
-	function deactivatePlanetTooltip() {
+		});
+	},
+
+	deactivatePlanetTooltip = function() {
 		hideTooltip();
 		$('#ui').off('mousemove.render_tooltip');
-	}
+	},
 
-	DataField.prototype.showToolTip = function (text,element,width) {
-		if(!element)
-			element = this.element;
-		var position = element.offset();
-
-		var tooltip = $('#tooltip');
-		if(tooltip.css("visibility") == 'hidden' && text) {
-			tooltip.empty();
-			if(width)
-				tooltip.css('width',width);
-			if(text.appendTo)
-				tooltip.append(text);
-			else
-				tooltip.html(text);
-			tooltip.css('top',position.top - (tooltip.height() + 20)).css('left',position.left).addClass('');
-			tooltip.css("display","none").css("visibility","visible").fadeIn('fast');
-		}
-
-		element.on('mouseout',this ,function (event) {
-			event.data.hideTooltip();
-		});
-	}
-
-	function hideTooltip() {
-		$('#tooltip').css('visibility','hidden');
-	}
-	DataField.prototype.hideTooltip = hideTooltip;
-
-	// Commands to run when loading is finished and main game UI is displayed
-	function mainUIReady() {
-		$('.draggable').on('mousedown.draggable', function (event) {
-			event.preventDefault();
-			status.mouse.down = true;
-			status.mouse.x = event.clientX;
-			status.mouse.y = event.clientY;
-			var elements = $(this).parent().find('.draggable');
-			elements.maxPos = { top: $(this).parent().height() - elements.height(), left: $(this).parent().width() - elements.width() }
-			$(this).on('mousemove.dragging', null, elements, function (event) {
-				event.preventDefault();
-				var position = event.data.position();
-				position.left += event.clientX - status.mouse.x;
-				position.top += event.clientY - status.mouse.y;
-				if(position.left > 0)
-					position.left = 0;
-				else if(position.left < event.data.maxPos.left)
-					position.left = event.data.maxPos.left;
-				if(position.top > 0)
-					position.top = 0;
-				else if(position.top < event.data.maxPos.top)
-					position.top = event.data.maxPos.top;
-
-				event.data.css('left', position.left);
-				event.data.css('top', position.top);
-				status.mouse.x = event.clientX;
-				status.mouse.y = event.clientY;
-			})
-		});
-		$('.draggable').on('mouseup.draggable', function (event) {
-			status.mouse.down = false;
-			$(this).off('mousemove.dragging');			
-		});
-		$('.draggable').on('mouseout.draggable', function (event) { $(this).trigger('mouseup'); });
-
-		$('#ui').on('mousedown.moveCamera', function (event) {
-			if(!status.pauseRenderer && status.mouse.bound === null) {
-				event.preventDefault();
-				status.mouse.down = true;
-				status.mouse.x = status.mouse.lastx = event.clientX;
-				status.mouse.y = status.mouse.lasty = event.clientY;
-				status.mouse.click = true;
-				Renderer.stopCameraMovement();
-				$(this).on('mousemove.moveCamera', function (event) {
-					status.mouse.x = event.clientX;
-					status.mouse.y = event.clientY;
-					// If user moves the mouse enough, declare this mousedown as NOT a click.
-					if(Math.abs(status.mouse.lastx - status.mouse.x) + Math.abs(status.mouse.lasty - status.mouse.y) > 3)
-						status.mouse.click = false;
-				});
-			}
-		});
-		$('#ui').on('mouseup.moveCamera', function (event) {
-			$(this).off('mousemove.moveCamera');
-			// If mouse didn't move, do the click
-			if(status.mouse.click) {
-				var sphereCoords = Renderer.clickSphere(status.mouse.x,status.mouse.y);
-				if(sphereCoords && debugMenu.active)
-					debugMenu.console.selectSquare(Math.round(sphereCoords[0] - 0.5) + 0.5, Math.round(sphereCoords[1] - 0.5) + 0.5);
-			}
-			status.mouse.x = status.mouse.lastx = status.mouse.y = status.mouse.lasty = status.mouse.scroll = 0;
-			status.mouse.click = status.mouse.down = false;
-		});
-		$('#ui').on('mousewheel.zoomCamera DOMMouseScroll.zoomCamera', function(event) {
-			if(status.mouse.bound === null) {
-			    event.preventDefault();
-			    if (event.type == 'mousewheel') {
-			        status.mouse.scroll += parseInt(event.originalEvent.wheelDelta);
-			    }
-			    else if (event.type == 'DOMMouseScroll') {
-			        status.mouse.scroll += parseInt(event.originalEvent.detail);
-			    }				
-			}
-		});
-
-		// Making the gene pieces interactive, gradding them onto the grid. etc
-		$('.toolbox').on('mousedown','.geneBlock',function (event) {
-			event.preventDefault();
-			var i,valid,element,position,	
-				gene = $(this),
-				geneImage = gene.find('img'),
-				currentUpgrade = Evolution.prototype.all[gene.data('geneId')],
-				overlayPosition = geneImage.parents('.overlay').offset(),
-				mousePosition = { left:event.clientX , top:event.clientY },
-				grid = Evolution.prototype.grid,
-				gridElement = $('#tb_board .grid'),
-				gridElementPosition = gridElement.offset(),
-				gridSquareSize = Evolution.prototype.SQUARE_SIZE;
-
-			// If gene has been placed on the board, pick it up to move it
-			if(gene.hasClass('placed')) {
-				element = gene;
-				var mouseOffsetGrid = { left: mousePosition.left - gridElementPosition.left, top: mousePosition.top - gridElementPosition.top }
-
-				// if the grid point you clicked on isn't actually this element, mousedown on the gridpoint owner and stop this at once
-				if(!grid[Math.floor(mouseOffsetGrid.left/10)][Math.floor(mouseOffsetGrid.top/10)]) {
-					event.stopImmediatePropagation();
-					return false;
-				}
-				else if(grid[Math.floor(mouseOffsetGrid.left/10)][Math.floor(mouseOffsetGrid.top/10)].id != currentUpgrade.id) {
-					currentUpgrade = grid[Math.floor(mouseOffsetGrid.left/10)][Math.floor(mouseOffsetGrid.top/10)];
-					element = gene = $('.gene_'+currentUpgrade.id,gridElement);
-					geneImage = gene.find('img');
-				}
-
-				for(i = 0; i < currentUpgrade.gene.shape.length; i++) {
-					delete grid[currentUpgrade.gene.shape[i].x + currentUpgrade.gene.placement.x][currentUpgrade.gene.shape[i].y + currentUpgrade.gene.placement.y];
-					$('.geneBlock.active.gene_'+currentUpgrade.id).removeClass('used');
-					currentUpgrade.gene.used = false;
-				}
-				currentUpgrade.gene.validPlacement = false;
-				var elementOffset = element.offset();
-				position = { left: elementOffset.left - overlayPosition.left, top: elementOffset.top - overlayPosition.top};				   
-			}
-			// If gene is in the 'toolshed', pick up a copy
-			else {
-				if(currentUpgrade.gene.used)
-					return false;
-				else
-					element = gene.clone(true).removeClass('active').empty().append(geneImage.clone());
-				position = { left: mousePosition.left - overlayPosition.left - geneImage.width(), top: mousePosition.top - overlayPosition.top - geneImage.height()};
-			}
-
-			geneImage.parents('.toolbox').append(element);
-			element.addClass('dragging').css('top',position.top).css('left', position.left);
-
-			currentUpgrade.gene.placement = new gridPoint();
-			gridElementPosition.top -= overlayPosition.top;
-			gridElementPosition.left -= overlayPosition.left;
-
-			$('.toolbox').on('mousemove.toolbox',null,{position:position,gridSquareSize:gridSquareSize,gridElement:gridElement,gridElementPosition:gridElementPosition,element:element,mousePosition:mousePosition,currentGene:currentUpgrade.gene}, function (event) {
-				event.data.position.left += event.clientX - event.data.mousePosition.left;
-				event.data.position.top += event.clientY - event.data.mousePosition.top;
-				event.data.mousePosition.left = event.clientX;
-				event.data.mousePosition.top = event.clientY;
-				if(event.data.gridElementPosition.left - gridSquareSize/2 < event.data.position.left && event.data.gridElementPosition.top - gridSquareSize/2 < event.data.position.top &&
-				  event.data.gridElementPosition.left + event.data.gridElement.width() + gridSquareSize/2 > event.data.position.left + event.data.currentGene.width*gridSquareSize && event.data.gridElementPosition.top + event.data.gridElement.height() + gridSquareSize/2 > event.data.position.top + event.data.currentGene.height*gridSquareSize) {
-					event.data.currentGene.placement.x = Math.round((event.data.position.left - event.data.gridElementPosition.left) / 10);
-					event.data.currentGene.placement.y = Math.round((event.data.position.top - event.data.gridElementPosition.top) / 10);
-					event.data.element.css('left',event.data.gridElementPosition.left + event.data.currentGene.placement.x*gridSquareSize - 1)
-						.css('top',event.data.gridElementPosition.top + event.data.currentGene.placement.y*gridSquareSize - 1);
-					valid = true;
-					for(i = 0; i < event.data.currentGene.shape.length; i++)
-						if(grid[event.data.currentGene.shape[i].x + event.data.currentGene.placement.x][event.data.currentGene.shape[i].y + event.data.currentGene.placement.y]) 
-							valid = false;
-
-					if(valid) {
-						event.data.element.addClass('valid');
-						event.data.currentGene.validPlacement = true;								
-					} else if(event.data.currentGene.validPlacement) {
-						event.data.element.removeClass('valid');
-						event.data.currentGene.validPlacement = false;							
-					}
-				}
-				else {
-					if(event.data.currentGene.validPlacement) {
-						event.data.element.removeClass('valid');
-						event.data.currentGene.validPlacement = false;							
-					}
-					event.data.element.css('left',event.data.position.left).css('top',event.data.position.top);
-				}
-			});
-			$(document).on('mouseup.toolbox',null,{gridSquareSize:gridSquareSize,currentGene:currentUpgrade.gene,currentUpgrade:currentUpgrade,element:element,gridElement:gridElement}, function (event) {
-				if(event.data.currentGene.validPlacement) {
-					$('.geneBlock.active.gene_'+event.data.currentUpgrade.id).addClass('used');
-					event.data.currentUpgrade.gene.used = true;
-					for(i = 0; i < event.data.currentGene.shape.length; i++) {
-						grid[event.data.currentGene.shape[i].x + event.data.currentGene.placement.x][event.data.currentGene.shape[i].y + event.data.currentGene.placement.y] = event.data.currentUpgrade;
-					}
-					event.data.element.removeClass('valid dragging').addClass('placed').css('left',event.data.currentGene.placement.x * gridSquareSize).css('top',event.data.currentGene.placement.y * gridSquareSize).appendTo(event.data.gridElement);
-				} else {
-					event.data.element.remove();
-				}
-				$('.toolbox').off('mousemove.toolbox');
-				$(document).off('mouseup.toolbox');
-			});
-
-			/*if(gene.hasClass('placed')) {
-				$('.toolbox').triggerHandler('mousemove');
-			}*/
-		});
-
-        //UI.interfaceParts.evolveMenu_button.element.trigger('click');
-        //UI.interfaceParts.mutateMenu_button.element.trigger('click');
-
-        // This is where we open the strain select/start game prompt. Auto-start for now.
-        Simulator.start('strain-zombie');
-	}
-
-   	// Function that runs on every frame, sending mouse movement from UI as coordinates to the renderer to move 3-d elements around
-	Renderer.onRender(function() {
-		if(!status.pauseRenderer) {
-			if(status.mouse.down) {
-				Renderer.moveCamera(status.mouse.lastx - status.mouse.x, status.mouse.lasty - status.mouse.y);
-				status.mouse.lastx = status.mouse.x;
-				status.mouse.lasty = status.mouse.y;
-			}
-			if(status.mouse.scroll) {
-				Renderer.zoomCamera(-status.mouse.scroll);
-				status.mouse.scroll = 0;
-			}
-		} 
-		else
-			Renderer.stopCameraMovement();
-	});
-
-	function addDataField(id,type,options) {
+	addDataField = function(id,type,options) {
 		if(arguments.length == 1) {
-			var type = arguments[0],
-				id = null;
+			type = arguments[0];
+			id = null;
 		}
 		// If second parameter is not a string and there are only two arguments, ID got left out
-		if(arguments.length == 2 && !arguments[1].substring) { 
-			var options = arguments[1],
-				type = arguments[0],
-				id = null;
+		if(arguments.length == 2 && !arguments[1].substring) {
+			options = arguments[1];
+			type = arguments[0];
+			id = null;
 		}
 		var newDataField = new DataField(id,type,options);
 		dataFieldsRoot.push(newDataField);
 		return newDataField;
-	}
+	},
 
-	function updateUI(dataField,data) {
-		if(data['money']) {
-			var money = parseInt(data['money']);
-			for(var i = 0; i < Evolution.prototype.selectedUpgrades.length; i++)
+	updateUI = function(dataField,data) {
+		if(data.money) {
+			var money = parseInt(data.money);
+			for(i = 0; i < Evolution.prototype.selectedUpgrades.length; i++)
 				money -= Evolution.prototype.all[Evolution.prototype.selectedUpgrades[i]].cost;
 			status.money = money;
 		}
 		if(dataField.visible) {
-			// Refresh the evolution menu if it is visible so you get updated availability of evolutions as you make money etc. 
+			// Refresh the evolution menu if it is visible so you get updated availability of evolutions as you make money etc.
 			if(dataField.id == 'evolveMenu') {
 				Evolution.prototype.refresh();
 			}
@@ -1086,18 +700,64 @@ var UserInterface = function UserInterface(Renderer,language) {
 					dataField.val(status.money);
 				}
 				else
-					dataField.val(data[dataField.dynamic]);				
+					dataField.val(data[dataField.dynamic]);
 			}
 		}
-	}
+	},
+
+	hideTooltip = function() {
+		$('#tooltip').css('visibility','hidden');
+	};
+
+	DataField.prototype.showToolTip = function (text,element,width) {
+		if(!element)
+			element = this.element;
+		var position = element.offset();
+
+		var tooltip = $('#tooltip');
+		if(tooltip.css('visibility') == 'hidden' && text) {
+			tooltip.empty();
+			if(width)
+				tooltip.css('width',width);
+			if(text.appendTo)
+				tooltip.append(text);
+			else
+				tooltip.html(text);
+			tooltip.css('top',position.top - (tooltip.height() + 20)).css('left',position.left).addClass('');
+			tooltip.css('display','none').css('visibility','visible').fadeIn('fast');
+		}
+
+		element.on('mouseout',this ,function (event) {
+			event.data.hideTooltip();
+		});
+	};
+	DataField.prototype.hideTooltip = hideTooltip;
+	DataField.prototype.interfaceParts = interfaceParts;
+	DataField.prototype.UIStatus = status;
+
+	// Function that runs on every frame, sending mouse movement from UI as coordinates to the renderer to move 3-d elements around
+	Renderer.onRender(function() {
+		if(!status.pauseRenderer) {
+			if(status.mouse.down) {
+				Renderer.moveCamera(status.mouse.lastx - status.mouse.x, status.mouse.lasty - status.mouse.y);
+				status.mouse.lastx = status.mouse.x;
+				status.mouse.lasty = status.mouse.y;
+			}
+			if(status.mouse.scroll) {
+				Renderer.zoomCamera(-status.mouse.scroll);
+				status.mouse.scroll = 0;
+			}
+		}
+		else
+			Renderer.stopCameraMovement();
+	});
 
 	return {
-		load: load,
 		interfaceParts: interfaceParts,
 		upgrades: Evolution.prototype.all,
 		addDataField: addDataField,
 		status: status,
-		toggleGlobeTooltip: function(activate) {
+		toggleGlobeTooltip: function(activate,getPointInfo) {
 			if(activate)
 				activatePlanetTooltip(getPointInfo);
 			else
@@ -1108,75 +768,61 @@ var UserInterface = function UserInterface(Renderer,language) {
 			return newEvolution;
 		},
 		setSimulator: function(S) {
-			Simulator = S;
 			DataField.prototype.Simulator = S;
-			Upgrade.prototype.Simulator = S;
-		},
-		init: function(onComplete) {
-			var preload_html = '<div id="progress"><div class="progressbar pace"><div class="pace-progress"></div></div><p></p></div>';
-			$("#ui").css('display','block').append($(preload_html));
-			onComplete();
-			/*
-			$.ajax({
-				url : 'ui/preload.htm',
-				dataType: 'html',
-				success : function (data) {
-					$("#ui").html(data);
-					onComplete();
-				}
-			});*/
 		},
 		updateUI: function(data) {
 			for(var i = 0, n = dataFieldsRoot.length; i < n; i++) {
 				updateUI(dataFieldsRoot[i],data);
 			}
 
-			if(status.mutateGridSize < data['gridSize']) {
-				Evolution.prototype.gridSize = status.mutateGridSize = data['gridSize'];
+			if(status.mutateGridSize < data.gridSize) {
+				Evolution.prototype.gridSize = status.mutateGridSize = data.gridSize;
 				if(!Evolution.prototype.grid)
 					Evolution.prototype.grid = [];
 				// Create the grid storage object for keeping track of each gene location
-				while(Evolution.prototype.grid.length < data['gridSize']) {
+				while(Evolution.prototype.grid.length < data.gridSize) {
 					Evolution.prototype.grid.push([]);
 				}
 				$('#tb_board .grid', Evolution.prototype.mutationMenu.element).css('width',data.gridSize*Evolution.prototype.SQUARE_SIZE).css('height',data.gridSize*Evolution.prototype.SQUARE_SIZE);
 			}
 		},
 		addNews: function(item) {
-			if(arguments.length == 0)
+			if(arguments.length === 0)
 				console.error('no language item id defined');
 			else {
-				if(arguments.length > 1) 
-					var langStr = i18n.t('messages:'+item, { postProcess: "sprintf", sprintf: Array.prototype.slice.call(arguments,1) });
+				var langStr;
+				if(arguments.length > 1)
+					langStr = i18n.t('messages:'+item, { postProcess: 'sprintf', sprintf: Array.prototype.slice.call(arguments,1) });
 				else
-					var langStr = i18n.t('messages:'+item);
+					langStr = i18n.t('messages:'+item);
 
-				interfaceParts['newsTicker'].element.prepend($('<p>'+langStr+'</p>'));				
+				interfaceParts.newsTicker.element.prepend($('<p>'+langStr+'</p>'));
 			}
 		},
 		// Call with alert id followed by the data to fill the alert with, any number of parameters.
 		alert: function(item) {
-			if(arguments.length == 0)
+			if(arguments.length === 0)
 				console.error('no language item id defined');
 			else {
-				if(arguments.length > 1) 
-					var dom = $(i18n.t('dom:alerts.'+item, { postProcess: "sprintf", sprintf: Array.prototype.slice.call(arguments,1) }));
+				var dom;
+				if(arguments.length > 1)
+					dom = $(i18n.t('dom:alerts.'+item, { postProcess: 'sprintf', sprintf: Array.prototype.slice.call(arguments,1) }));
 				else
-					var dom = $(i18n.t('dom:alerts.'+item));
+					dom = $(i18n.t('dom:alerts.'+item));
 
-				interfaceParts['alert'].element.append(dom)
-				interfaceParts['alert'].display();
+				interfaceParts.alert.element.append(dom);
+				interfaceParts.alert.display();
 			}
 		},
 		addMutationGridOverlay: function(x,y) {
 			var overlay = $('<div class="grid_overlay"></div>');
 			if(!x)
 				overlay.css('width', '100%');
-			else 
+			else
 				overlay.css('width', Evolution.prototype.SQUARE_SIZE);
 			if(!y)
 				overlay.css('height', '100%');
-			else 
+			else
 				overlay.css('height', Evolution.prototype.SQUARE_SIZE);
 
 			if(!x)
@@ -1191,4 +837,4 @@ var UserInterface = function UserInterface(Renderer,language) {
 			$('.toolbox .grid').append(overlay);
 		}
 	};
-}
+};

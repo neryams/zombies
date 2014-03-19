@@ -13,7 +13,14 @@ exports.run = function(current,passData) {
 	passData.panic = 0;
 };
 exports.options = {
-	init: function(callback) {
+	init: function() {
+		// Create the starting seed for the upgrade tree. Strains should only have one upgrade. Add other free upgrades via other modules.
+		// Upgrades attatched to a strain get a special ID "strain", the center of the uprgade grid
+		this.S.addUpgrades(this,
+			{cost:0,paths:[],name:'Virus',active:true, description:'Basic Virus. Creates slow, witless zombies that enjoy eating healthy brains.'} // setting active to true makes the upgrade automatically purchased
+		);
+	},
+	onStart: function(callback) {
 		// Code to start the simulation
 		var startRandomizer = 1000 + Math.round(Math.random()*4000);
 		var randPoint = null;
@@ -30,12 +37,6 @@ exports.options = {
 				}
 			}
 		}
-
-		// Create the starting seed for the upgrade tree. Strains should only have one upgrade. Add other free upgrades via other modules.
-		// Upgrades attatched to a strain get a special ID "strain", the center of the uprgade grid
-		this.S.addUpgrades(this,
-			{cost:0,paths:[],name:'Virus',active:true, description:'Basic Virus. Creates slow, witless zombies that enjoy eating healthy brains.'} // setting active to true makes the upgrade automatically purchased
-		);
 
 		// Send the starting point back to the callback function to start the simulation
 		callback(randPoint);

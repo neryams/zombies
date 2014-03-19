@@ -49,9 +49,69 @@ var Renderer = function (scaling) {
     // Load decal textures here
     visualization.decalTextures.gun = new THREE.ImageUtils.loadTexture('ui/gun.png');
 
-    var init = function(texture, gConfig, SimulatorLink) {
-        generatorConfig = gConfig;
-        Simulator = SimulatorLink;
+    var init = function() {
+        /* Create 3D Globe --------------------- */
+        Camera = new THREE.PerspectiveCamera( 60, WindowConfig.windowX / WindowConfig.windowY, 1, 10000 );
+        Camera.position.z = 450;
+
+        Scene = new THREE.Scene();
+
+        var group = new THREE.Object3D();
+        Sphere = new THREE.Object3D();
+
+        group.add( Sphere );
+        Scene.add( group );
+
+        // lights
+
+        var ambientLight = new THREE.AmbientLight( 0x404040 );
+        Scene.add( ambientLight );
+
+        var directionalLight = new THREE.DirectionalLight( 0xcccccc, 2 );
+        directionalLight.position.set( -500, 0, 500 );
+        directionalLight.target = Sphere;
+        Scene.add( directionalLight );
+
+        // Visualization layer floating above the earth
+        var visualLayerGeometry = new THREE.SphereGeometry( 202, 40, 30 );
+        visualization.texture = new THREE.Texture( visualization.textureCanvas );
+        visualization.mesh = new THREE.Mesh(visualLayerGeometry, new THREE.MeshLambertMaterial({ map: visualization.texture, opacity: 0.8, transparent: true }));
+        visualization.mesh.visible = false;
+        Sphere.add( visualization.mesh );
+
+        // Arc for showing shipping routes and flights
+        var visualArcGeometry = new THREE.Geometry();
+        while(visualArcGeometry.vertices.length < 108)
+            visualArcGeometry.vertices.push( new THREE.Vector3( 0, 0, 0 ) );
+        visualization.arc = new THREE.Line(visualArcGeometry,new THREE.LineBasicMaterial({linewidth:5}));
+        visualization.arc.visible = false;
+        Sphere.add( visualization.arc );
+
+        // Bars to show zombies and humans
+        var geometry = new THREE.CubeGeometry(1, 1, 1);
+        // Move the 'position point' of the cube to the bottom so it sits on the surface of the globe.
+        geometry.applyMatrix( new THREE.Matrix4().makeTranslation(0, 0, 0.5) );
+        DataBarMesh = new THREE.Mesh(geometry); // humans
+
+        Camera.lookAt( Scene.position );
+        //Camera.position.x = -100;
+
+        /*SceneRenderer = new THREE.CanvasRenderer();
+        SceneRenderer.setSize( window.innerWidth, window.innerHeight );*/
+        SceneRenderer = new THREE.WebGLRenderer( { antialias: true, clearColor: 0x060708, clearAlpha: 1 } );
+        resize();
+
+        document.getElementById('container').appendChild( SceneRenderer.domElement );
+
+        DataBarsGeometry = new THREE.Geometry();
+        DataBarsGeometry.dynamic = true;
+
+        addHordeParticles();
+    },
+
+    simulatorStart = function(texture, generatorOptions, simulatorLink) {
+        generatorConfig = generatorOptions;
+        Simulator = simulatorLink;
 
         // Function for filling the canvases with the data generated previously
         var buildImage = function(globeTexture, globeHeightmap, texture) {
@@ -138,28 +198,6 @@ var Renderer = function (scaling) {
 
         buildImage(globeTexture,globeHeightmap,texture);
 
-        /* Create 3D Globe --------------------- */
-        Camera = new THREE.PerspectiveCamera( 60, WindowConfig.windowX / WindowConfig.windowY, 1, 10000 );
-        Camera.position.z = 450;
-
-        Scene = new THREE.Scene();
-
-        var group = new THREE.Object3D();
-        Sphere = new THREE.Object3D();
-
-        group.add( Sphere );
-        Scene.add( group );
-
-        // lights
-
-        var ambientLight = new THREE.AmbientLight( 0x404040 );
-        Scene.add( ambientLight );
-
-        var directionalLight = new THREE.DirectionalLight( 0xcccccc, 2 );
-        directionalLight.position.set( -500, 0, 500 );
-        directionalLight.target = Sphere;
-        Scene.add( directionalLight );
-
         // earth
 
         var earthTexture = new THREE.Texture( globeTexture );
@@ -174,43 +212,7 @@ var Renderer = function (scaling) {
         var earthMesh = new THREE.Mesh( geometry, material );
         Sphere.add( earthMesh );
 
-        // Visualization layer floating above the earth
-        var visualLayerGeometry = new THREE.SphereGeometry( 202, 40, 30 );
-        visualization.texture = new THREE.Texture( visualization.textureCanvas );
-        visualization.mesh = new THREE.Mesh(visualLayerGeometry, new THREE.MeshLambertMaterial({ map: visualization.texture, opacity: 0.8, transparent: true }));
-        visualization.mesh.visible = false;
-        Sphere.add( visualization.mesh );
-
-        // Arc for showing shipping routes and flights
-        var visualArcGeometry = new THREE.Geometry();
-        while(visualArcGeometry.vertices.length < 108)
-            visualArcGeometry.vertices.push( new THREE.Vector3( 0, 0, 0 ) );
-        visualization.arc = new THREE.Line(visualArcGeometry,new THREE.LineBasicMaterial({linewidth:5}));
-        visualization.arc.visible = false;
-        Sphere.add( visualization.arc );
-
-        // Bars to show zombies and humans
-        geometry = new THREE.CubeGeometry(1, 1, 1);
-        // Move the 'position point' of the cube to the bottom so it sits on the surface of the globe.
-        geometry.applyMatrix( new THREE.Matrix4().makeTranslation(0, 0, 0.5) );
-        DataBarMesh = new THREE.Mesh(geometry); // humans
-
-        Camera.lookAt( Scene.position );
-        //Camera.position.x = -100;
-
-        /*SceneRenderer = new THREE.CanvasRenderer();
-        SceneRenderer.setSize( window.innerWidth, window.innerHeight );*/
-        SceneRenderer = new THREE.WebGLRenderer( { antialias: true, clearColor: 0x060708, clearAlpha: 1 } );
-        resize();
-
-        document.getElementById('container').appendChild( SceneRenderer.domElement );
-
-        DataBarsGeometry = new THREE.Geometry();
-        DataBarsGeometry.dynamic = true;
-
-        addHordeParticles();
         addData();
-
         ready = true;
     },
 
@@ -273,7 +275,8 @@ var Renderer = function (scaling) {
                     'ui/zombie_basic.png'
                 ),
                 transparent: true,
-                depthWrite: false
+                depthWrite: false,
+                opacity: 0.5
             });
 
         // now create the individual particles
@@ -749,6 +752,7 @@ var Renderer = function (scaling) {
         hideArc: function () {
             visualization.arc.visible = false;
         },
-        init: init
+        init: init,
+        simulatorStart: simulatorStart
     };
 };

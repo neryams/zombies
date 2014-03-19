@@ -360,6 +360,17 @@ function Simulator(R, UI, generatorConfig, generatorData) {
 			}
 		}
 	};
+
+	// if running in node, grab the modules automagically
+	if(typeof require === 'function') {
+		for(i = 0; i < this.loadModules.length; i++)
+			this.addModule(this.loadModules[i],'node');
+    // if doing PHP loading, run the provided function
+	} else if(typeof this.loadModules === 'function') {
+		this.loadModules();
+    } else {
+		console.error('Unable to load modules');
+    }
 }
 Simulator.prototype = {
 	modules: null,
@@ -379,22 +390,11 @@ Simulator.prototype = {
 Simulator.prototype.start = function(strainId) {
 	// Add all the modules specified in the contruction of the Simulator
 
-	// if running in node, grab the modules automagically
-	if(typeof require === 'function') {
-		for(var i = 0; i < this.loadModules.length; i++)
-			this.addModule(this.loadModules[i],'node');
-    // if doing PHP loading, run the provided function
-	} else if(typeof this.loadModules === 'function') {
-		this.loadModules();
-    } else {
-		console.error('Unable to load modules');
-    }
-
 	this.addActive(strainId);
 	Math.seedrandom(); // Before we start the simulation, generate a new random seed so the game itself is unpredictable with respect to the land generation.
 
 	var that = this;
-	that.strain.init(function(startSq) {
+	that.strain.onStart(function(startSq) {
 		that.startPoint = startSq;
 		// Create the first horde, with one zombie in it.
 		that.hordes.push(new Horde(1, startSq));
@@ -405,7 +405,7 @@ Simulator.prototype.start = function(strainId) {
 				current;
 			if (that.upgrades.hasOwnProperty(key)) {
 				current = that.upgrades[key];
-				for(i = 0; i < current.paths.length; i++) {
+				for(var i = 0; i < current.paths.length; i++) {
 					that.upgrades[current.paths[i]].children.push(current);
 					pathPointers.push(that.upgrades[current.paths[i]]);
 				}
@@ -459,7 +459,7 @@ Simulator.prototype.addModule = function(id,moduleArray) {
 
 			newModule.id = id;
 			this.modules[id] = newModule;
-			if(newModule.init !== undefined && newModule.type != 'strain')
+			if(newModule.init !== undefined)
 				newModule.init();
 
 			// Add children recursively
@@ -981,9 +981,24 @@ function Module(type,processFunction,options) {
 	if(options !== undefined)
 		for (var key in options)
 			if (options.hasOwnProperty(key)) {
-				if(typeof(options[key]) === 'function')
-					options[key].bind(this);
-				this[key] = options[key];
+				if(key == 'upgrades') {
+					for(var i = 0; i < options[key].length; i++) {
+						var upgrade = options[key][i];
+						if(upgrade.target) {
+							var target = this.S.modules[upgrade.target];
+							delete options[key].target;
+							this.S.addUpgrades(target, upgrade);
+						}
+						else {
+							this.S.addUpgrades(this, upgrade);
+						}
+					}
+				}
+				else {
+					if(typeof(options[key]) === 'function')
+						options[key].bind(this);
+					this[key] = options[key];
+				}
 			}
 }
 
