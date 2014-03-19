@@ -110,9 +110,13 @@ exports.run = function(current,passData,multiplier) {
 			}
 	    } else {
 	    	// zombie horde did not move, possibly combine with a horde in the same square
-	    	if(current.location.hordes.length > 0 && current.location.hordes[0].id !== current.id && passData.rand > 1 - (this.S.hordes.length / 40000)) {
-	    		current.location.hordes[0].size += current.size;
-	    		current.size = 0;
+	    	if(current.location.hordes.length > 1 && passData.rand > 1 - (this.S.hordes.length / 40000)) {
+	    		var newRand = Math.pow(((passData.rand*100)%10)/10, 3);
+	    			combineWith = Math.floor(current.location.hordes.length*newRand);
+	    		if(current.location.hordes[combineWith].id != current.id) {
+	    			current.location.hordes[combineWith].size += current.size;
+	    			current.size = 0;
+	    		}
 	    	}
 	    }
 	}
@@ -142,6 +146,7 @@ exports.options = {
 						var distance = this.S.bakedValues.latDistances[lat][direction/2];
 					else
 						var distance = this.S.bakedValues.latDistances[lat][Math.floor(direction/2)+4];
+					// Normal curve approximation formula
 			    	var x = (distance*0.5 - meanMovement)/(1.414213562*sigma),
 			    		t = 1.0/(1.0 + 0.3275911*x);
 					result[direction] = (((((1.061405429*t - 1.453152027)*t) + 1.421413741)*t - 0.284496736)*t + 0.254829592)*t*Math.pow(Math.E,-x*x);
