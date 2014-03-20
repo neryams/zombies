@@ -117,10 +117,9 @@ $(function () {
                     UI.setSimulator(S);
                     generatorWorker.terminate();
 
-                    MI.load.end();
-
-                    MI.strainPrompt(null, function(strain) {
+                    MI.strainPrompt(S.getStrainOptions(), function(strain) {
                         S.start(strain);
+                        MI.load.end();
                         R.animate();
                     });
 

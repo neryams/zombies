@@ -227,6 +227,7 @@ function Simulator(R, UI, generatorConfig, generatorData) {
 		gridSize: 5
 	};
 	this.modules = {};
+	this.strainOptions = [];
 	this.activeModules = {infect:[],spread:[],event:[]};
 	this.iteration = 0;
 	this.date = new Date();
@@ -245,7 +246,7 @@ function Simulator(R, UI, generatorConfig, generatorData) {
 			phiy = (lat+latdelta)/180*Math.PI;
 		
 		var a = (Math.sin(phi/2) * Math.sin(phi/2) +
-		        Math.sin(theta/2) * Math.sin(theta/2) * Math.cos(phix) * Math.cos(phiy));
+			Math.sin(theta/2) * Math.sin(theta/2) * Math.cos(phix) * Math.cos(phiy));
 		return 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)) * 6378; // rough estimate of the radius of the earth in km (6378.1)
 	};
 
@@ -361,6 +362,7 @@ function Simulator(R, UI, generatorConfig, generatorData) {
 		}
 	};
 
+	// Load specified modules
 	// if running in node, grab the modules automagically
 	if(typeof require === 'function') {
 		for(i = 0; i < this.loadModules.length; i++)
@@ -384,6 +386,9 @@ Simulator.prototype = {
 	loadModules: null,
 	setName: function (name) {
 		this.properties.virus_name = name;
+	},
+	getStrainOptions: function() {
+		return this.strainOptions;
 	}
 };
 
@@ -391,10 +396,18 @@ Simulator.prototype.start = function(strainId) {
 	// Add all the modules specified in the contruction of the Simulator
 
 	this.addActive(strainId);
+
+	for(var i = 0; i < this.strainOptions.length; i++) {
+		if(this.strainOptions[i].id !== strainId)
+			delete this.modules[this.strainOptions[i].id];
+	}
+	delete this.strainOptions;
+	delete this.loadModules;
+
 	Math.seedrandom(); // Before we start the simulation, generate a new random seed so the game itself is unpredictable with respect to the land generation.
 
 	var that = this;
-	that.strain.onStart(function(startSq) {
+	this.strain.onStart(function(startSq) {
 		that.startPoint = startSq;
 		// Create the first horde, with one zombie in it.
 		that.hordes.push(new Horde(1, startSq));
@@ -424,7 +437,7 @@ Simulator.prototype.start = function(strainId) {
 		if(debugMenu.active) {
 			debugMenu.setSimulator(that).newTick();
 		}
-
+		
 		that.tick();
 	});
 };
@@ -446,8 +459,8 @@ Simulator.prototype.addModule = function(id,moduleArray) {
 
 	if(!this.modules[id]) {
 		if(moduleArray === 'node') {
-	        var loaded = require('./js/modules/'+id+'.js');
-	        newModule = new Module(loaded.type,loaded.run,loaded.options);
+			var loaded = require('./js/modules/'+id+'.js');
+			newModule = new Module(loaded.type,loaded.run,loaded.options);
 		} else {
 			newModule = moduleArray[id];
 		}
@@ -459,6 +472,9 @@ Simulator.prototype.addModule = function(id,moduleArray) {
 
 			newModule.id = id;
 			this.modules[id] = newModule;
+			if(newModule.type === 'strain') {
+				this.strainOptions.push(newModule);
+			}
 			if(newModule.init !== undefined)
 				newModule.init();
 
@@ -641,7 +657,7 @@ Simulator.prototype.purchaseMutation = function(mutations) {
 	var grid = [];
     // Create the grid storage object for keeping track of each gene location
 	while(grid.length < this.properties.gridSize) {
-	    grid.push([]);
+		grid.push([]);
 	}
 
 	// Check the grid placements and costs of modules to make sure this is a valid upgrade. 
@@ -865,9 +881,9 @@ Simulator.prototype.tick = function() {
 		// Iterate over the sparse array
 		for (var point in this.pointsToWatch) {
 			// If item is array index
-		    if (String(point >>> 0) == point && point >>> 0 != 0xffffffff) {
+			if (String(point >>> 0) == point && point >>> 0 != 0xffffffff) {
 				this.updateSquare(this.points[point]);
-		    }
+			}
 		}
 		this.pointsToWatch.length = 0;
 

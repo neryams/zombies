@@ -23,16 +23,16 @@ exports.options = {
 			this.world_pop += this.S.populatedPoints[i].total_pop;
 		}
 
-        this.S.UI.interfaceParts.stats.addDataField('text',{
+        this.S.UI.interfaceParts.stats.addDataField({
         	dynamic: 'cur_date'
         });
-        this.S.UI.interfaceParts.stats.addDataField('text',{title: 'ui:labels.virus_name'}).val(this.S.properties.virus_name);
-        this.S.UI.interfaceParts.stats.addDataField('text',{
+        this.S.UI.interfaceParts.stats.addDataField({title: 'ui:labels.virus_name'}).val(this.S.properties.virus_name);
+        this.S.UI.interfaceParts.stats.addDataField({
         	title: 'ui:labels.population_world',
         	dynamic: 'world_pop',
         	value: this.world_pop
         });
-        this.S.UI.interfaceParts.stats.addDataField('text',{
+        this.S.UI.interfaceParts.stats.addDataField({
         	title: 'ui:labels.population_zombies',
         	dynamic: 'world_infected', 
         	value: this.world_infected

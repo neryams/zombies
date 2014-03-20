@@ -74,8 +74,15 @@ exports.options = {
 		}
 	},
 	onActivate: function() {
-		var progressContainer = this.S.UI.addDataField('div',{ class: 'bottom_stats' });
-		this.progressBar = progressContainer.addDataField('progressBar',{title: 'Vaccine Progress', width: 300}).val(0);
+		var progressContainer = this.S.UI.addDataField({
+			type: 'div',
+			class: 'bottom_stats'
+		});
+		this.progressBar = progressContainer.addDataField({
+			type: 'progressBar',
+			title: 'Vaccine Progress', 
+			width: 300
+		}).val(0);
 	},
 	onMutationChange: function(grid) {
 		this.currentColors.length = 0;

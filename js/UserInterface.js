@@ -14,20 +14,28 @@ Date.prototype.getMonthNameShort = function() {
 	return i18n.t('ui:dates.month_names_short.'+this.getMonth());
 };
 
-function DataField(id,type,options,parent) {
+function DataField(id,options,parent) {
 	var newElement, fullElement,
 		className = 'dataField';
-	if(id) {
-		this.interfaceParts[id] = this;
-		this.id = id;
-		className += ' dataField-'+id;
+
+	if(typeof id == 'object') {
+		options = id;
+		id = undefined;
 	}
 
-	this.children = [];
-	if(type) {
-		this.dataType = type;
-		className += ' dataField-'+type;
+	if(!id)
+		id = '_' + Object.keys(this.interfaceParts).length;
+	this.interfaceParts[id] = this;
+	this.id = id;
+	className += ' dataField-'+id;
+
+	if(options && options.type) {
+		this.dataType = options.type;
+		delete options.type;
 	}
+	className += ' dataField-'+this.dataType;
+
+	this.children = [];
 
 	if(this.dataType == 'text')
 		newElement = $(i18n.t('dom:interface.dataField.text'));
@@ -59,6 +67,7 @@ function DataField(id,type,options,parent) {
 	}
 	
 	this.element = newElement;
+	this.fullElement = fullElement;
 
 	if(options)
 		for (var key in options)
@@ -128,19 +137,17 @@ DataField.prototype = {
 	mousePriority:false,
 	interfaceParts: null,
 	UIStatus: null,
-	addDataField: function(id,type,options) {
-		if(arguments.length == 1) {
-			type = arguments[0];
-			id = null;
+	remove: function() {
+		this.fullElement.remove();
+		delete this.interfaceParts[this.id];
+	},
+	addDataField: function(id,options) {
+		if(typeof id == 'object') {
+			options = id;
+			id = undefined;
 		}
 
-		// If second parameter is not a string and there are only two arguments, ID got left out
-		if(arguments.length == 2 && !arguments[1].substring) {
-			options = arguments[1];
-			type = arguments[0];
-			id = null;
-		}
-		var newDataField = new DataField(id,type,options,this);
+		var newDataField = new DataField(id,options,this);
 		return newDataField;
 	},
 	display: function(recursive) {
@@ -219,8 +226,12 @@ DataField.prototype = {
 function Evolution(name,levels,options) {
 	var i,j,evol = this;
 
+	if(!options)
+		options = {};
+
+	options.type = 'div';
 	// Inherit the DataField class
-	DataField.call( this, null, 'div', options, this.evolveMenu );
+	DataField.call( this, '_evol'+name, options, this.evolveMenu );
 	// Save the process function to the Evolution object
 	this.name = name;
 
@@ -605,7 +616,7 @@ Evolution.prototype.buildWeb = function(upgrade,lastTheta,depth) {
 
 var UserInterface = function UserInterface(Renderer) {
 	var sphere_coords,
-		dataFieldsRoot = [], interfaceParts = {},
+		interfaceParts = {},
 		status = {
 			mouse: { x:0, y:0, lastx:0, lasty:0, down:false, click: false, scroll: 0, bound: null },
 			pauseRenderer: false,
@@ -662,19 +673,8 @@ var UserInterface = function UserInterface(Renderer) {
 		$('#ui').off('mousemove.render_tooltip');
 	},
 
-	addDataField = function(id,type,options) {
-		if(arguments.length == 1) {
-			type = arguments[0];
-			id = null;
-		}
-		// If second parameter is not a string and there are only two arguments, ID got left out
-		if(arguments.length == 2 && !arguments[1].substring) {
-			options = arguments[1];
-			type = arguments[0];
-			id = null;
-		}
-		var newDataField = new DataField(id,type,options);
-		dataFieldsRoot.push(newDataField);
+	addDataField = function(id,options) {
+		var newDataField = new DataField(id,options);
 		return newDataField;
 	},
 
@@ -771,9 +771,10 @@ var UserInterface = function UserInterface(Renderer) {
 			DataField.prototype.Simulator = S;
 		},
 		updateUI: function(data) {
-			for(var i = 0, n = dataFieldsRoot.length; i < n; i++) {
-				updateUI(dataFieldsRoot[i],data);
-			}
+			for (var key in interfaceParts)
+				if (interfaceParts.hasOwnProperty(key)) {
+					updateUI(interfaceParts[key],data);
+				}
 
 			if(status.mutateGridSize < data.gridSize) {
 				Evolution.prototype.gridSize = status.mutateGridSize = data.gridSize;
@@ -812,6 +813,7 @@ var UserInterface = function UserInterface(Renderer) {
 
 				interfaceParts.alert.element.append(dom);
 				interfaceParts.alert.display();
+				return interfaceParts.alert;
 			}
 		},
 		addMutationGridOverlay: function(x,y) {

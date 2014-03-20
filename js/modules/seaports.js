@@ -96,7 +96,8 @@ exports.options = {
         }
 
 		// Shipping Schedule display button.
-        this.shippingMenu = this.S.UI.interfaceParts.sidebarAccordion.addDataField('accordion_child',{
+        this.shippingMenu = this.S.UI.interfaceParts.sidebarAccordion.addDataField({
+        	type: 'accordion_child',
         	title: 'ui:buttons.shipping',
         	class: 'shipping'
         });
@@ -125,7 +126,7 @@ exports.options = {
 
 							// Make progress bar for shipping route and add it to the intervals object
 							progressBar = this.shippingMenu.addDataField('progressBar',{title: this.S.countries[i].name+' to '+this.S.countries[j].name, width: 186});
-							progressBar.element.parent().on('mouseover.showRoute',{R: this.S.Renderer, point1: a, point2: b}, this.displayArc);
+							progressBar.element.parent().on('mouseover.showRoute',{R: this.S.R, point1: a, point2: b}, this.displayArc);
 							progressBar.val(this.getShipDate(this.S.date,interval));
 							if(!this.intervals['int'+interval])
 								this.intervals['int'+interval] = [];
