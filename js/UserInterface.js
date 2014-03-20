@@ -37,23 +37,31 @@ function DataField(id,options,parent) {
 
 	this.children = [];
 
-	if(this.dataType == 'text')
-		newElement = $(i18n.t('dom:interface.dataField.text'));
-	else if(this.dataType == 'p')
-		newElement = $(i18n.t('dom:interface.dataField.paragraph'));
-	else if(this.dataType == 'progressBar')
-		newElement = $(i18n.t('dom:interface.dataField.progressBar'));
-	else if(this.dataType == 'button')
-		newElement = fullElement = $(i18n.t('dom:interface.dataField.default',{ element:'a', className:className+' button tiny' }));
-	else if(this.dataType == 'accordion') {
-		newElement = fullElement = $(i18n.t('dom:interface.dataField.default',{ element:'dl', className:className+' accordion' })).attr('data-accordion','');
+	switch(this.dataType) {
+		case 'text':
+			newElement = $(i18n.t('dom:interface.dataField.text'));
+		break;
+
+		case 'p':
+			newElement = $(i18n.t('dom:interface.dataField.paragraph'));
+		break;
+
+		case 'progressBar':
+			newElement = $(i18n.t('dom:interface.dataField.progressBar'));
+		break;
+		case 'button':
+			newElement = fullElement = $(i18n.t('dom:interface.dataField.default',{ element:'a', className:className+' button tiny' }));
+		break;
+		case 'accordion':
+			newElement = fullElement = $(i18n.t('dom:interface.dataField.default',{ element:'dl', className:className+' accordion' })).attr('data-accordion','');
+		break;
+		case 'accordion_child':
+			newElement = $(i18n.t('dom:interface.dataField.default',{ element:'div', className:className }));
+			fullElement = $(i18n.t('dom:interface.dataField.default',{ element:'dd', className:'' })).append(newElement);
+		break;
+		default:
+			newElement = fullElement = $(i18n.t('dom:interface.dataField.default',{ element:this.dataType, className:className }));
 	}
-	else if(this.dataType == 'accordion_child') {
-		newElement = $(i18n.t('dom:interface.dataField.default',{ element:'div', className:className }));
-		fullElement = $(i18n.t('dom:interface.dataField.default',{ element:'dd', className:'' })).append(newElement);
-	}
-	else
-		newElement = fullElement = $(i18n.t('dom:interface.dataField.default',{ element:this.dataType, className:className }));
 
 	if(!fullElement)
 		fullElement = $(i18n.t('dom:interface.dataField.default',{ element:'div', className:className })).append(newElement);
