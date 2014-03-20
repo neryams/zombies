@@ -437,7 +437,7 @@ Simulator.prototype.start = function(strainId) {
 		if(debugMenu.active) {
 			debugMenu.setSimulator(that).newTick();
 		}
-		
+
 		that.tick();
 	});
 };
@@ -470,21 +470,24 @@ Simulator.prototype.addModule = function(id,moduleArray) {
 			for(i = 0, n = newModule.dependencies.length; i < n; i++)
 				this.addModule(newModule.dependencies[i],moduleArray);
 
-			newModule.id = id;
-			this.modules[id] = newModule;
-			if(newModule.type === 'strain') {
-				this.strainOptions.push(newModule);
+			// Make sure this module wasn't added somewhere in its dependencies
+			if(!this.modules[id]) {
+				newModule.id = id;
+				this.modules[id] = newModule;
+				if(newModule.type === 'strain') {
+					this.strainOptions.push(newModule);
+				}
+				if(newModule.init !== undefined)
+					newModule.init();
+
+				// Add children recursively
+				for(i = 0, n = newModule.children.length; i < n; i++)
+					this.addModule(newModule.children[i],moduleArray);
+
+				// Activate after adding all linked modules
+				if(newModule.alwaysActive)
+					this.addActive(id);
 			}
-			if(newModule.init !== undefined)
-				newModule.init();
-
-			// Add children recursively
-			for(i = 0, n = newModule.children.length; i < n; i++)
-				this.addModule(newModule.children[i],moduleArray);
-
-			// Activate after adding all linked modules
-			if(newModule.alwaysActive)
-				this.addActive(id);
 		}
 		else
 			console.error('Module "'+id+'" not found. Try adding it to Dependencies or Children');
@@ -557,26 +560,36 @@ Simulator.prototype.unPause = function() {
 
 Simulator.prototype.addUpgrades = function(module) {
 	var levels = [],
-		j;
+		i = 0,
+		n = arguments.length;
 
-	for (var i = 1, n = arguments.length; i < n; i++) {
-		j = i - 1;
-		levels[j] = arguments[i];
-		if(module.type == 'strain')
-			levels[j].id = 'strain';
-		else if(n == 2)
-			levels[j].id = module.id;
+	// If an upgrade got added with the wrong id, fix it
+	if(this.upgrades[module.id] !== undefined) {
+		this.upgrades[module.id + '_0'] = this.upgrades[module.id];
+		delete this.upgrades[module.id];
+	}
+
+	while(this.upgrades[module.id + '_' + i] !== undefined) {
+		i++;
+	}
+
+	for (var j = 1; j < n; i++,j++) {
+		var currentLevel = arguments[j];
+		levels.push(currentLevel);
+
+		if(n == 2)
+			currentLevel.id = module.id;
 		else
-			levels[j].id = module.id + '_' + j;
+			currentLevel.id = module.id + '_' + i;
 
-		this.upgrades[levels[j].id] = new Upgrade(levels[j]);
-		this.upgrades[levels[j].id].module = module;
-		this.upgrades[levels[j].id].level = j;
+		this.upgrades[currentLevel.id] = new Upgrade(currentLevel);
+		this.upgrades[currentLevel.id].module = module;
+		this.upgrades[currentLevel.id].level = currentLevel;
 
 		// Send in default values etc
-		if(!levels[j].bg)
-			levels[j].bg = this.upgrades[levels[j].id].bg;
-		delete levels[j].onUpgrade;
+		if(!currentLevel.bg)
+			currentLevel.bg = this.upgrades[currentLevel.id].bg;
+		delete currentLevel.onUpgrade;
     }
     // send all the levels to the UI
     this.UI.addEvolution(module.id,levels);

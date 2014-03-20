@@ -41,7 +41,7 @@ exports.options = {
 		// Send the starting point back to the callback function to start the simulation
 		callback(randPoint);
 	},
-	name: 'Mind Slave Robots',
-	description: 'Takes over people',
+	name: 'Self-Replicating Robots',
+	description: 'Clones Selves',
 	children: ['base-movement','process-fightBite']
 };

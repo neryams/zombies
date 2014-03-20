@@ -11,7 +11,7 @@ exports.options = {
 		this.panic = 0;
 		this.zombieStartStrength = 0;
 		this.S.addUpgrades(this,
-			{cost: 1000,paths:['strain'],name:'Hunger', onUpgrade: function() {
+			{cost: 1000,paths:['strain-zombie'],name:'Hunger', onUpgrade: function() {
 				this.val('zombieStartStrength',5);
 				this.val('panic',1);
 			}, description:'Makes zombies aggressive.'},

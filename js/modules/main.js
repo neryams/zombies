@@ -4,5 +4,5 @@
 exports.type = 'event';
 exports.run = function() {};
 exports.options = {
-	children: ['strain-zombie','event-worldStats','base-population','process-transfer']
+	children: ['strain-zombie','strain-reproducer','event-worldStats','base-population','process-transfer']
 };
