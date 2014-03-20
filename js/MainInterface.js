@@ -465,7 +465,7 @@ function MainInterface(UI,R) {
 			strainPrompt.addDataField({
 				type:'button',
 				onClick: selectStrain(options[i].id)
-			}).val(options[i].id);
+			}).val(options[i].name).addDataField().val(options[i].description);
 		}
 
 		strainPrompt.display();

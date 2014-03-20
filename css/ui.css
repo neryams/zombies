@@ -309,6 +309,18 @@ canvas.draggable {
 
 
 /*
+ * Setup prompt
+ */
+
+.strain_prompt a.button {
+	width: 250px;
+	margin: 0 8px;
+	font-size: 1rem;
+	font-family: helvetica;
+}
+
+
+/*
  * Tooltips
  */
 
