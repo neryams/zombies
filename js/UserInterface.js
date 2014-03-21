@@ -249,7 +249,9 @@ function Evolution(name,levels,options) {
 	var evolutionTooltip = function(event) {
 		var data = event.data.all[$(this).data('id')];
 		var toolTipContent = $('<table/>');
-		toolTipContent.append($('<tr><th colspan="2">'+data.name+'</th></tr><tr><td>Cost</td><td>'+data.cost+'</td></tr>'));
+		toolTipContent.append($('<tr><th colspan="2">'+data.name+'</th></tr>'));
+		if(data.cost > 0)
+			toolTipContent.append($('<tr><td>Cost</td><td>'+data.cost+'</td></tr>'));
 		if(data.gene)
 			toolTipContent = toolTipContent.append($('<tr><td>Gene</td></tr>').append($('<td/>').append(data.gene.imageElement)));
 
@@ -539,6 +541,7 @@ Evolution.prototype.buildWeb = function(focusUpgrade) {
 		evolutionBg = this.imageCanvas;
 	evolutionBg.width = this.evolveMenu.element.width();
 	evolutionBg.height = this.evolveMenu.element.height();
+	$('.connector',this.evolveMenu.element).remove();
 
 	var bgCtx = evolutionBg.getContext('2d');
 	bgCtx.clearRect(0, 0, evolutionBg.width, evolutionBg.height);
@@ -663,7 +666,8 @@ Evolution.prototype.buildWeb = function(focusUpgrade) {
 			else {
 				for(i = 0; i < current.paths.length; i++) {
 					if(this.all[current.paths[i]] === undefined) {
-						console.error('Cannot find upgrade with ID "' + current.paths[i] + '"!');
+						if(typeof current.paths[i] !== 'object')
+							console.error('Cannot find upgrade with ID "' + current.paths[i] + '"!');
 					} else {
 						current.paths[i] = this.all[current.paths[i]];
 						current.paths[i].children.push(current);
@@ -837,6 +841,9 @@ var UserInterface = function UserInterface(Renderer) {
 		addEvolution: function(name,runOnClick,options) {
 			var newEvolution = new Evolution(name,runOnClick,options);
 			return newEvolution;
+		},
+		updateEvolution: function(id,property,value) {
+			Evolution.prototype.all[id][property] = value;
 		},
 		setSimulator: function(S) {
 			DataField.prototype.Simulator = S;

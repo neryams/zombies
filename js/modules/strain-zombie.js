@@ -15,18 +15,16 @@ exports.run = function(current,passData) {
 exports.options = {
 	init: function() {
 		// Create the starting seed for the upgrade tree. Strains should only have one upgrade. Add other free upgrades via other modules.
-		// Upgrades attatched to a strain get a special ID "strain", the center of the uprgade grid
 		this.S.addUpgrades(this,
 			{
-				cost: 0,
+				cost: -1, // Negative cost means you can't buy it.
 				paths:[],
 				name: this.name,
 				description: this.description,
 				style: {
 					offset: [-100, 50]
-				},
-				active:true
-			} // setting active to true makes the upgrade automatically purchased
+				}
+			} // Do not set an ID for the strain upgrade. The simulator needs to use the default name to give you the upgrade when you start the game.
 		);
 	},
 	onStart: function(callback) {
@@ -46,6 +44,8 @@ exports.options = {
 				}
 			}
 		}
+		// Create the first horde, with one zombie in it.
+		this.S.hordes.push(new Horde(1, randPoint));
 
 		// Send the starting point back to the callback function to start the simulation
 		callback(randPoint);

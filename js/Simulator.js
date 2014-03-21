@@ -114,6 +114,12 @@ Upgrade.prototype.generateGene = function(pieceSize, shape) {
     this.gene.width = bottomRight.x - topLeft.x + 1;
     this.gene.placement = new gridPoint();
 };
+
+Upgrade.prototype.set = function(property,value) {
+	this[property] = value;
+	this.S.UI.updateEvolution(this.id,property,value);
+};
+
 Upgrade.prototype.purchase = function() {
 	this.active = true;
 	// If there is no gene, run the process.
@@ -408,10 +414,6 @@ Simulator.prototype.start = function(strainId) {
 
 	var that = this;
 	this.strain.onStart(function(startSq) {
-		that.startPoint = startSq;
-		// Create the first horde, with one zombie in it.
-		that.hordes.push(new Horde(1, startSq));
-
 		// Sort out the children for the upgrades, convert string pointers to related upgrades to actual pointers.
 		for (var key in that.upgrades) {
 			var pathPointers = [],
@@ -426,6 +428,7 @@ Simulator.prototype.start = function(strainId) {
 				current.paths = pathPointers;
 			}
 		}
+		that.upgrades[that.strain.id].set('active',true);
 
 		// Initialize all the other modules
 		for(var id in that.modules)
@@ -577,15 +580,17 @@ Simulator.prototype.addUpgrades = function(module) {
 		var currentLevel = arguments[j];
 		levels.push(currentLevel);
 
-		if(n == 2)
-			currentLevel.id = module.id;
-		else
-			currentLevel.id = module.id + '_' + i;
+		if(!currentLevel.id) {
+			if(n == 2)
+				currentLevel.id = module.id;
+			else
+				currentLevel.id = module.id + '_' + i;
+		}
 
 		this.upgrades[currentLevel.id] = new Upgrade(currentLevel);
 		this.upgrades[currentLevel.id].module = module;
 		this.upgrades[currentLevel.id].level = currentLevel;
-		
+
 		delete currentLevel.onUpgrade;
     }
     // send all the levels to the UI
@@ -605,6 +610,8 @@ Simulator.prototype.availableUpgrades = function(selectedUpgrades) {
 		upgrade = this.upgrades[selectedUpgrades[i]];
 		// If the upgrade is already active, then you can't activate it again
 		if(upgrade.active)
+			return false;
+		if(upgrade.cost < 0)
 			return false;
 
 		totalCost += upgrade.cost;
@@ -633,7 +640,7 @@ Simulator.prototype.availableUpgrades = function(selectedUpgrades) {
 			upgrade = this.upgrades[key];
 			if(upgrade.active)
 				for(j = 0; j < upgrade.children.length; j++) {
-					if(this.properties.money >= totalCost + upgrade.children[j].cost)
+					if(upgrade.children[j].cost >= 0 && this.properties.money >= totalCost + upgrade.children[j].cost)
 						available.push(upgrade.children[j].id);
 				}
 		}
@@ -641,7 +648,7 @@ Simulator.prototype.availableUpgrades = function(selectedUpgrades) {
 	for(i = 0; i < selectedUpgrades.length; i++) {
 		upgrade = this.upgrades[selectedUpgrades[i]];
 		for(j = 0; j < upgrade.children.length; j++) {
-			if(this.properties.money >= totalCost + upgrade.children[j].cost)
+			if(upgrade.children[j].cost >= 0 && this.properties.money >= totalCost + upgrade.children[j].cost)
 				available.push(upgrade.children[j].id);
 		}
 	}
@@ -652,11 +659,12 @@ Simulator.prototype.purchaseUpgrades = function(upgrades) {
 	var upgrade;
 	if(!this.availableUpgrades(upgrades))
 		return false;
-	while(upgrades.length) {
-		upgrade = this.upgrades[upgrades.pop()];
-		this.properties.money -= upgrade.cost;
-		upgrade.purchase();
-	}
+	else
+		while(upgrades.length) {
+			upgrade = this.upgrades[upgrades.pop()];
+			this.properties.money -= upgrade.cost;
+			upgrade.purchase();
+		}
 
 	return true;
 };
