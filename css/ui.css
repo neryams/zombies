@@ -193,31 +193,45 @@ canvas.draggable {
 .evolution>div div {
 	width: 30px;
 	height: 30px;
-	border-radius: 15px;
 	margin-left: -15px;
 	margin-top: -15px;
 	position: absolute;
-	z-index: 22;
-	background-image: url('../ui/evol_sprite_unavail.png');
 }
-.evolution>div .available {
-	background-image: url('../ui/evol_sprite_avail.png');
-}
-.evolution>div .active {
-	background-image: url('../ui/evol_sprite_active.png');
-}
+
 .evolution>div div img {
 	max-width: none;
-	opacity: 0.25;
-	position: absolute;
-	right: 0;
-	bottom: 0;
 }
-.evolution>div .available img {
+.evolution>div div img.geneIcon {
+	max-width: none;
+	opacity: 0.25;
+	z-index: 24;
+	position: absolute;
+}
+.evolution>div .available img.geneIcon {
 	opacity: 0.65;
 }
-.evolution>div .active img {
+.evolution>div .active img.geneIcon {
 	opacity: 1;
+}
+.evolution>div div a.evoIcon {
+	width: 100%;
+	height: 100%;
+	display: block;
+	z-index: 23;
+	border-radius: 15px;
+	background-image: url('../ui/evol_sprite_unavail.png');
+}
+.evolution>div .available a.evoIcon {
+	background-image: url('../ui/evol_sprite_avail.png');
+}
+.evolution>div .active a.evoIcon {
+	background-image: url('../ui/evol_sprite_active.png');
+}
+.evolution>div div img.connector {
+	opacity: 1;
+	position: absolute;
+	z-index: -1;
+	margin: 15px;
 }
 
 .alert {

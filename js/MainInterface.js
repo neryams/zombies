@@ -139,10 +139,6 @@ function MainInterface(UI,R) {
 				Evolution.prototype.buyEvolutions();
 			}
 		});
-		Evolution.prototype.evolveMenuBg = evolveMenuOuter.addDataField({
-			type: 'canvas',
-			class: 'draggable'
-		});
 		Evolution.prototype.evolveMenu = evolveMenuOuter.addDataField({
 			type: 'div',
 			class: 'draggable'

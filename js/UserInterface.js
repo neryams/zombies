@@ -258,6 +258,7 @@ function Evolution(name,levels,options) {
 	};
 
 	var evolutionSelect = function(event) {
+		event.preventDefault();
 		var i, upgradeId = $(this).data('id'),
 			upgrade = event.data.evolution.all[upgradeId],
 			selectedUpgrades = event.data.evolution.selectedUpgrades;
@@ -296,8 +297,9 @@ function Evolution(name,levels,options) {
 
 		// Create the evolution upgrade button in the menu
 			// Clone a div element for each level so it can be treated as a separate evolution
-		var currentElement = this.element.clone().addClass(/*'evolutionButton_' + this.name + ' */'evolutionButton_' + currentId).appendTo(this.evolveMenu.element)
-			.css('background-position', ((levels[i].style.bg || this.defaultStyle.bg)*30) + 'px 0').data('id',currentId);
+		var currentElement = this.element.clone().addClass(/*'evolutionButton_' + this.name + ' */'evolutionButton_' + currentId).appendTo(this.evolveMenu.element);
+		var icon = currentElement.append('<a class="evoIcon" />').css('background-position', ((levels[i].style.bg || this.defaultStyle.bg)*30) + 'px 0').data('id',currentId);
+
 
 		this.all[currentId] = levels[i];
 		if(this.all[currentId].gene)
@@ -397,14 +399,14 @@ function Evolution(name,levels,options) {
 		// Add gene graphic to evolution panel icons
 		if(this.all[currentId].gene) {
 			var geneGraphic = this.all[currentId].gene.imageElement.clone();
-			currentElement.append(geneGraphic.css('bottom',this.imageCanvas.height/-2).css('right',this.imageCanvas.height/-2));
+			currentElement.append(geneGraphic.addClass('geneIcon').css('bottom',this.imageCanvas.height/-2).css('right',this.imageCanvas.height/-2));
 		}
 
 		// Mouseover tooltip for evolution
-		currentElement.on('mouseover.evolutionTooltip', this, evolutionTooltip);
+		icon.on('mouseover.evolutionTooltip', this, evolutionTooltip);
 
 		// Click event for evolution in the upgrade menu
-		currentElement.on('click.evolutionSelect', { Simulator: this.Simulator, evolution: this }, evolutionSelect);
+		icon.on('click.evolutionSelect', { Simulator: this.Simulator, evolution: this }, evolutionSelect);
 
 	}
 	this.element.remove();
@@ -533,21 +535,24 @@ Evolution.prototype.clearGrid = function() {
 };
 
 Evolution.prototype.buildWeb = function(focusUpgrade) {
-	var evolutionBg = this.evolveMenuBg.element[0];
+	var upgradeDistance = 80,
+		evolutionBg = this.imageCanvas;
 	evolutionBg.width = this.evolveMenu.element.width();
 	evolutionBg.height = this.evolveMenu.element.height();
 
 	var bgCtx = evolutionBg.getContext('2d');
 	bgCtx.clearRect(0, 0, evolutionBg.width, evolutionBg.height);
 
-	var i,key,E = this;
+	var i,key,
+		E = this;
 
-	var drawUpgrade = function(upgrade, position, lastTheta, depth) {
+	var placeUpgrades = function(upgrade, position, lastTheta, depth) {
 		var currentOffset = upgrade.style.offset || E.defaultStyle.offset;
 		if(!upgrade.position) {
 			upgrade.position = {
 				top: position.top + currentOffset[1],
-				left: position.left + currentOffset[0]
+				left: position.left + currentOffset[0],
+				maxDist: 0
 			};
 			upgrade.element.css('top', upgrade.position.top).css('left', upgrade.position.left);
 		}
@@ -557,28 +562,94 @@ Evolution.prototype.buildWeb = function(focusUpgrade) {
 			var currentChild = upgrade.children[i],
 				theta = lastTheta + 2 * Math.PI * ( Math.ceil( i / 2 ) / n ) / depth * (1 - i % 2 * 2 ),
 				childPosition = {
-					top: upgrade.position.top + Math.round( 75 * Math.sin(theta) ),
-					left: upgrade.position.left + Math.round( 75 * Math.cos(theta) )
+					top: upgrade.position.top + Math.round( upgradeDistance * Math.sin(theta) ),
+					left: upgrade.position.left + Math.round( upgradeDistance * Math.cos(theta) )
 				};
 
-			childPosition = drawUpgrade(currentChild, childPosition, theta, depth);
+			childPosition = placeUpgrades(currentChild, childPosition, theta, depth);
+			var x = (childPosition.left - upgrade.position.left),
+				y = (childPosition.top - upgrade.position.top);
+
+			if(x > upgrade.position.maxDist)
+				upgrade.position.maxDist = x;
+			else if(y > upgrade.position.maxDist)
+				upgrade.position.maxDist = y;
+		}
+
+		return upgrade.position;
+	};
+
+	var drawUpgradeConnectors = function(upgrade) {
+		var i,n,x,y,
+			maxWidth = 8,
+			maxHeight = 8;
+		//bgCtx.clearRect(0, 0, evolutionBg.width, evolutionBg.height);
+		for(i = 0, n = upgrade.children.length; i < n; i++) {
+			x = upgrade.children[i].position.xDist = (upgrade.children[i].position.left - upgrade.position.left);
+			y = upgrade.children[i].position.yDist = (upgrade.children[i].position.top - upgrade.position.top);
+			x = Math.abs(x);
+			y = Math.abs(y);
+
+			maxWidth = x > maxWidth ? x : maxWidth;
+			maxHeight = y > maxHeight ? y : maxHeight;
+		}
+		for(i = 0, n = upgrade.paths.length; i < n; i++) {
+			x = upgrade.paths[i].position.xDist = (upgrade.paths[i].position.left - upgrade.position.left);
+			y = upgrade.paths[i].position.yDist = (upgrade.paths[i].position.top - upgrade.position.top);
+			x = Math.abs(x);
+			y = Math.abs(y);
+
+			maxWidth = x > maxWidth ? x : maxWidth;
+			maxHeight = y > maxHeight ? y : maxHeight;
+		}
+		maxWidth += 4;
+		maxHeight += 4;
+
+		evolutionBg.width = maxWidth;
+		evolutionBg.height = maxHeight;
+		maxWidth = Math.floor(maxWidth/2) + 0.5;
+		maxHeight = Math.floor(maxHeight/2) + 0.5;
+		var bgCtx = evolutionBg.getContext('2d');
+
+		var drawConnector = function (startX, startY, moveVector) {
+			x = moveVector.xDist/2;
+			y = moveVector.yDist/2;
+			if(y === 0)
+				if(x < 0)
+					x -= 0.5;
+				else
+					x += 0.5;
+			if(x === 0)
+				if(y < 0)
+					y -= 0.5;
+				else
+					y += 0.5;
 
 			bgCtx.lineWidth = 4;
 			bgCtx.strokeStyle = 'rgba(120,120,120,255)';
 			bgCtx.beginPath();
-			bgCtx.moveTo(upgrade.position.left, upgrade.position.top);
-			bgCtx.lineTo(childPosition.left, childPosition.top);
+			bgCtx.moveTo(startX, startY);
+			bgCtx.lineTo(startX + x, startY + y);
 			bgCtx.stroke();
 
 			bgCtx.lineWidth = 1;
 			bgCtx.strokeStyle = 'rgba(255,255,150,255)';
 			bgCtx.beginPath();
-			bgCtx.moveTo(upgrade.position.left, upgrade.position.top);
-			bgCtx.lineTo(childPosition.left, childPosition.top);
+			bgCtx.moveTo(startX, startY);
+			bgCtx.lineTo(startX + x, startY + y);
 			bgCtx.stroke();
-		}
 
-		return upgrade.position;
+			delete moveVector.xDist;
+			delete moveVector.yDist;
+		};
+
+		for(i = 0, n = upgrade.children.length; i < n; i++) {
+			drawConnector(maxWidth, maxHeight, upgrade.children[i].position);
+		}
+		for(i = 0, n = upgrade.paths.length; i < n; i++) {
+			drawConnector(maxWidth, maxHeight, upgrade.paths[i].position);
+		}
+		upgrade.element.append($('<img class="connector" />').attr('src', evolutionBg.toDataURL()).css('left', evolutionBg.width/-2).css('top', evolutionBg.height/-2));
 	};
 
 
@@ -607,8 +678,11 @@ Evolution.prototype.buildWeb = function(focusUpgrade) {
 	};
 
 	for(i = 0; i < startingUpgrades.length; i++) {
-		drawUpgrade(startingUpgrades[i], position, 0, 0);
+		placeUpgrades(startingUpgrades[i], position, 0, 0);
 	}
+	for (key in this.all)
+		if (this.all.hasOwnProperty(key))
+			drawUpgradeConnectors(this.all[key]);
 };
 
 var UserInterface = function UserInterface(Renderer) {
