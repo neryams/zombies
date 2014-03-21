@@ -17,7 +17,16 @@ exports.options = {
 		// Create the starting seed for the upgrade tree. Strains should only have one upgrade. Add other free upgrades via other modules.
 		// Upgrades attatched to a strain get a special ID "strain", the center of the uprgade grid
 		this.S.addUpgrades(this,
-			{cost:0,paths:[],name:this.name,active:true, description:this.description} // setting active to true makes the upgrade automatically purchased
+			{
+				cost: 0,
+				paths:[],
+				name: this.name,
+				description: this.description,
+				style: {
+					offset: [100, -50]
+				},
+				active:true
+			} // setting active to true makes the upgrade automatically purchased
 		);
 	},
 	onStart: function(callback) {

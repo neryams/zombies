@@ -13,7 +13,7 @@ Upgrade.prototype = {
 	name:'',
 	cost: 0,
 	active: false,
-	bg: 0,
+	style: {},
 	paths:[],
 	children: []
 };
@@ -585,10 +585,7 @@ Simulator.prototype.addUpgrades = function(module) {
 		this.upgrades[currentLevel.id] = new Upgrade(currentLevel);
 		this.upgrades[currentLevel.id].module = module;
 		this.upgrades[currentLevel.id].level = currentLevel;
-
-		// Send in default values etc
-		if(!currentLevel.bg)
-			currentLevel.bg = this.upgrades[currentLevel.id].bg;
+		
 		delete currentLevel.onUpgrade;
     }
     // send all the levels to the UI

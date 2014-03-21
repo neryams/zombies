@@ -291,10 +291,13 @@ function Evolution(name,levels,options) {
 	for(i = 0; i < levels.length; i++) {
 		var currentId = levels[i].id;
 
+		if(!levels[i].style)
+			levels[i].style = {};
+
 		// Create the evolution upgrade button in the menu
 			// Clone a div element for each level so it can be treated as a separate evolution
 		var currentElement = this.element.clone().addClass(/*'evolutionButton_' + this.name + ' */'evolutionButton_' + currentId).appendTo(this.evolveMenu.element)
-			.css('background-position', (levels[i].bg*30) + 'px 0').data('id',currentId);
+			.css('background-position', ((levels[i].style.bg || this.defaultStyle.bg)*30) + 'px 0').data('id',currentId);
 
 		this.all[currentId] = levels[i];
 		if(this.all[currentId].gene)
@@ -409,6 +412,10 @@ function Evolution(name,levels,options) {
 }
 // Inherit the DataField class
 Evolution.prototype = Object.create( DataField.prototype );
+Evolution.prototype.defaultStyle = {
+	bg: 0,
+	offset: [0,0]
+};
 Evolution.prototype.all = {};
 Evolution.prototype.selectedUpgrades = [];
 Evolution.prototype.mutation = [];
@@ -525,100 +532,82 @@ Evolution.prototype.clearGrid = function() {
 	$('.geneBlock.active').removeClass('used');
 };
 
-Evolution.prototype.buildWeb = function(upgrade,lastTheta,depth) {
-	// Figure out where to put the starting points.
+Evolution.prototype.buildWeb = function(focusUpgrade) {
 	var evolutionBg = this.evolveMenuBg.element[0];
-	if(!upgrade) {
-		evolutionBg.width = this.evolveMenu.element.width();
-		evolutionBg.height = this.evolveMenu.element.height();
-	}
+	evolutionBg.width = this.evolveMenu.element.width();
+	evolutionBg.height = this.evolveMenu.element.height();
+
 	var bgCtx = evolutionBg.getContext('2d');
-	/*bgCtx.fillStyle = 'rgba(30, 30, 30, 255)';
-	bgCtx.fillRect(0, 0, evolutionBg.width, evolutionBg.height);*/
+	bgCtx.clearRect(0, 0, evolutionBg.width, evolutionBg.height);
 
-	var i,key,current,target,position,childUpgrades,theta;
-	if(upgrade === undefined) {
-		childUpgrades = [];
-		for (key in this.all)
-			if (this.all.hasOwnProperty(key)) {
-				current = this.all[key];
-				if(!current.paths.length)
-					childUpgrades.push(current);
-				else
-					for(i = 0; i < current.paths.length; i++)
-						this.all[current.paths[i]].children.push(current);
-			}
-		position = {left:500,top:500};
-	} else {
-		position = upgrade.position;
-		childUpgrades = upgrade.children;
-	}
-	if(depth === undefined)
-		depth = 0;
+	var i,key,E = this;
 
-	for(i = 0; i < childUpgrades.length; i++) {
-		current = childUpgrades[i];
-		// Switch going up and down
-		if(current.position === undefined) {
-			if(lastTheta === undefined) {
-				theta = 0;
-				current.position = { top: position.top, left: position.left};
-			}
-			else
-			{
-				theta = lastTheta + 2*Math.PI*(Math.ceil(i/2)/childUpgrades.length)/depth*(1 - i%2*2);
-				current.position = { top: position.top + Math.round(75*Math.sin(theta)), left: position.left + Math.round(75*Math.cos(theta))};
-			}
-
-			current.element.css('top', current.position.top).css('left', current.position.left);
+	var drawUpgrade = function(upgrade, position, lastTheta, depth) {
+		var currentOffset = upgrade.style.offset || E.defaultStyle.offset;
+		if(!upgrade.position) {
+			upgrade.position = {
+				top: position.top + currentOffset[1],
+				left: position.left + currentOffset[0]
+			};
+			upgrade.element.css('top', upgrade.position.top).css('left', upgrade.position.left);
 		}
 		
-		if(current.children.length) {
-			if(childUpgrades.length > 1 || depth < 2)
-				this.buildWeb(current,theta,depth+1);
-			else
-				this.buildWeb(current,theta,depth);
-			//var shiftPosition = {}, arrow_separation = 0.03
-			for(var j = 0; j < current.children.length; j++) {
-				// Link the children of this object together both visually and symbolically
-				target = current.children[j];
+		depth++;
+		for(var i = 0, n = upgrade.children.length; i < n; i++) {
+			var currentChild = upgrade.children[i],
+				theta = lastTheta + 2 * Math.PI * ( Math.ceil( i / 2 ) / n ) / depth * (1 - i % 2 * 2 ),
+				childPosition = {
+					top: upgrade.position.top + Math.round( 75 * Math.sin(theta) ),
+					left: upgrade.position.left + Math.round( 75 * Math.cos(theta) )
+				};
 
-				/*var shiftX = current.position.left - target.position.left;
-				var shiftY = current.position.top - target.position.top;
-				var shiftH = Math.sqrt(shiftX*shiftX+shiftY*shiftY);
+			childPosition = drawUpgrade(currentChild, childPosition, theta, depth);
 
-				if(shiftY > 0)
-					shiftPosition.top = Math.sin(Math.asin(shiftY/shiftH) - arrow_separation)*shiftH - shiftY;
-				else
-					shiftPosition.top = Math.sin(Math.asin(shiftY/shiftH) + arrow_separation)*shiftH - shiftY;
-				if(shiftX > 0)
-					shiftPosition.left = Math.cos(Math.acos(shiftX/shiftH) - arrow_separation)*shiftH - shiftX;
-				else
-					shiftPosition.left =  Math.cos(Math.acos(shiftX/shiftH) + arrow_separation)*shiftH - shiftX;
+			bgCtx.lineWidth = 4;
+			bgCtx.strokeStyle = 'rgba(120,120,120,255)';
+			bgCtx.beginPath();
+			bgCtx.moveTo(upgrade.position.left, upgrade.position.top);
+			bgCtx.lineTo(childPosition.left, childPosition.top);
+			bgCtx.stroke();
 
-				bgCtx.lineWidth = 2;
-				bgCtx.strokeStyle = 'rgba(225,150,0,255)';
-				bgCtx.beginPath();
-				bgCtx.moveTo(current.position.left + shiftPosition.left, current.position.top + shiftPosition.top);
-				bgCtx.lineTo(target.position.left, target.position.top);
-				bgCtx.lineTo(current.position.left - shiftPosition.left, current.position.top - shiftPosition.top);
-				bgCtx.stroke();*/
+			bgCtx.lineWidth = 1;
+			bgCtx.strokeStyle = 'rgba(255,255,150,255)';
+			bgCtx.beginPath();
+			bgCtx.moveTo(upgrade.position.left, upgrade.position.top);
+			bgCtx.lineTo(childPosition.left, childPosition.top);
+			bgCtx.stroke();
+		}
 
-				bgCtx.lineWidth = 4;
-				bgCtx.strokeStyle = 'rgba(120,120,120,255)';
-				bgCtx.beginPath();
-				bgCtx.moveTo(current.position.left, current.position.top);
-				bgCtx.lineTo(target.position.left, target.position.top);
-				bgCtx.stroke();
+		return upgrade.position;
+	};
 
-				bgCtx.lineWidth = 1;
-				bgCtx.strokeStyle = 'rgba(255,255,150,255)';
-				bgCtx.beginPath();
-				bgCtx.moveTo(current.position.left, current.position.top);
-				bgCtx.lineTo(target.position.left, target.position.top);
-				bgCtx.stroke();
+
+	// Figure out where to put the starting points.
+	var startingUpgrades = [];
+	for (key in this.all)
+		if (this.all.hasOwnProperty(key)) {
+			var current = this.all[key];
+			if(!current.paths.length)
+				startingUpgrades.push(current);
+			else {
+				for(i = 0; i < current.paths.length; i++) {
+					if(this.all[current.paths[i]] === undefined) {
+						console.error('Cannot find upgrade with ID "' + current.paths[i] + '"!');
+					} else {
+						current.paths[i] = this.all[current.paths[i]];
+						current.paths[i].children.push(current);
+					}
+				}
 			}
 		}
+
+	var position = {
+		left:500,
+		top:500
+	};
+
+	for(i = 0; i < startingUpgrades.length; i++) {
+		drawUpgrade(startingUpgrades[i], position, 0, 0);
 	}
 };
 
