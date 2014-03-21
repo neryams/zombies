@@ -200,19 +200,29 @@ canvas.draggable {
 
 .evolution>div div img {
 	max-width: none;
+	position: absolute;
+	opacity: .7;
 }
 .evolution>div div img.geneIcon {
-	max-width: none;
-	opacity: 0.25;
 	z-index: 24;
-	position: absolute;
 }
-.evolution>div .available img.geneIcon {
-	opacity: 0.65;
+.evolution>div div img.connector {
+	z-index: -2;
+	margin: 15px;
+	filter: grayscale(90%);
+	-webkit-filter: grayscale(90%);
 }
-.evolution>div .active img.geneIcon {
+.evolution>div div img.arrows {
+	z-index: -1;
+	margin: 15px;
+	filter: grayscale(90%);
+	-webkit-filter: grayscale(90%);
+}
+.evolution>div div.active img {
+	-webkit-filter: none;
 	opacity: 1;
 }
+
 .evolution>div div a.evoIcon {
 	width: 100%;
 	height: 100%;
@@ -226,12 +236,6 @@ canvas.draggable {
 }
 .evolution>div .active a.evoIcon {
 	background-image: url('../ui/evol_sprite_active.png');
-}
-.evolution>div div img.connector {
-	opacity: 1;
-	position: absolute;
-	z-index: -1;
-	margin: 15px;
 }
 
 .alert {

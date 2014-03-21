@@ -430,6 +430,8 @@ Evolution.prototype.SQUARE_SIZE = 10;
 Evolution.prototype.imageCanvas = document.createElement( 'canvas' );
 Evolution.prototype.imageCanvas.width = 100;
 Evolution.prototype.imageCanvas.height = 100;
+Evolution.prototype.connectorArrow = new Image(); 
+Evolution.prototype.connectorArrow.src = './ui/evol_arrow.png';
 
 Evolution.prototype.refresh = function() {
 	var available = this.Simulator.availableUpgrades(this.selectedUpgrades);
@@ -538,10 +540,12 @@ Evolution.prototype.clearGrid = function() {
 
 Evolution.prototype.buildWeb = function(focusUpgrade) {
 	var upgradeDistance = 80,
+		arrowLength = Evolution.prototype.connectorArrow.width/2,
+		arrowBaseRatio = 0.25,
 		evolutionBg = this.imageCanvas;
 	evolutionBg.width = this.evolveMenu.element.width();
 	evolutionBg.height = this.evolveMenu.element.height();
-	$('.connector',this.evolveMenu.element).remove();
+	$('.connector, .arrows',this.evolveMenu.element).remove();
 
 	var bgCtx = evolutionBg.getContext('2d');
 	bgCtx.clearRect(0, 0, evolutionBg.width, evolutionBg.height);
@@ -554,8 +558,7 @@ Evolution.prototype.buildWeb = function(focusUpgrade) {
 		if(!upgrade.position) {
 			upgrade.position = {
 				top: position.top + currentOffset[1],
-				left: position.left + currentOffset[0],
-				maxDist: 0
+				left: position.left + currentOffset[0]
 			};
 			upgrade.element.css('top', upgrade.position.top).css('left', upgrade.position.left);
 		}
@@ -569,14 +572,7 @@ Evolution.prototype.buildWeb = function(focusUpgrade) {
 					left: upgrade.position.left + Math.round( upgradeDistance * Math.cos(theta) )
 				};
 
-			childPosition = placeUpgrades(currentChild, childPosition, theta, depth);
-			var x = (childPosition.left - upgrade.position.left),
-				y = (childPosition.top - upgrade.position.top);
-
-			if(x > upgrade.position.maxDist)
-				upgrade.position.maxDist = x;
-			else if(y > upgrade.position.maxDist)
-				upgrade.position.maxDist = y;
+			placeUpgrades(currentChild, childPosition, theta, depth);
 		}
 
 		return upgrade.position;
@@ -584,75 +580,69 @@ Evolution.prototype.buildWeb = function(focusUpgrade) {
 
 	var drawUpgradeConnectors = function(upgrade) {
 		var i,n,x,y,
-			maxWidth = 8,
-			maxHeight = 8;
-		//bgCtx.clearRect(0, 0, evolutionBg.width, evolutionBg.height);
+			maxWidth = 4,
+			maxHeight = 4;
 		for(i = 0, n = upgrade.children.length; i < n; i++) {
-			x = upgrade.children[i].position.xDist = (upgrade.children[i].position.left - upgrade.position.left);
-			y = upgrade.children[i].position.yDist = (upgrade.children[i].position.top - upgrade.position.top);
+			x = upgrade.children[i].position.x = (upgrade.children[i].position.left - upgrade.position.left);
+			y = upgrade.children[i].position.y = (upgrade.children[i].position.top - upgrade.position.top);
 			x = Math.abs(x);
 			y = Math.abs(y);
 
 			maxWidth = x > maxWidth ? x : maxWidth;
 			maxHeight = y > maxHeight ? y : maxHeight;
 		}
-		for(i = 0, n = upgrade.paths.length; i < n; i++) {
-			x = upgrade.paths[i].position.xDist = (upgrade.paths[i].position.left - upgrade.position.left);
-			y = upgrade.paths[i].position.yDist = (upgrade.paths[i].position.top - upgrade.position.top);
-			x = Math.abs(x);
-			y = Math.abs(y);
 
-			maxWidth = x > maxWidth ? x : maxWidth;
-			maxHeight = y > maxHeight ? y : maxHeight;
-		}
-		maxWidth += 4;
-		maxHeight += 4;
-
-		evolutionBg.width = maxWidth;
-		evolutionBg.height = maxHeight;
-		maxWidth = Math.floor(maxWidth/2) + 0.5;
-		maxHeight = Math.floor(maxHeight/2) + 0.5;
 		var bgCtx = evolutionBg.getContext('2d');
 
+		var drawArrow = function (startX, startY, moveVector) {
+			var theta = Math.atan2(moveVector.y,moveVector.x);
+			bgCtx.save();
+
+			bgCtx.translate(startX, startY);
+			bgCtx.rotate(theta);
+			bgCtx.drawImage(Evolution.prototype.connectorArrow, -(arrowLength), -(arrowLength));
+
+			bgCtx.restore();
+
+			delete moveVector.x;
+			delete moveVector.y;
+		};
+
 		var drawConnector = function (startX, startY, moveVector) {
-			x = moveVector.xDist/2;
-			y = moveVector.yDist/2;
-			if(y === 0)
-				if(x < 0)
-					x -= 0.5;
-				else
-					x += 0.5;
-			if(x === 0)
-				if(y < 0)
-					y -= 0.5;
-				else
-					y += 0.5;
+			bgCtx.save();
+			bgCtx.translate(startX, startY);
 
 			bgCtx.lineWidth = 4;
-			bgCtx.strokeStyle = 'rgba(120,120,120,255)';
+			bgCtx.strokeStyle = 'rgba(95,66,16,255)';
 			bgCtx.beginPath();
-			bgCtx.moveTo(startX, startY);
-			bgCtx.lineTo(startX + x, startY + y);
+			bgCtx.moveTo(0, 0);
+			bgCtx.lineTo(moveVector.x, moveVector.y);
 			bgCtx.stroke();
 
 			bgCtx.lineWidth = 1;
-			bgCtx.strokeStyle = 'rgba(255,255,150,255)';
+			bgCtx.strokeStyle = 'rgba(188,128,28,255)';
 			bgCtx.beginPath();
-			bgCtx.moveTo(startX, startY);
-			bgCtx.lineTo(startX + x, startY + y);
+			bgCtx.moveTo(0, 0);
+			bgCtx.lineTo(moveVector.x, moveVector.y);
 			bgCtx.stroke();
-
-			delete moveVector.xDist;
-			delete moveVector.yDist;
+			bgCtx.restore();
 		};
 
+		evolutionBg.width = maxWidth*2;
+		evolutionBg.height = maxHeight*2;
+		maxWidth = Math.floor(maxWidth) + 0.5;
+		maxHeight = Math.floor(maxHeight) + 0.5;
 		for(i = 0, n = upgrade.children.length; i < n; i++) {
 			drawConnector(maxWidth, maxHeight, upgrade.children[i].position);
 		}
-		for(i = 0, n = upgrade.paths.length; i < n; i++) {
-			drawConnector(maxWidth, maxHeight, upgrade.paths[i].position);
-		}
 		upgrade.element.append($('<img class="connector" />').attr('src', evolutionBg.toDataURL()).css('left', evolutionBg.width/-2).css('top', evolutionBg.height/-2));
+
+		evolutionBg.width = arrowLength*2;
+		evolutionBg.height = arrowLength*2;
+		for(i = 0, n = upgrade.children.length; i < n; i++) {
+			drawArrow(arrowLength + 0.5, arrowLength + 0.5, upgrade.children[i].position);
+		}
+		upgrade.element.append($('<img class="arrows" />').attr('src', evolutionBg.toDataURL()).css('left', -arrowLength).css('top', -arrowLength));
 	};
 
 
