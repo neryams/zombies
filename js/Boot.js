@@ -46,7 +46,9 @@ if(typeof global !== 'undefined')
             delete global.require.cache[key];
 
 // Global variables
-var R,S,debugMenu;
+var R,S,debugMenu,
+    node = typeof require !== 'undefined',
+    fs = require('fs');
 
 $(function () {
     // Select Resolution closes to device pixel ratio
@@ -55,6 +57,13 @@ $(function () {
         if(Math.abs(parseFloat(ratioSelect.val()) - window.devicePixelRatio) > Math.abs(parseFloat($(this).attr('value')) - window.devicePixelRatio))
             ratioSelect.val($(this).attr('value'));
     });
+    if(node) {
+        $('.node-only').css('display', 'block');
+        fs.exists('./generated.data', function (exists) {
+            if(exists)
+                $('#s_save').attr('checked',true);
+        });
+    }
 
     // Load language files
     $.i18n.init({ resGetPath: 'locales/__lng__/__ns__.json', lng: 'en', load: 'unspecific', ns: 'setup', fallbackLng: 'en', debug: true, useCookie: false }, function() {
@@ -88,8 +97,8 @@ $(function () {
     $('form').on('submit', function (event) {
         event.preventDefault();
 
-        var generatorWorker = new Worker('js/Generator.js'),
-            loadingState = 0,
+        var loadingState = 0,
+            generatorWorker,
             generatorConfig,
             generatorTexture,
             UI,MI,
@@ -97,22 +106,31 @@ $(function () {
                 seed: $('#s_seed').val(),
                 tx_w: $('#s_tx').val(),
                 language: $('#s_lng').val(),
-                resolution: $('#s_rs').val()
+                resolution: $('#s_rs').val(),
+                saveGenerator: !!$('#s_save:checked').val()
             },
             onLoadModules = function () {
                 // Open debug menu by default.
                 debugMenu.openConsole();
 
-                R = Renderer(userConfig.resolution);
-                UI = UserInterface(R);
+                R = Renderer(userConfig.resolution, function() {
+                    UI = UserInterface(R);
 
-                MI = MainInterface(UI,R);
-                MI.load.start();
-                generatorWorker.postMessage(userConfig);
-                R.init();
+                    MI = MainInterface(UI,R);
+                    MI.load.start();
+                    generatorWorker.postMessage(userConfig);
+                    R.init();                    
+                });
             },
             checkLoadingState = function(completeSteps) {
                 if(completeSteps == 3) {
+                    if(userConfig.saveData) {
+                        fs.writeFile('generated.data', JSON.stringify(userConfig.saveData), function(err) {
+                            if(err) throw err;
+                            console.log('JSON saved');
+                        });
+                    }
+
                     // Function also initializes UI.
                     UI.setSimulator(S);
                     generatorWorker.terminate();
@@ -128,8 +146,49 @@ $(function () {
                         R.simulatorStart(generatorTexture,generatorConfig,S);
                     }, 50);
                 }
+            },
+            generatorLoadConfig = function(config) {
+                generatorConfig = config;
+                console.time('webWorkerTransferTimer');
+            },
+            generatorLoadData = function(points, countries, name) {
+                var data = {points: [], countries: countries};
+                // Re-reference the adjacent points
+                for(var i = 0, n = points.length; i < n; i++) {
+                    data.points[i] = new DataPoint(points[i]);
+                }
+                for(i = 0, n = data.points.length; i < n; i++) {
+                    data.points[i].adjacent[0] = data.points[data.points[i].adjacent[0]];
+                    data.points[i].adjacent[1] = data.points[data.points[i].adjacent[1]];
+                    data.points[i].adjacent[2] = data.points[data.points[i].adjacent[2]];
+                    data.points[i].adjacent[3] = data.points[data.points[i].adjacent[3]];
+                    data.points[i].country = data.countries[data.points[i].country];
+                }
+                console.timeEnd('webWorkerTransferTimer');
+                MI.load.endGenerator();
+                S = new Simulator(R,UI,generatorConfig,data);
+                S.setName(name);
+                loadingState++;
+                checkLoadingState(loadingState);
             };
 
+        // Load the rest of the language files
+        $.i18n.loadNamespaces(['ui', 'messages', 'dom'], function() {
+            $.i18n.setDefaultNamespace('messages');
+        });
+
+        var startLoad = function () {
+            // Load the chosen modules first, then initiate the game 
+            // If this is not running in node, load modules form server
+            if(!node) {
+                $.getScript('js/loadModules.php?modules='+$('#s_modules').val(), onLoadModules);
+            } else {
+                Simulator.prototype.loadModules = $('#s_modules').val().split(',');
+                onLoadModules();
+            }
+        };
+
+        generatorWorker = new Worker('js/Generator.js');
         generatorWorker.addEventListener('message', function(event) {
             switch (event.data.cmd) {
                 case 'progress':
@@ -139,31 +198,27 @@ $(function () {
                         MI.load.progress(event.data.progress,event.data.share);
                     break;
                 case 'ready':
-                    generatorConfig = event.data.config;
-                    console.time('webWorkerTransferTimer');
+                    if(node && userConfig.saveGenerator) {
+                        userConfig.saveData.config = event.data.config;
+                    }
+
+                    generatorLoadConfig(event.data.config);
                     break;
                 case 'data':
-                    var gData = {points: [], countries: event.data.countries};
-                    // Re-reference the adjacent points
-                    for(var i = 0, n = event.data.points.length; i < n; i++) {
-                        gData.points[i] = new DataPoint(event.data.points[i]);
+                    if(node && userConfig.saveGenerator) {
+                        userConfig.saveData.points = JSON.parse(JSON.stringify(event.data.points));
+                        userConfig.saveData.countries = JSON.parse(JSON.stringify(event.data.countries));
+                        userConfig.saveData.name = event.data.generatedName;
                     }
-                    for(i = 0, n = gData.points.length; i < n; i++) {
-                        gData.points[i].adjacent[0] = gData.points[gData.points[i].adjacent[0]];
-                        gData.points[i].adjacent[1] = gData.points[gData.points[i].adjacent[1]];
-                        gData.points[i].adjacent[2] = gData.points[gData.points[i].adjacent[2]];
-                        gData.points[i].adjacent[3] = gData.points[gData.points[i].adjacent[3]];
-                        gData.points[i].country = gData.countries[gData.points[i].country];
-                    }
-                    console.timeEnd('webWorkerTransferTimer');
-                    MI.load.endGenerator();
-                    S = new Simulator(R,UI,generatorConfig,gData);
-                    S.setName(event.data.generatedName);
-                    loadingState++;
-                    checkLoadingState(loadingState);
+
+                    generatorLoadData(event.data.points, event.data.countries, event.data.generatedName);
                     break;
                 case 'texture':
                     generatorTexture = new Float32Array(event.data.texture);
+                    if(node && userConfig.saveGenerator) {
+                        userConfig.saveData.texture = generatorTexture;
+                    }
+
                     loadingState++;
                     checkLoadingState(loadingState);
                     break;
@@ -174,19 +229,39 @@ $(function () {
             }
         }, false);
 
-        // Load the rest of the language files
-        $.i18n.loadNamespaces(['ui', 'messages', 'dom'], function() {
-            $.i18n.setDefaultNamespace('messages');
-        });
+        if(node && userConfig.saveGenerator) {
+            fs.readFile('./generated.data', function (err, data) {
+                if (err) {
+                    console.log(err);
+                    userConfig.saveData = {};
+                } else {
+                    userConfig.saveData = JSON.parse(data);
+                    userConfig.saveData.loaded = true;
 
-        // Load the chosen modules first, then initiate the game 
-        // If this is not running in node, load modules form server
-        if(typeof require === 'undefined') {
-            $.getScript('js/loadModules.php?modules='+$('#s_modules').val(), onLoadModules);
+                    generatorWorker.terminate();
+                    generatorWorker = {
+                        postMessage: function() {
+                            generatorLoadConfig(userConfig.saveData.config);
+                            generatorLoadData(userConfig.saveData.points, userConfig.saveData.countries, userConfig.saveData.name);
+                            generatorTexture = [];
+                            var i = 0;
+                            while(userConfig.saveData.texture[i]) {
+                                generatorTexture.push(userConfig.saveData.texture[i]);
+                                i++;
+                            }
+                            delete userConfig.saveData;
+                            checkLoadingState(3);
+                        },
+                        terminate: function() {}
+                    };
+                }
+
+                startLoad();
+            });
         } else {
-            Simulator.prototype.loadModules = $('#s_modules').val().split(',');
-            onLoadModules();
+            startLoad();
         }
+
         return false;
     });
 });

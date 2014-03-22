@@ -22,10 +22,10 @@
                     <h1 data-i18n="title"></h1>
                     <form action="#" method="GET">
                         <div class="row">
-                            <div class="small-3 columns">
+                            <div class="small-4 columns">
                                 <label class="right inline" data-i18n="labels.texturesize"></label>
                             </div>
-                            <div class="small-9 columns">
+                            <div class="small-8 columns">
                                 <select class="form-control" name="texture_size" id="s_tx">
                                     <option data-i18n="texturesizes.low" value="360"></option>
                                     <option data-i18n="texturesizes.medium" value="720" selected></option>
@@ -36,10 +36,10 @@
                         </div>
 
                         <div class="row">
-                            <div class="small-3 columns">
+                            <div class="small-4 columns">
                                 <label class="right inline" data-i18n="labels.resolution"></label>
                             </div>
-                            <div class="small-9 columns">
+                            <div class="small-8 columns">
                                 <select class="form-control" name="resolution" id="s_rs">
                                     <option value="1" selected>native</option>
                                     <option value="1.5">1/1.5</option>
@@ -49,29 +49,38 @@
                         </div>
 
                         <div class="row">
-                            <div class="small-3 columns">
+                            <div class="small-4 columns">
                                 <label class="right inline" data-i18n="labels.seed"></label>
                             </div>
-                            <div class="small-9 columns">
+                            <div class="small-8 columns">
                                 <input class="form-control" type="text" name="seed" id="s_seed" />
                             </div>
                         </div>
 
                         <div class="row">
-                            <div class="small-3 columns">
+                            <div class="small-4 columns">
                                 <label class="right inline" data-i18n="labels.models">Modules: </label>
                             </div>
-                            <div class="small-9 columns">
+                            <div class="small-8 columns">
                                 <input class="form-control" type="text" name="modules" id="s_modules" value="main,gridBoost,seaports,climate" />
                                 <!-- main,resistance,climate,gridBoost,seaports -->
                             </div>
                         </div>
 
+                        <div class="row node-only" style="display: none;">
+                            <div class="small-4 columns">
+                                <label class="right" data-i18n="labels.savedGenerator">Use Saved Generator: </label>
+                            </div>
+                            <div class="small-8 columns">
+                                <input class="form-control" type="checkbox" name="saveGenerator" id="s_save" value="save" />
+                            </div>
+                        </div>
+
                         <div class="row">
-                            <div class="small-3 columns">
+                            <div class="small-4 columns">
                                 <label class="right inline" data-i18n="labels.language">Language: </label>
                             </div>
-                            <div class="small-9 columns">
+                            <div class="small-8 columns">
                                 <select class="form-control" name="language" id="s_lng">
                                     <option value="en">English</option>
                                     <option value="jp">日本語</option>

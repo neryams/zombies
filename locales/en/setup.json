@@ -6,7 +6,8 @@
 		"seed": "Seed",
 		"models": "Models",
 		"language": "Language",
-		"start": "Start"
+		"start": "Start",
+		"savedGenerator": "Save Generator"
 	},
 	"texturesizes": {
 		"low": "Low",

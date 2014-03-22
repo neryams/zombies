@@ -9,7 +9,7 @@
 	z-index: 2000;
 	position: fixed;
 	margin: auto;
-	top: 286px;
+	top: 338px;
 	left: 0;
 	right: 0;
 	bottom: 0;
@@ -233,6 +233,9 @@ body,h1,h2,h3,h4,h5,h6 {
 }
 .pace-done #setup input[type='submit'] {
 	visibility: visible;
+}
+#setup input[type='checkbox'] {
+	margin: 0.25rem 0 1.5rem;
 }
 
 #progress {

@@ -4,7 +4,7 @@
 */
 /* global requestAnimationFrame */
 /* exported Renderer */
-var Renderer = function (scaling) {
+var Renderer = function (scaling,onLoad) {
     // Initialize variables
     var Camera, Scene, Sphere, SceneRenderer, DataBarsMesh, DataBarsGeometry, DataBarMesh,
         Simulator,
@@ -43,6 +43,7 @@ var Renderer = function (scaling) {
         climateGradient.height = climateBg.height;
         var ctx = climateGradient.getContext('2d');
         ctx.drawImage(climateBg, 0, 0);
+        onLoad();
     };
     climateBg.src = 'ui/climateGradient.jpg';
 
