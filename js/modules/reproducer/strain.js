@@ -6,14 +6,13 @@ exports.run = function(current,passData) {
 	passData.encounterProbability = 0;
 	passData.zombieStrength = 0;
 	passData.humanStrength = 0;
-	passData.infectChance = 0;
-	passData.transferStrength = 0;
-	passData.transferChance = 0;
 	passData.mobility = 0;
 	passData.panic = 0;
 };
 exports.options = {
 	init: function() {
+		this.S.modules['factory'].val('productionSpeed',1);
+
 		// Create the starting seed for the upgrade tree. Strains should only have one upgrade. Add other free upgrades via other modules.
 		this.S.addUpgrades(this,
 			{
@@ -22,7 +21,7 @@ exports.options = {
 				name: this.name,
 				description: this.description,
 				style: {
-					offset: [-100, 50]
+					offset: [100, -50]
 				}
 			} // Do not set an ID for the strain upgrade. The simulator needs to use the default name to give you the upgrade when you start the game.
 		);
@@ -44,13 +43,16 @@ exports.options = {
 				}
 			}
 		}
-		// Create the first horde, with one zombie in it.
-		this.S.hordes.push(new Horde(1, randPoint));
+		// Create the fort/factory location
+		this.fort = randPoint;
+		this.S.modules['factory'].val('locations',randPoint,'append');
+
 
 		// Send the starting point back to the callback function to start the simulation
 		callback(randPoint);
 	},
-	name: 'Mind Slave Robots',
-	description: 'Takes over people',
-	children: ['base-movement','process-fightBite']
+	name: 'Self-Replicating Robots',
+	description: 'Robots make more of themselves using ',
+	dependencies: ['factory'],
+	children: ['movement.base','fight']
 };

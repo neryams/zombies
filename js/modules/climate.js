@@ -22,6 +22,7 @@ exports.options = {
 		this.rangeWet = 5;
 	},
 	init: function() {
+		/*
 		var warmAcc = function() {
 			this.val('idealTemp',6,'+');
 			this.val('rangeTemp',3,'+');
@@ -36,7 +37,7 @@ exports.options = {
 		};
 		this.S.addUpgrades(this,
 			{cost: 200,
-				paths:['strain-zombie','strain-reproducer'],
+				paths:['strain-zombie','reproducer.strain'],
 				name:'Heat Affinity I',
 				onUpgrade: warmAcc,
 				description:'Zombies become stronger in warmth.',
@@ -48,7 +49,7 @@ exports.options = {
 			},
 			{
 				cost: 200,
-				paths:['strain-zombie','strain-reproducer'],
+				paths:['strain-zombie','reproducer.strain'],
 				name:'Cold Affinity I',
 				onUpgrade: coldAcc,
 				description:'Zombies become stronger in cold.',
@@ -60,7 +61,7 @@ exports.options = {
 			},
 			{
 				cost: 200,
-				paths:['strain-zombie','strain-reproducer'],
+				paths:['strain-zombie','reproducer.strain'],
 				name:'Water Affinity I',
 				onUpgrade: wetAcc,
 				description:'Zombies become stronger in wet conditions.',
@@ -111,8 +112,7 @@ exports.options = {
 					bg: 1
 				}
 			}
-		);
+		);*/
 	},
-	dependencies: ['base-movement'],
 	alwaysActive: true
 };

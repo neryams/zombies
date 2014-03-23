@@ -1,3 +1,4 @@
+/* global fs */
 function Upgrade(options) {
 	if(options)
 		for (var key in options)
@@ -460,10 +461,26 @@ Simulator.prototype.end = function(state) {
 Simulator.prototype.addModule = function(id,moduleArray) {
 	var i,n,newModule;
 
+	// dot in id name symbolizes subdirectory
+	var idParts = id.split('.');
 	if(!this.modules[id]) {
 		if(moduleArray === 'node') {
-			var loaded = require('./js/modules/'+id+'.js');
-			newModule = new Module(loaded.type,loaded.run,loaded.options);
+			var path = './js/modules/'+idParts.join('/')+'.js',
+				//fileStats = fs.lstat(path),
+				loaded;
+
+			try {
+				loaded = require(path);
+			}
+			catch(err) {
+				if(err.code == 'MODULE_NOT_FOUND')
+					console.error('Module ' + id + ' not found. Looked in ' + path);
+				else
+					console.error(err);
+			}
+			finally {
+				newModule = new Module(loaded.type,loaded.run,loaded.options);
+			}
 		} else {
 			newModule = moduleArray[id];
 		}

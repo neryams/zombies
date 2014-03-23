@@ -4,7 +4,7 @@
 exports.type = 'infect';
 exports.run = function(current,passData) {
 	passData.mobility = this.speed;
-	passData.encounterProbability = 1 + this.burstSpeed;
+	passData.encounterProbability = this.speed + this.burstSpeed;
 	passData.panic += this.panic;
 };
 exports.options = {
@@ -12,6 +12,7 @@ exports.options = {
 		this.speed = 1.5; // movement speed of zombies in kph. Average walking speed is 4.5-5.5 kph so they start pretty slow
 		this.burstSpeed = 0;
 		this.panic = 0;
+		/*
 		var speedUpgrade = function() {
 			this.val('speed',1.5,'+');
 			this.val('panic',1,'+');
@@ -29,9 +30,8 @@ exports.options = {
 				this.val('speed',0.5,'+');
 				this.val('burstSpeed',15);
 			}, description:'Zombies can sprint. Results in terror and a large increase in deadliness.', gene:{size: 6, shape: 'c', color: 'red'}}
-		);
+		);*/
 	},
 	runtime: 1,
-	dependencies: ['infect-bite'],
-	children: ['fight-movement','spread-movement']
+	children: ['movement.addEncounters','movement.move']
 };

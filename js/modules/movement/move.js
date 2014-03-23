@@ -183,5 +183,5 @@ exports.options = {
 	    	return returnAmount;
 		}
 	},
-	dependencies: ['base-movement']
+	dependencies: ['movement.base']
 };

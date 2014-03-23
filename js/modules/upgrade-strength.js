@@ -9,7 +9,7 @@ exports.run = function(current,passData) {
 exports.options = {
 	init: function() {
 		this.panic = 0;
-		this.zombieStartStrength = 0;
+		this.zombieStartStrength = 0;/*
 		this.S.addUpgrades(this,
 			{cost: 1000,paths:['strain-zombie'],name:'Hunger', onUpgrade: function() {
 				this.val('zombieStartStrength',5);
@@ -19,8 +19,8 @@ exports.options = {
 				this.val('zombieStartStrength',10,'+');
 				this.val('panic',2,'+');
 			}, description:'Makes zombies more likely to kill people. Improves effectiveness against military. Increases Panic.'}
-		);
+		);*/
 	},
 	runtime: 5,
-	dependencies: ['process-fightBite']
+	dependencies: ['fight']
 };

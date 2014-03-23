@@ -7,5 +7,5 @@ exports.run = function(current,passData) {
 };
 exports.options = {
 	runtime: 11,
-	dependencies: ['base-movement']
+	dependencies: ['movement.base']
 };

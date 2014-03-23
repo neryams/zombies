@@ -1,4 +1,5 @@
 <?php
+error_reporting(-1);
 header('Content-Type: application/javascript');
 $load_modules = explode(',',$_GET['modules']);
 
@@ -9,21 +10,34 @@ $inject = '
 		if(debugMenu.console.watchModules(arguments[0])[this.id])
 			debugger;';
 
+
 if(is_dir('modules') && !empty($_GET['modules'])) {
-
-	chdir('modules');
-	$dir = opendir('.');
-
 	echo "var SimulatorModules = {},exports = {};\n";
 
-	while (($file = readdir($dir)) !== false) {
-		$module_name = preg_replace('/(.+?)(\.[^.]*$|$)/','$1',$file);
-		if (is_file($file)) {
-			echo file_get_contents($file);
-			// Add debugger script
-			echo "SimulatorModules['$module_name'] = new Module(exports.type,exports.run,exports.options);\n";
+	function insert_modules($path, $prepend_name) {
+		chdir($path);
+		$dir = opendir('.');
+
+		while (($file = readdir($dir)) !== false) {
+			$module_name = preg_replace('/(.+?)(\.[^.]*$|$)/','$1',$file);
+			if(!empty($prepend_name))
+				$module_name = $prepend_name . '.' . $module_name;
+
+			if (is_file($file)) {
+				echo file_get_contents($file);
+				echo "SimulatorModules['$module_name'] = new Module(exports.type,exports.run,exports.options);\n";
+			}
+			if (is_dir($file) && $file != '.' && $file != '..') {
+				insert_modules($file, $module_name);
+			}
 		}
+
+		closedir($dir);
+		chdir('../');
 	}
+
+	insert_modules('modules', '');
+
 	echo "Simulator.prototype.loadModules=function(){";
 
 	for($i = 0; $i < count($load_modules); $i++) {
