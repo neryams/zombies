@@ -422,8 +422,10 @@ Simulator.prototype.start = function(strainId) {
 			if (that.upgrades.hasOwnProperty(key)) {
 				current = that.upgrades[key];
 				for(var i = 0; i < current.paths.length; i++) {
-					that.upgrades[current.paths[i]].children.push(current);
-					pathPointers.push(that.upgrades[current.paths[i]]);
+					if(that.upgrades[current.paths[i]] !== undefined) {
+						that.upgrades[current.paths[i]].children.push(current);
+						pathPointers.push(that.upgrades[current.paths[i]]);
+					}
 				}
 				delete current.paths;
 				current.paths = pathPointers;

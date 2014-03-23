@@ -564,7 +564,6 @@ Evolution.prototype.buildWeb = function(focusUpgrade) {
 
 		// Scroll to put the upgrade to focus on in the middle
 		if(upgrade.id == focusUpgrade) {
-			var currPos = E.evolveMenu.element.position();
 			E.evolveMenu.element.css('margin-left', -upgrade.position.left).css('margin-top', -upgrade.position.top);
 		}
 		
@@ -661,11 +660,17 @@ Evolution.prototype.buildWeb = function(focusUpgrade) {
 			else {
 				for(i = 0; i < current.paths.length; i++) {
 					if(this.all[current.paths[i]] === undefined) {
-						if(typeof current.paths[i] !== 'object')
-							console.error('Cannot find upgrade with ID "' + current.paths[i] + '"!');
+						if(typeof current.paths[i] !== 'object') {
+							console.warn('Cannot find upgrade with ID "' + current.paths[i] + '", path removed');
+							current.paths.splice(i,1);
+							i--;
+						}
 					} else {
 						current.paths[i] = this.all[current.paths[i]];
 						current.paths[i].children.push(current);
+					}
+					if(!current.paths.length) {
+						current.element.hide();
 					}
 				}
 			}
