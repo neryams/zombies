@@ -47,8 +47,9 @@ if(typeof global !== 'undefined')
 
 // Global variables
 var R,S,debugMenu,
-    node = typeof require !== 'undefined',
-    fs = require('fs');
+    node = typeof require !== 'undefined';
+if(node)
+    var fs = require('fs');
 
 $(function () {
     // Select Resolution closes to device pixel ratio
@@ -119,7 +120,7 @@ $(function () {
                     MI = MainInterface(UI,R);
                     MI.load.start();
                     generatorWorker.postMessage(userConfig);
-                    R.init();                    
+                    R.init();
                 });
             },
             checkLoadingState = function(completeSteps) {
@@ -137,6 +138,7 @@ $(function () {
 
                     MI.strainPrompt(S.getStrainOptions(), function(strain) {
                         S.start(strain);
+                        UI.processUpgrades(strain);
                         MI.load.end();
                         R.animate();
                     });

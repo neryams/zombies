@@ -430,7 +430,7 @@ Evolution.prototype.SQUARE_SIZE = 10;
 Evolution.prototype.imageCanvas = document.createElement( 'canvas' );
 Evolution.prototype.imageCanvas.width = 100;
 Evolution.prototype.imageCanvas.height = 100;
-Evolution.prototype.connectorArrow = new Image(); 
+Evolution.prototype.connectorArrow = new Image();
 Evolution.prototype.connectorArrow.src = './ui/evol_arrow.png';
 
 Evolution.prototype.refresh = function() {
@@ -541,7 +541,6 @@ Evolution.prototype.clearGrid = function() {
 Evolution.prototype.buildWeb = function(focusUpgrade) {
 	var upgradeDistance = 80,
 		arrowLength = Evolution.prototype.connectorArrow.width/2,
-		arrowBaseRatio = 0.25,
 		evolutionBg = this.imageCanvas;
 	evolutionBg.width = this.evolveMenu.element.width();
 	evolutionBg.height = this.evolveMenu.element.height();
@@ -561,6 +560,12 @@ Evolution.prototype.buildWeb = function(focusUpgrade) {
 				left: position.left + currentOffset[0]
 			};
 			upgrade.element.css('top', upgrade.position.top).css('left', upgrade.position.left);
+		}
+
+		// Scroll to put the upgrade to focus on in the middle
+		if(upgrade.id == focusUpgrade) {
+			var currPos = E.evolveMenu.element.position();
+			E.evolveMenu.element.css('margin-left', -upgrade.position.left).css('margin-top', -upgrade.position.top);
 		}
 		
 		depth++;
@@ -667,8 +672,8 @@ Evolution.prototype.buildWeb = function(focusUpgrade) {
 		}
 
 	var position = {
-		left:500,
-		top:500
+		left:0,
+		top:0
 	};
 
 	for(i = 0; i < startingUpgrades.length; i++) {
@@ -834,6 +839,9 @@ var UserInterface = function UserInterface(Renderer) {
 		},
 		updateEvolution: function(id,property,value) {
 			Evolution.prototype.all[id][property] = value;
+		},
+		processUpgrades: function(focusUpgrade) {
+			Evolution.prototype.buildWeb(focusUpgrade);
 		},
 		setSimulator: function(S) {
 			DataField.prototype.Simulator = S;

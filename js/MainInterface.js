@@ -24,7 +24,6 @@ function MainInterface(UI,R) {
 			$('#container').css('display','block');
 		},
 		end: function() {
-			Evolution.prototype.buildWeb();
 			attachEvents();
 		},
 		progress: function(ratio, share) {
@@ -132,7 +131,7 @@ function MainInterface(UI,R) {
 
 		var evolveMenuOuter = UI.addDataField('evolveMenu',{
 			type: 'div',
-			class: 'evolution',
+			class: 'evolution draggable-parent',
 			title: 'Evolution',
 			overlay: true,
 			onHide: function() {
@@ -255,24 +254,34 @@ function MainInterface(UI,R) {
 
 	// Commands to run when loading is finished and main game UI is displayed
 	attachEvents = function() {
-		$('.draggable').on('mousedown.draggable', function (event) {
+		$('.draggable, .draggable-parent').on('mousedown.draggable', function (event) {
+			var elements;
 			event.preventDefault();
 			status.mouse.down = true;
 			status.mouse.x = event.clientX;
 			status.mouse.y = event.clientY;
-			var elements = $(this).parent().find('.draggable');
-			elements.maxPos = { top: $(this).parent().height() - elements.height(), left: $(this).parent().width() - elements.width() };
+			if($(this).hasClass('.draggable')) {
+				elements = $(this).parent().find('.draggable');
+				elements.maxPos = { top: $(this).parent().height() - elements.height(), left: $(this).parent().width() - elements.width() };
+			}
+			else {
+				elements = $(this).find('.draggable');
+				elements.maxPos = false;
+			}
 			$(this).on('mousemove.dragging', null, elements, function (event) {
 				event.preventDefault();
 				var position = event.data.position();
 				position.left += event.clientX - status.mouse.x;
 				position.top += event.clientY - status.mouse.y;
-				if(position.left > 0)
-					position.left = 0;
-				else if(position.left < event.data.maxPos.left)
-					position.left = event.data.maxPos.left;
-				if(position.top > 0)
-					position.top = 0;
+				if(event.data.maxPos) {
+					if(position.left > 0)
+						position.left = 0;
+					else if(position.left < event.data.maxPos.left)
+						position.left = event.data.maxPos.left;
+					if(position.top > 0)
+						position.top = 0;
+				}
+
 				else if(position.top < event.data.maxPos.top)
 					position.top = event.data.maxPos.top;
 
@@ -282,11 +291,11 @@ function MainInterface(UI,R) {
 				status.mouse.y = event.clientY;
 			});
 		});
-		$('.draggable').on('mouseup.draggable', function () {
+		$('.draggable, .draggable-parent').on('mouseup.draggable', function () {
 			status.mouse.down = false;
 			$(this).off('mousemove.dragging');
 		});
-		$('.draggable').on('mouseout.draggable', function () { $(this).trigger('mouseup'); });
+		$('.draggable, .draggable-parent').on('mouseout.draggable', function () { $(this).trigger('mouseup'); });
 
 		$('#ui').on('mousedown.moveCamera', function (event) {
 			if(!status.pauseR && status.mouse.bound === null) {
