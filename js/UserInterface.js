@@ -418,7 +418,8 @@ function Evolution(name,levels,options) {
 Evolution.prototype = Object.create( DataField.prototype );
 Evolution.prototype.defaultStyle = {
 	bg: 0,
-	offset: [0,0]
+	offset: [0,0],
+	distance: 80
 };
 Evolution.prototype.all = {};
 Evolution.prototype.selectedUpgrades = [];
@@ -539,8 +540,7 @@ Evolution.prototype.clearGrid = function() {
 };
 
 Evolution.prototype.buildWeb = function(focusUpgrade) {
-	var upgradeDistance = 80,
-		arrowLength = Evolution.prototype.connectorArrow.width/2,
+	var arrowLength = Evolution.prototype.connectorArrow.width/2,
 		evolutionBg = this.imageCanvas;
 	evolutionBg.width = this.evolveMenu.element.width();
 	evolutionBg.height = this.evolveMenu.element.height();
@@ -552,13 +552,17 @@ Evolution.prototype.buildWeb = function(focusUpgrade) {
 	var i,key,
 		E = this;
 
-	var placeUpgrades = function(upgrade, position, lastTheta, depth) {
-		var currentOffset = upgrade.style.offset || E.defaultStyle.offset;
+	var placeUpgrades = function(upgrade, position, theta, depth) {
 		if(!upgrade.position) {
+			var currentOffset = upgrade.style.offset || E.defaultStyle.offset,
+				upgradeDistance = upgrade.style.distance || E.defaultStyle.distance;
+			var offsetX = currentOffset[0] + Math.round( upgradeDistance * Math.cos(theta) );
+			var offsetY = currentOffset[1] - Math.round( upgradeDistance * Math.sin(theta) );
 			upgrade.position = {
-				top: position.top + currentOffset[1],
-				left: position.left + currentOffset[0]
+				top: position.top + offsetY,
+				left: position.left + offsetX
 			};
+
 			upgrade.element.css('top', upgrade.position.top).css('left', upgrade.position.left);
 		}
 
@@ -570,13 +574,12 @@ Evolution.prototype.buildWeb = function(focusUpgrade) {
 		depth++;
 		for(var i = 0, n = upgrade.children.length; i < n; i++) {
 			var currentChild = upgrade.children[i],
-				theta = lastTheta + 2 * Math.PI * ( Math.ceil( i / 2 ) / n ) / depth * (1 - i % 2 * 2 ),
-				childPosition = {
-					top: upgrade.position.top + Math.round( upgradeDistance * Math.sin(theta) ),
-					left: upgrade.position.left + Math.round( upgradeDistance * Math.cos(theta) )
-				};
-
-			placeUpgrades(currentChild, childPosition, theta, depth);
+				newTheta;
+			if(currentChild.style.angle)
+				newTheta = theta + Math.PI * currentChild.style.angle;
+			else
+				newTheta = theta + 2 * Math.PI * ( Math.ceil( i / 2 ) / n ) / depth * (1 - i % 2 * 2 );
+			placeUpgrades(currentChild, upgrade.position, newTheta, depth);
 		}
 
 		return upgrade.position;
