@@ -247,34 +247,42 @@ canvas.draggable {
 }
 .evolution>div div img.connector {
 	z-index: -2;
-	margin: 15px;
-	filter: grayscale(90%);
-	-webkit-filter: grayscale(90%);
 }
 .evolution>div div img.arrows {
 	z-index: -1;
-	margin: 15px;
-	filter: grayscale(90%);
-	-webkit-filter: grayscale(90%);
 }
-.evolution>div div.active img {
-	-webkit-filter: none;
+.evolution>div div img.connector,
+.evolution>div div img.arrows,
+.evolution>div div a.evoIcon {
+	filter: grayscale(90%);
+	-webkit-filter: grayscale(90%);	
+}
+.evolution>div div.active img,
+.evolution>div div.active a.evoIcon {
+	-webkit-filter: grayscale(0%);
 	opacity: 1;
 }
 
 .evolution>div div a.evoIcon {
-	width: 100%;
-	height: 100%;
+	width: 30px;
+	height: 30px;
+	border-radius: 15px;
 	display: block;
 	z-index: 23;
-	border-radius: 15px;
-	background-image: url('../ui/evol_sprite_unavail.png');
+	overflow: hidden;
+	background-image: url(../js/modules/sprite.png);
 }
-.evolution>div .available a.evoIcon {
-	background-image: url('../ui/evol_sprite_avail.png');
+.evolution>div div.available a.evoIcon {
+	-webkit-filter: grayscale(0%);
 }
-.evolution>div .active a.evoIcon {
-	background-image: url('../ui/evol_sprite_active.png');
+.evolution>div div a.evoIcon img {
+	margin-top: -200%;
+}
+.evolution>div div.available a.evoIcon img {
+	margin-top: -100%;
+}
+.evolution>div div.active a.evoIcon img {
+	margin-top: 0;
 }
 
 .alert {

@@ -1,6 +1,7 @@
 /* 
 	STRAIN - Simple virus. Infects  or kills healthy people, raises panic based on infected. 1 evo point per tick.
 */
+/*jshint sub:true*/
 exports.type = 'strain';
 exports.run = function(current,passData) {
 	passData.encounterProbability = 0;
@@ -8,6 +9,7 @@ exports.run = function(current,passData) {
 	passData.humanStrength = 0;
 	passData.mobility = 0;
 	passData.panic = 0;
+	passData.reproduction = 5;
 };
 exports.options = {
 	init: function() {
@@ -21,7 +23,9 @@ exports.options = {
 				name: this.name,
 				description: this.description,
 				style: {
-					offset: [100, -50]
+					offset: [100, -50],
+					size: 90,
+					graphic: 'strain.png'
 				}
 			} // Do not set an ID for the strain upgrade. The simulator needs to use the default name to give you the upgrade when you start the game.
 		);
@@ -47,12 +51,11 @@ exports.options = {
 		this.fort = randPoint;
 		this.S.modules['factory'].val('locations',randPoint,'append');
 
-
 		// Send the starting point back to the callback function to start the simulation
 		callback(randPoint);
 	},
 	name: 'Self-Replicating Robots',
 	description: 'Robots make more of themselves using ',
 	dependencies: ['factory'],
-	children: ['movement.base','fight']
+	children: ['movement.base','fight','reproducer.upgrade-repro']
 };

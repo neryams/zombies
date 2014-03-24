@@ -292,41 +292,63 @@ function Evolution(name,levels,options) {
 	};
 
 	for(i = 0; i < levels.length; i++) {
-		var currentId = levels[i].id;
+		var currentId = levels[i].id,
+			currentLevel = levels[i];
 
-		if(!levels[i].style)
-			levels[i].style = {};
+		if(!currentLevel.style)
+			currentLevel.style = {};
 
 		// Create the evolution upgrade button in the menu
 			// Clone a div element for each level so it can be treated as a separate evolution
 		var currentElement = this.element.clone().addClass(/*'evolutionButton_' + this.name + ' */'evolutionButton_' + currentId).appendTo(this.evolveMenu.element);
-		var icon = currentElement.append('<a class="evoIcon" />').css('background-position', ((levels[i].style.bg || this.defaultStyle.bg)*30) + 'px 0').data('id',currentId);
+		var icon = $('<a class="evoIcon" />')
+			.css('background-position', '-' + ((currentLevel.style.bg || this.defaultStyle.bg)*(currentLevel.style.size || this.defaultStyle.size)) + 'px 0')
+			.data('id',currentId).appendTo(currentElement);
 
+		if(currentLevel.resourcePath)
+			icon.css('background-image', 'url(js/modules/' + currentLevel.resourcePath + '/sprite.png)');
 
-		this.all[currentId] = levels[i];
-		if(this.all[currentId].gene)
-			this.all[currentId].gene = {
+		if(currentLevel.style.graphic && currentLevel.resourcePath) {
+			icon.append('<img src="js/modules/' + currentLevel.resourcePath + '/' + currentLevel.style.graphic + '" />');
+		}
+		else {
+			icon.append('<img src="ui/evol_sprite.png" />');
+		}
+
+		if(currentLevel.style.size) {
+			icon.add(currentElement)
+				.css('height',currentLevel.style.size)
+				.css('width',currentLevel.style.size);
+
+			icon.css('border-radius',currentLevel.style.size/2);
+
+			currentElement.css('margin-left',-(currentLevel.style.size/2)).css('margin-top',-(currentLevel.style.size/2));
+		}
+
+		this.all[currentId] = currentLevel;
+		if(currentLevel.gene)
+			currentLevel.gene = {
 				shape: levels[i].gene.shape,
 				color: levels[i].gene.color,
 				height: levels[i].gene.height,
 				width: levels[i].gene.width,
 			};
 			
-		this.all[currentId].evolution = this;
-		this.all[currentId].element = currentElement;
-		this.all[currentId].children = [];
+		currentLevel.evolution = this;
+		currentLevel.element = currentElement;
+		currentLevel.children = [];
 
 		// Draw gene shape image, (the tetris peices)
-		if(this.all[currentId].gene) {
+		if(currentLevel.gene) {
 			// Get canvas for drawing the image
 			var imageCtx = this.imageCanvas.getContext('2d'),
 				currPoint;
 			// Clear the last gene graphic and set the canvas size to the final shape size
-			this.imageCanvas.height = this.SQUARE_SIZE * this.all[currentId].gene.height;
-			this.imageCanvas.width = this.SQUARE_SIZE * this.all[currentId].gene.width;
+			this.imageCanvas.height = this.SQUARE_SIZE * currentLevel.gene.height;
+			this.imageCanvas.width = this.SQUARE_SIZE * currentLevel.gene.width;
 
 			// Drawing styles
-			switch(this.all[currentId].gene.color) {
+			switch(currentLevel.gene.color) {
 				case 'red':
 					imageCtx.fillStyle = 'rgba(120, 0, 0, 255)';
 					imageCtx.strokeStyle = 'rgba(255, 0, 0, 255)';
@@ -357,35 +379,35 @@ function Evolution(name,levels,options) {
 			// array for removing points that are not on the outside
 			var borders = [];
 			// For each point, draw a square at the coordinates
-			for(j = 0; j < this.all[currentId].gene.shape.length; j++) {
-				currPoint = this.all[currentId].gene.shape[j];
+			for(j = 0; j < currentLevel.gene.shape.length; j++) {
+				currPoint = currentLevel.gene.shape[j];
 				imageCtx.beginPath();
 				imageCtx.rect(currPoint.x*this.SQUARE_SIZE, currPoint.y*this.SQUARE_SIZE, this.SQUARE_SIZE, this.SQUARE_SIZE);
 				imageCtx.fill();
-				borders[currPoint.y*this.all[currentId].gene.width + currPoint.x] = j;
+				borders[currPoint.y*currentLevel.gene.width + currPoint.x] = j;
 			}
 			for(j = 0; j < borders.length; j++) {
 				if(borders[j] !== undefined) {
-					currPoint = this.all[currentId].gene.shape[borders[j]];
+					currPoint = currentLevel.gene.shape[borders[j]];
 					if(borders[j - 1] === undefined || currPoint.x === 0) {
 						imageCtx.beginPath();
 						imageCtx.moveTo(currPoint.x*this.SQUARE_SIZE + 0.5,currPoint.y*this.SQUARE_SIZE );
 						imageCtx.lineTo(currPoint.x*this.SQUARE_SIZE + 0.5,(currPoint.y+1)*this.SQUARE_SIZE );
 						imageCtx.stroke();
 					}
-					if(borders[j - this.all[currentId].gene.width] === undefined || currPoint.y === 0) {
+					if(borders[j - currentLevel.gene.width] === undefined || currPoint.y === 0) {
 						imageCtx.beginPath();
 						imageCtx.moveTo(currPoint.x*this.SQUARE_SIZE ,currPoint.y*this.SQUARE_SIZE + 0.5);
 						imageCtx.lineTo((currPoint.x+1)*this.SQUARE_SIZE ,currPoint.y*this.SQUARE_SIZE + 0.5);
 						imageCtx.stroke();
 					}
-					if(borders[j + 1] === undefined || currPoint.x == this.all[currentId].gene.width - 1) {
+					if(borders[j + 1] === undefined || currPoint.x == currentLevel.gene.width - 1) {
 						imageCtx.beginPath();
 						imageCtx.moveTo((currPoint.x+1)*this.SQUARE_SIZE - 0.5,currPoint.y*this.SQUARE_SIZE);
 						imageCtx.lineTo((currPoint.x+1)*this.SQUARE_SIZE - 0.5,(currPoint.y+1)*this.SQUARE_SIZE);
 						imageCtx.stroke();
 					}
-					if(borders[j + this.all[currentId].gene.width] === undefined || currPoint.y == this.all[currentId].gene.height - 1) {
+					if(borders[j + currentLevel.gene.width] === undefined || currPoint.y == currentLevel.gene.height - 1) {
 						imageCtx.beginPath();
 						imageCtx.moveTo(currPoint.x*this.SQUARE_SIZE,(currPoint.y+1)*this.SQUARE_SIZE - 0.5);
 						imageCtx.lineTo((currPoint.x+1)*this.SQUARE_SIZE,(currPoint.y+1)*this.SQUARE_SIZE - 0.5);
@@ -395,12 +417,12 @@ function Evolution(name,levels,options) {
 			}
 
 			// Copy a image elemnt for the user interface and put the gene image into it.
-			this.all[currentId].gene.imageElement = $('<img />').attr('src', this.imageCanvas.toDataURL());
+			currentLevel.gene.imageElement = $('<img />').attr('src', this.imageCanvas.toDataURL());
 		}
 
 		// Add gene graphic to evolution panel icons
-		if(this.all[currentId].gene) {
-			var geneGraphic = this.all[currentId].gene.imageElement.clone();
+		if(currentLevel.gene) {
+			var geneGraphic = currentLevel.gene.imageElement.clone();
 			currentElement.append(geneGraphic.addClass('geneIcon').css('bottom',this.imageCanvas.height/-2).css('right',this.imageCanvas.height/-2));
 		}
 
@@ -419,7 +441,8 @@ Evolution.prototype = Object.create( DataField.prototype );
 Evolution.prototype.defaultStyle = {
 	bg: 0,
 	offset: [0,0],
-	distance: 80
+	distance: 65,
+	size: 30
 };
 Evolution.prototype.all = {};
 Evolution.prototype.selectedUpgrades = [];
@@ -540,7 +563,8 @@ Evolution.prototype.clearGrid = function() {
 };
 
 Evolution.prototype.buildWeb = function(focusUpgrade) {
-	var arrowLength = Evolution.prototype.connectorArrow.width/2,
+	var arrowWidth = Evolution.prototype.connectorArrow.height,
+		arrowLength = Evolution.prototype.connectorArrow.width,
 		evolutionBg = this.imageCanvas;
 	evolutionBg.width = this.evolveMenu.element.width();
 	evolutionBg.height = this.evolveMenu.element.height();
@@ -575,6 +599,7 @@ Evolution.prototype.buildWeb = function(focusUpgrade) {
 		for(var i = 0, n = upgrade.children.length; i < n; i++) {
 			var currentChild = upgrade.children[i],
 				newTheta;
+			currentChild.style.distance = (currentChild.style.distance || E.defaultStyle.distance) + (upgrade.style.size || E.defaultStyle.size)/2;
 			if(currentChild.style.angle)
 				newTheta = theta + Math.PI * currentChild.style.angle;
 			else
@@ -588,7 +613,8 @@ Evolution.prototype.buildWeb = function(focusUpgrade) {
 	var drawUpgradeConnectors = function(upgrade) {
 		var i,n,x,y,
 			maxWidth = 4,
-			maxHeight = 4;
+			maxHeight = 4,
+			elementSize = upgrade.style.size || E.defaultStyle.size;
 		for(i = 0, n = upgrade.children.length; i < n; i++) {
 			x = upgrade.children[i].position.x = (upgrade.children[i].position.left - upgrade.position.left);
 			y = upgrade.children[i].position.y = (upgrade.children[i].position.top - upgrade.position.top);
@@ -607,7 +633,7 @@ Evolution.prototype.buildWeb = function(focusUpgrade) {
 
 			bgCtx.translate(startX, startY);
 			bgCtx.rotate(theta);
-			bgCtx.drawImage(Evolution.prototype.connectorArrow, -(arrowLength), -(arrowLength));
+			bgCtx.drawImage(Evolution.prototype.connectorArrow, elementSize/2 - 2, -(arrowWidth/2));
 
 			bgCtx.restore();
 
@@ -644,12 +670,13 @@ Evolution.prototype.buildWeb = function(focusUpgrade) {
 		}
 		upgrade.element.append($('<img class="connector" />').attr('src', evolutionBg.toDataURL()).css('left', evolutionBg.width/-2).css('top', evolutionBg.height/-2));
 
-		evolutionBg.width = arrowLength*2;
-		evolutionBg.height = arrowLength*2;
+		evolutionBg.height = evolutionBg.width = elementSize + arrowLength * 2;
 		for(i = 0, n = upgrade.children.length; i < n; i++) {
-			drawArrow(arrowLength + 0.5, arrowLength + 0.5, upgrade.children[i].position);
+			drawArrow(Math.floor(evolutionBg.width/2) + 0.5, Math.floor(evolutionBg.height/2) + 0.5, upgrade.children[i].position);
 		}
-		upgrade.element.append($('<img class="arrows" />').attr('src', evolutionBg.toDataURL()).css('left', -arrowLength).css('top', -arrowLength));
+		upgrade.element.append($('<img class="arrows" />').attr('src', evolutionBg.toDataURL()).css('left', evolutionBg.width/-2).css('top', evolutionBg.height/-2));
+
+		upgrade.element.children('img.connector, img.arrows').css('margin', elementSize/2);
 	};
 
 

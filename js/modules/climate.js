@@ -46,6 +46,7 @@ exports.options = {
 					color: 'yellow'
 				},
 				style: {
+					bg: 2,
 					angle: 1,
 					distance: 120
 				}
@@ -62,6 +63,7 @@ exports.options = {
 					color: 'green'
 				},
 				style: {
+					bg: 3,
 					angle: 1.333,
 					distance: 120
 				}
@@ -92,6 +94,9 @@ exports.options = {
 					size: 3,
 					shape: 'r',
 					color: 'yellow'
+				},
+				style: {
+					bg: 2
 				}
 			},
 			{
@@ -104,6 +109,9 @@ exports.options = {
 					size: 3,
 					shape: 'r',
 					color: 'green'
+				},
+				style: {
+					bg: 3
 				}
 			},
 			{cost: 400,

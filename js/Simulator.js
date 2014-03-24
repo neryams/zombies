@@ -610,6 +610,12 @@ Simulator.prototype.addUpgrades = function(module) {
 		this.upgrades[currentLevel.id].module = module;
 		this.upgrades[currentLevel.id].level = currentLevel;
 
+		var idParts = module.id.split('.');
+		if(idParts.length > 1)  {
+			idParts.pop();
+			currentLevel.resourcePath = idParts.join('/');
+		}
+
 		delete currentLevel.onUpgrade;
     }
     // send all the levels to the UI
