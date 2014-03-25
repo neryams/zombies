@@ -1,4 +1,3 @@
-/* global fs */
 function Upgrade(options) {
 	if(options)
 		for (var key in options)
@@ -859,6 +858,9 @@ Simulator.prototype.tick_module = function(process, moduleName, options) {
 };
 
 Simulator.prototype.tick = function() {
+	var S = this,
+		R = this.R;
+
 	this.date.setTime(1577880000000 + 86400000*this.iteration);
 	if(this.paused)
 		return false;
@@ -893,12 +895,10 @@ Simulator.prototype.tick = function() {
 
 		this.tick_module(function(current) {
 			// Update nearby square populations
-			if(this.iteration%10 == current.id%10) {
-				current.location.updateNearbyPop();
-			}
+			current.location.updateNearbyPop(S.iteration);
 
 			if(!current.renderer.cacheLat || current.renderer.cacheLat != current.location.lat || current.renderer.cacheLng != current.location.lng) {
-				this.R.updateHorde(current);
+				R.updateHorde(current);
 				current.renderer.cacheLat = current.location.lat;
 				current.renderer.cacheLng = current.location.lng;
 			}

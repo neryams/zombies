@@ -56,7 +56,7 @@ function MainInterface(UI,R) {
 			class: 'main_menu'
 		});
 
-		var uiMenuDataviews = uiMenu.addDataField({
+		var uiMenuDataviews = uiMenu.addDataField('dataViewSelector',{
 			type: 'div',
 			visible: false,
 			class: 'dataViewList'
@@ -75,11 +75,13 @@ function MainInterface(UI,R) {
 
 		uiMenuDataviews.addDataField({
 			type:'button',
-			class: 'secondary',
 			onClick: function() {
+				R.closeVisualization();
 				this.parent.hide();
+				UI.deactivatePlanetTooltip(false);
 			}
-		}).label('ui:buttons.close');
+		}).label('ui:buttons.dataviews_inner.disable');
+		uiMenuDataviews.element.css('top',uiMenuDataviewsPos.top - uiMenuDataviews.element.height());
 		uiMenuDataviews.addDataField({
 			type:'button',
 			onClick: function() {
@@ -112,15 +114,6 @@ function MainInterface(UI,R) {
 				});
 			}
 		}).label('ui:buttons.dataviews_inner.temperature');
-		uiMenuDataviews.addDataField({
-			type:'button',
-			onClick: function() {
-				R.closeVisualization();
-				this.parent.hide();
-				UI.deactivatePlanetTooltip(false);
-			}
-		}).label('ui:buttons.dataviews_inner.disable');
-		uiMenuDataviews.element.css('top',uiMenuDataviewsPos.top - uiMenuDataviews.element.height());
 
 		uiMenu.addDataField({
 			type: 'button',

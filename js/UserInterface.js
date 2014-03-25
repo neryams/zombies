@@ -179,8 +179,8 @@ DataField.prototype = {
 				that.hide();
 			});
 			this.UIStatus.pauseRenderer = true;
-			if(this.Simulator)
-				this.Simulator.pause();
+			if(this.S)
+				this.S.pause();
 		}
 
 		this.element.css('display','');
@@ -200,8 +200,8 @@ DataField.prototype = {
 		if(this.overlay) {
 			$('#ui_mask').css('visibility','hidden').off('click.closeOverlay');
 			this.UIStatus.pauseRenderer = false;
-			if(this.Simulator)
-				this.Simulator.unPause();
+			if(this.S)
+				this.S.unPause();
 		}
 		this.hideTooltip();
 
@@ -430,7 +430,7 @@ function Evolution(name,levels,options) {
 		icon.on('mouseover.evolutionTooltip', this, evolutionTooltip);
 
 		// Click event for evolution in the upgrade menu
-		icon.on('click.evolutionSelect', { Simulator: this.Simulator, evolution: this }, evolutionSelect);
+		icon.on('click.evolutionSelect', { S: this.S, evolution: this }, evolutionSelect);
 
 	}
 	this.element.remove();
@@ -458,7 +458,7 @@ Evolution.prototype.connectorArrow = new Image();
 Evolution.prototype.connectorArrow.src = './ui/evol_arrow.png';
 
 Evolution.prototype.refresh = function() {
-	var available = this.Simulator.availableUpgrades(this.selectedUpgrades);
+	var available = this.S.availableUpgrades(this.selectedUpgrades);
 	this.evolveMenu.element.find('.available').removeClass('available');
 	for (var key in this.all)
 		if (this.all.hasOwnProperty(key)) {
@@ -481,7 +481,7 @@ for (key in this.all)
 
 Evolution.prototype.buyEvolutions = function() {
 	var upgrade,
-		success = this.Simulator.purchaseUpgrades(this.selectedUpgrades.slice(0));
+		success = this.S.purchaseUpgrades(this.selectedUpgrades.slice(0));
 	while(this.selectedUpgrades.length) {
 		upgrade = this.all[this.selectedUpgrades.pop()];
 		if(success) {
@@ -541,7 +541,7 @@ Evolution.prototype.mutate = function() {
 		}
 
 	if(this.mutation.length > 0)
-		if(!this.Simulator.purchaseMutation(this.mutation.slice(0)))
+		if(!this.S.purchaseMutation(this.mutation.slice(0)))
 			console.error('mutation not valid!');
 
 	this.mutationMenu.hide();
@@ -879,7 +879,10 @@ var UserInterface = function UserInterface(Renderer) {
 			Evolution.prototype.buildWeb(focusUpgrade);
 		},
 		setSimulator: function(S) {
-			DataField.prototype.Simulator = S;
+			DataField.prototype.S = S;
+		},
+		setRenderer: function(R) {
+			DataField.prototype.R = R;
 		},
 		updateUI: function(data) {
 			for (var key in interfaceParts)

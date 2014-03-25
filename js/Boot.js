@@ -46,7 +46,7 @@ if(typeof global !== 'undefined')
             delete global.require.cache[key];
 
 // Global variables
-var R,S,debugMenu,
+var S,debugMenu,
     node = typeof require !== 'undefined';
 if(node)
     var fs = require('fs');
@@ -102,7 +102,7 @@ $(function () {
             generatorWorker,
             generatorConfig,
             generatorTexture,
-            UI,MI,
+            UI,MI,R,
             userConfig = {
                 seed: $('#s_seed').val(),
                 tx_w: $('#s_tx').val(),
