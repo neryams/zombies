@@ -3,6 +3,7 @@
     Dependencies: Three.js
 */
 /* global requestAnimationFrame */
+/* global hqx */
 /* exported Renderer */
 var Renderer = function (scaling,onLoad) {
     // Initialize variables
@@ -406,10 +407,25 @@ var Renderer = function (scaling,onLoad) {
                     pix[i*4+2] = Math.floor(val / 100 * 255);
                 };
                 organizeColor = function(i) {
-                    pix[i*4+3] = pix[i*4+2];
-                    pix[i*4+2] = 255;
+                    pix[i*4+3] = (pix[i*4+2])/2 + 128;
                 };
                 save = true; break;
+            case 'tech':
+                setColor = function(i,val) {
+                    pix[i*4] = Math.floor(val / 50000 * 255);
+                };
+                organizeColor = function(i) {
+                    pix[i*4+3] = (pix[i*4+1])/2 + 128;
+                };
+                break;
+            case 'trees':
+                setColor = function(i,val) {
+                    pix[i*4+1] = Math.floor(val / 50000 * 255);
+                };
+                organizeColor = function(i) {
+                    pix[i*4+3] = (pix[i*4+1])/2 + 128;
+                };
+                break;
             case 'temperature':
                 setColor = function(i,val) {
                     if(val < 290) {
@@ -466,6 +482,12 @@ var Renderer = function (scaling,onLoad) {
                     pix[i*4] = 255;
                 };
                 save = true; break;
+            default:
+                setColor = function() {
+                };
+                organizeColor = function() {
+                };
+                console.warn('layer ' + layer + ' not found in visualizer');
         }
         //dtI = Math.floor(i/generatorConfig.tx_w/data_ratio)*generatorConfig.w + Math.floor(i%generatorConfig.tx_w / data_ratio);
         for(i = 0, n = pix.length/4; i < n; i++) {

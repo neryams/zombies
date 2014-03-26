@@ -29,6 +29,38 @@ exports.options = {
 				}
 			} // Do not set an ID for the strain upgrade. The simulator needs to use the default name to give you the upgrade when you start the game.
 		);
+
+		for(var i = 0, n = this.S.points.length; i < n; i++) {
+			if(this.S.points[i].water) {
+				this.S.points[i].tech = 0;
+				this.S.points[i].trees = 0;
+			} else {
+				this.S.points[i].tech = Math.log(this.S.points[i].total_pop*10000000);
+				this.S.points[i].trees = Math.log(this.S.config.max_pop/(this.S.points[i].total_pop+10) + 1)*this.S.points[i].precipitation*this.S.points[i].temperature;
+			}
+		}
+
+		var dataViews = this.S.UI.interfaceParts.dataViewSelector;
+		dataViews.addDataField({
+			type:'button',
+			onClick: function() {
+				this.R.setVisualization('tech');
+				this.parent.hide();
+				this.S.UI.toggleGlobeTooltip(true,function(point){
+					return Math.round((point.tech)*10)/10 + ' parts';
+				});
+			}
+		}).label('ui:buttons.dataviews_inner.tech');
+		dataViews.addDataField({
+			type:'button',
+			onClick: function() {
+				this.R.setVisualization('trees');
+				this.parent.hide();
+				this.S.UI.toggleGlobeTooltip(true,function(point){
+					return Math.round((point.trees)*10)/10 + ' vegetation';
+				});
+			}
+		}).label('ui:buttons.dataviews_inner.trees');
 	},
 	onStart: function(callback) {
 		// Code to start the simulation

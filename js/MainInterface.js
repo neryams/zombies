@@ -62,7 +62,7 @@ function MainInterface(UI,R) {
 			class: 'dataViewList'
 		});
 
-		var uiMenuDataviewsPos = uiMenu.addDataField({
+		uiMenu.addDataField({
 			type: 'button',
 			onClick: function() {
 				if(!this.opens[0].visible)
@@ -78,10 +78,9 @@ function MainInterface(UI,R) {
 			onClick: function() {
 				R.closeVisualization();
 				this.parent.hide();
-				UI.deactivatePlanetTooltip(false);
+				UI.toggleGlobeTooltip(false);
 			}
 		}).label('ui:buttons.dataviews_inner.disable');
-		uiMenuDataviews.element.css('top',uiMenuDataviewsPos.top - uiMenuDataviews.element.height());
 		uiMenuDataviews.addDataField({
 			type:'button',
 			onClick: function() {
@@ -243,6 +242,8 @@ function MainInterface(UI,R) {
 				this.element.empty();
 			}
 		});
+		
+		uiMenuDataviews.element.css('bottom',uiMenu.element.height());
 	},
 
 	// Commands to run when loading is finished and main game UI is displayed

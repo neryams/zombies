@@ -6,6 +6,8 @@
 			"temperature": "Temperature",
 			"rain": "Precipication",
 			"political": "Political",
+			"tech": "Robot Parts",
+			"trees": "Vegetation",
 			"disable": "Disable Overlay"
 		},
 		"population": "Toggle Population",

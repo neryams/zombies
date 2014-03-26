@@ -839,6 +839,7 @@ var UserInterface = function UserInterface(Renderer) {
 	DataField.prototype.hideTooltip = hideTooltip;
 	DataField.prototype.interfaceParts = interfaceParts;
 	DataField.prototype.UIStatus = status;
+	DataField.prototype.R = Renderer;
 
 	// Function that runs on every frame, sending mouse movement from UI as coordinates to the renderer to move 3-d elements around
 	Renderer.onRender(function() {
@@ -880,9 +881,6 @@ var UserInterface = function UserInterface(Renderer) {
 		},
 		setSimulator: function(S) {
 			DataField.prototype.S = S;
-		},
-		setRenderer: function(R) {
-			DataField.prototype.R = R;
 		},
 		updateUI: function(data) {
 			for (var key in interfaceParts)
