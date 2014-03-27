@@ -83,7 +83,7 @@ $(function () {
     });
 
     $.getScript('js/third-party/foundation.min.js');
-    $.getScript('js/third-party/three.min.js');
+    $.getScript('js/third-party/three.js');
     $.getScript('js/third-party/seedrandom.min.js');
     $.getScript('js/third-party/tween.min.js');
     $.getScript('js/third-party/hqx.min.js');

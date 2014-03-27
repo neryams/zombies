@@ -90,7 +90,7 @@ var Renderer = function (scaling,onLoad) {
         Sphere.add( visualization.arc );
 
         // Bars to show zombies and humans
-        var geometry = new THREE.CubeGeometry(1, 1, 1);
+        var geometry = new THREE.BoxGeometry(1, 1, 1);
         // Move the 'position point' of the cube to the bottom so it sits on the surface of the globe.
         geometry.applyMatrix( new THREE.Matrix4().makeTranslation(0, 0, 0.5) );
         DataBarMesh = new THREE.Mesh(geometry); // humans
