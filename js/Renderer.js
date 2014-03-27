@@ -119,7 +119,8 @@ var Renderer = function (scaling,onLoad) {
 
         // Function for filling the canvases with the data generated previously
         var buildImage = function(globeTexture, globeHeightmap, texture) {
-            var current, dtI, gradX, gradY, gradI, color,
+
+            var current, dtI, gradX, gradY, gradI, color, currentTemp, currentWet,
                 ctxT = globeTexture.getContext('2d'),
                 ctxH = globeHeightmap.getContext('2d'),
                 ctxC = climateGradient.getContext('2d'),
@@ -132,25 +133,42 @@ var Renderer = function (scaling,onLoad) {
 
                 data_ratio = generatorConfig.tx_w / generatorConfig.w;
 
+            var blendProperties = function(center, low, high, ratio) {
+                if(ratio > 0 && ratio < 1)
+                    if(ratio < 0.5) {
+                        return center * (2 * ratio) + low * (1 - 2 * ratio);
+                    } else {
+                        return center * (2 - 2 * ratio) + high * (2 * ratio - 1);
+                    }
+            };
+
             for (var i = 0, n = texture.length; i < n; i++) {
                 current = Math.floor(texture[i]);
 
                 // Figure out the current square in the data map (as opposed to the texture map)
                 dtI = Math.floor(i / generatorConfig.tx_w / data_ratio) * generatorConfig.w + Math.floor(i % generatorConfig.tx_w / data_ratio);
-                var currentConditions = Simulator.points[dtI];
+
+                // Get the percentage of how far in the datasquare the current point is to get the ratios of blending with adjacent square values.
+                var positionV = ( (Math.floor(i / generatorConfig.tx_w) + 0.5) % data_ratio ) / data_ratio;
+                var positionH = ( (i % generatorConfig.tx_w + 0.5) % data_ratio ) / data_ratio;
+
+                currentTemp = blendProperties(Simulator.points[dtI].temperature, Simulator.points[dtI].adjacent[0].temperature, Simulator.points[dtI].adjacent[2].temperature, positionV);
+                currentWet = blendProperties(Simulator.points[dtI].precipitation, Simulator.points[dtI].adjacent[0].precipitation, Simulator.points[dtI].adjacent[2].precipitation, positionV);
+                currentTemp = (currentTemp + blendProperties(Simulator.points[dtI].temperature, Simulator.points[dtI].adjacent[3].temperature, Simulator.points[dtI].adjacent[1].temperature, positionH)) / 2;
+                currentWet = (currentWet + blendProperties(Simulator.points[dtI].precipitation, Simulator.points[dtI].adjacent[3].precipitation, Simulator.points[dtI].adjacent[1].precipitation, positionH)) / 2;
 
                 // Get the x/y coordinates in the climate coloring textureW
-                gradY = Math.round((1 - (312.5 - currentConditions.temperature) / 60) * 255);
+                gradY = Math.round((1 - (312.5 - currentTemp) / 60) * 255);
                 if (gradY < 0)
                     gradY = 0;
-                if (currentConditions.precipitation < 0)
-                    currentConditions.precipitation = 0;
-                gradX = Math.round((1 - currentConditions.precipitation/20)*255);
+                if (currentWet < 0)
+                    currentWet = 0;
+                gradX = Math.round((1 - currentWet/20)*255);
                 if (gradX < 0)
                     gradX = 0;
                 gradI = gradY * climateGradient.width + gradX;
 
-                // Get the color of the gorund at this point
+                // Get the color of the ground at this point
                 color = [grdC[gradI * 4],grdC[gradI * 4 + 1],grdC[gradI * 4 + 2]];
 
                 // Generate height texture (greyscale map of elevation) and earth texture (color map using climate info)
@@ -165,7 +183,7 @@ var Renderer = function (scaling,onLoad) {
                     pixT[i * 4 + 1] = Math.floor(generatorConfig.waterLevel / 2) - (generatorConfig.waterLevel - current) * 3;
                     pixT[i * 4 + 2] = current * 2 + 10;
 
-                    if (currentConditions.temperature < 252.5) {
+                    if (currentTemp < 252.5) {
                         pixT[i * 4 + 0] = color[0];
                         pixT[i * 4 + 1] = color[1];
                         pixT[i * 4 + 2] = color[2];
