@@ -4,6 +4,7 @@
 */
 /* global requestAnimationFrame */
 /* global hqx */
+/* global SPE */
 /* exported Renderer */
 var Renderer = function (scaling,onLoad) {
     // Initialize variables
@@ -11,6 +12,7 @@ var Renderer = function (scaling,onLoad) {
         Simulator,
         hordeSystem = {
             length: 0,
+            maxSize: 0,
             particles: null
         },
         WindowConfig = {
@@ -269,33 +271,37 @@ var Renderer = function (scaling,onLoad) {
     },
 
     addHordeParticles = function() {
-        var particleCount = 40000,
-            particles = new THREE.Geometry(),
-            pMaterial = new THREE.ParticleBasicMaterial({
-                size: 1,
-                map: THREE.ImageUtils.loadTexture(
-                    'ui/zombie_basic.png'
-                ),
-                transparent: true,
-                depthWrite: false,
-                opacity: 0.5
-            });
+        var particleGroup = new SPE.Group({
+            texture: THREE.ImageUtils.loadTexture('ui/zombie_basic.png'),
+            maxAge: 2
+        });
 
-        // now create the individual particles
-        for (var p = 0; p < particleCount; p++) {
-            var particle = new THREE.Vector3();
+        var emitter = new SPE.Emitter({
+            type: 'sphere',
 
-            // add it to the geometry
-            particles.vertices.push(particle);
-        }
+            radius: 0,
+            radiusScale: new THREE.Vector3(1, 1, 1),
 
-        // create the particle system
-        var particleSystem = new THREE.ParticleSystem(particles, pMaterial);
-        //particleSystem.sortParticles = true;
+            position: new THREE.Vector3( 0, 0, 0 ),
 
-        // add it to the scene
-        Sphere.add(particleSystem);
-        hordeSystem.particles = particles;
+            colorStart: (new THREE.Color()).setRGB(
+                1,
+                0,
+                0
+            ),
+            sizeStart: 1,
+
+            particleCount: 40000,
+
+            opacityStart: 0.5,
+            isStatic: 1
+        });
+
+        particleGroup.addEmitter( emitter );
+        Sphere.add( particleGroup.mesh );
+        
+        hordeSystem.particles = particleGroup.geometry;
+        hordeSystem.attributes = particleGroup.attributes;
     },
 
     updateHorde = function(horde, remove) {
@@ -310,6 +316,7 @@ var Renderer = function (scaling,onLoad) {
             hordeSystem.particles.vertices[hordeSystem.length] = horde.renderer.particleVertex;
             horde.renderer.particleVertex.set(0,0,0);
             delete horde.renderer.particleVertex;
+            delete horde.renderer.particleSizeAttrib;
         } else {
             if(horde.renderer.particleVertex) {
                 horde.renderer.particleVertex.copy(coordToCartesian(horde.location.lat-0.5+Math.random(), horde.location.lng-0.5+Math.random()));
@@ -317,12 +324,22 @@ var Renderer = function (scaling,onLoad) {
                 var currentParticle = hordeSystem.particles.vertices[hordeSystem.length];
                 currentParticle.copy(coordToCartesian(horde.location.lat-0.5+Math.random(), horde.location.lng-0.5+Math.random()));
                 currentParticle.index = hordeSystem.length;
-                hordeSystem.length++;
 
                 horde.renderer.particleVertex = currentParticle;
+                horde.renderer.particleSizeAttrib = hordeSystem.attributes.size.value[hordeSystem.length];
+                hordeSystem.length++;
             }
         }
         hordeSystem.particles.verticesNeedUpdate = true;
+
+        if(hordeSystem.maxSize < horde.size)
+            hordeSystem.maxSize = horde.size;
+
+        var newParticleSize = (hordeSystem.maxSize > 500 ? 5 : hordeSystem.maxSize / 125 + 1) * horde.size / hordeSystem.maxSize + 1.75;
+        if(horde.renderer.particleSizeAttrib.length() != newParticleSize) {
+            horde.renderer.particleSizeAttrib.setLength(newParticleSize);
+        }
+        hordeSystem.attributes.size.needsUpdate = true;
     },
 
     render = function() {
