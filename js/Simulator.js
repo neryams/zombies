@@ -488,27 +488,25 @@ Simulator.prototype.addModule = function(id,moduleArray) {
 
 		if(newModule !== undefined) {
 			// Add dependencies recursively
+			newModule.id = id;
+			this.modules[id] = newModule;
+			if(newModule.type === 'strain') {
+				this.strainOptions.push(newModule);
+			}
+
 			for(i = 0, n = newModule.dependencies.length; i < n; i++)
 				this.addModule(newModule.dependencies[i],moduleArray);
 
-			// Make sure this module wasn't added somewhere in its dependencies
-			if(!this.modules[id]) {
-				newModule.id = id;
-				this.modules[id] = newModule;
-				if(newModule.type === 'strain') {
-					this.strainOptions.push(newModule);
-				}
-				if(newModule.init !== undefined)
-					newModule.init();
+			if(newModule.init !== undefined)
+				newModule.init();
 
-				// Add children recursively
-				for(i = 0, n = newModule.children.length; i < n; i++)
-					this.addModule(newModule.children[i],moduleArray);
+			// Add children recursively
+			for(i = 0, n = newModule.children.length; i < n; i++)
+				this.addModule(newModule.children[i],moduleArray);
 
-				// Activate after adding all linked modules
-				if(newModule.alwaysActive)
-					this.addActive(id);
-			}
+			// Activate after adding all linked modules
+			if(newModule.alwaysActive)
+				this.addActive(id);
 		}
 		else
 			console.error('Module "'+id+'" not found. Try adding it to Dependencies or Children');

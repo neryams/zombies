@@ -412,7 +412,7 @@ var Renderer = function (scaling,onLoad) {
                 save = true; break;
             case 'tech':
                 setColor = function(i,val) {
-                    pix[i*4] = Math.floor(val / 50000 * 255);
+                    pix[i*4] = Math.floor(val / 80000 * 255);
                 };
                 organizeColor = function(i) {
                     pix[i*4+3] = (pix[i*4+1])/2 + 128;

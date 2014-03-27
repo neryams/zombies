@@ -5,7 +5,6 @@ exports.type = 'infect';
 exports.run = function(current,passData) {
 	var tempAdjust = 1 / (Math.pow((this.idealTemp - passData.target.temperature)/(this.rangeTemp),2) + 1);
 	var precAdjust = 1 / (Math.pow((this.idealWet - passData.target.precipitation)/(this.rangeWet),2) + 1);
-	passData.spreadChance   *= tempAdjust * precAdjust * 1.5;
 
 	tempAdjust = 1 / (Math.pow((this.idealTemp - current.location.temperature)/(this.rangeTemp),2) + 1);
 	precAdjust = 1 / (Math.pow((this.idealWet - current.location.precipitation)/(this.rangeWet),2) + 1);

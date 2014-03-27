@@ -5,11 +5,9 @@
 exports.type = 'strain';
 exports.run = function(current,passData) {
 	passData.encounterProbability = 0;
-	passData.zombieStrength = 0;
-	passData.humanStrength = 0;
 	passData.mobility = 0;
 	passData.panic = 0;
-	passData.reproduction = 5;
+	passData.collect = 10;
 };
 exports.options = {
 	init: function() {
@@ -35,7 +33,7 @@ exports.options = {
 				this.S.points[i].tech = 0;
 				this.S.points[i].trees = 0;
 			} else {
-				this.S.points[i].tech = Math.log(this.S.points[i].total_pop*10000000);
+				this.S.points[i].tech = Math.pow(Math.log(this.S.points[i].total_pop+1),4);
 				this.S.points[i].trees = Math.log(this.S.config.max_pop/(this.S.points[i].total_pop+10) + 1)*this.S.points[i].precipitation*this.S.points[i].temperature;
 			}
 		}
@@ -89,5 +87,5 @@ exports.options = {
 	name: 'Self-Replicating Robots',
 	description: 'Robots make more of themselves using ',
 	dependencies: ['factory'],
-	children: ['movement.base','fight','reproducer.upgrade-repro']
+	children: ['movement.base','fight','reproducer.reproduce','reproducer.hordeBoost']
 };

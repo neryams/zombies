@@ -1,12 +1,12 @@
 exports.type = 'infect';
 exports.run = function(current,passData) {
-	passData.reproduction += this.rateAdjust;
+	passData.collect += this.rateAdjust;
 };
 exports.options = {
 	init: function() {
 		this.rateAdjust = 0;
 		var adjustReproduction = function() {
-			this.val('rateAdjust',2,'+');
+			this.val('rateAdjust',3,'+');
 		};
 		this.S.addUpgrades(this,
 			{cost: 200,
@@ -39,6 +39,5 @@ exports.options = {
 			}
 		);
 	},
-	dependencies: ['reproducer.strain','reproducer.reproduce'],
-	alwaysActive: true
+	dependencies: ['reproducer.strain','reproducer.reproduce']
 };
