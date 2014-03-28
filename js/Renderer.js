@@ -130,6 +130,8 @@ var Renderer = function (scaling,onLoad) {
                 pixT = imgdT.data,
                 pixH = imgdH.data,
                 grdC = imgdC.data,
+                maxColorHeight = climateBg.height/2,
+                maxColorWidth = climateBg.width,
 
                 data_ratio = generatorConfig.tx_w / generatorConfig.w;
 
@@ -143,7 +145,7 @@ var Renderer = function (scaling,onLoad) {
             };
 
             for (var i = 0, n = texture.length; i < n; i++) {
-                current = Math.floor(texture[i]);
+                current = texture[i];
 
                 // Figure out the current square in the data map (as opposed to the texture map)
                 dtI = Math.floor(i / generatorConfig.tx_w / data_ratio) * generatorConfig.w + Math.floor(i % generatorConfig.tx_w / data_ratio);
@@ -158,37 +160,31 @@ var Renderer = function (scaling,onLoad) {
                 currentWet = (currentWet + blendProperties(Simulator.points[dtI].precipitation, Simulator.points[dtI].adjacent[3].precipitation, Simulator.points[dtI].adjacent[1].precipitation, positionH)) / 2;
 
                 // Get the x/y coordinates in the climate coloring textureW
-                gradY = Math.round((1 - (312.5 - currentTemp) / 60) * 255);
-                if (gradY < 0)
-                    gradY = 0;
-                if (currentWet < 0)
-                    currentWet = 0;
-                gradX = Math.round((1 - currentWet/20)*255);
-                if (gradX < 0)
-                    gradX = 0;
-                gradI = gradY * climateGradient.width + gradX;
-
-                // Get the color of the ground at this point
-                color = [grdC[gradI * 4],grdC[gradI * 4 + 1],grdC[gradI * 4 + 2]];
+                gradY = Math.round((1 - (312.5 - currentTemp) / 60) * (maxColorHeight - 1));
+                gradY = Math.min(Math.max(gradY, 0), maxColorHeight - 1);
 
                 // Generate height texture (greyscale map of elevation) and earth texture (color map using climate info)
                 if (current > generatorConfig.waterLevel) {
-                    pixH[i * 4] = pixH[i * 4 + 2] = pixH[i * 4 + 1] = Math.floor((current - generatorConfig.waterLevel) / 10);
-                    pixT[i * 4] = color[0];
-                    pixT[i * 4 + 1] = color[1];
-                    pixT[i * 4 + 2] = color[2];
-                } else {
-                    pixH[i * 4] = pixH[i * 4 + 2] = pixH[i * 4 + 1] = 0;
-                    pixT[i * 4] = 0;
-                    pixT[i * 4 + 1] = Math.floor(generatorConfig.waterLevel / 2) - (generatorConfig.waterLevel - current) * 3;
-                    pixT[i * 4 + 2] = current * 2 + 10;
+                    gradX = Math.round((1 - currentWet/20)*(maxColorWidth - 1));
+                    gradX = Math.min(Math.max(gradX, 0), maxColorWidth - 1);
 
-                    if (currentTemp < 252.5) {
-                        pixT[i * 4 + 0] = color[0];
-                        pixT[i * 4 + 1] = color[1];
-                        pixT[i * 4 + 2] = color[2];
-                    }
+                    gradI = gradY * climateGradient.width + gradX;
+                    color = [grdC[gradI * 4],grdC[gradI * 4 + 1],grdC[gradI * 4 + 2]];
+
+                    var currentHeight = Math.floor((current - generatorConfig.waterLevel)/(1 - generatorConfig.waterLevel) * 50) * 2;
+                    pixH[i * 4] = pixH[i * 4 + 1] = pixH[i * 4 + 2] = Math.min(currentHeight, maxColorWidth - 1);
+                } else {
+                    gradX = Math.floor(current/generatorConfig.waterLevel * maxColorWidth);
+                    gradX = Math.min(Math.max(gradX, 0), maxColorWidth - 1);
+
+                    gradI = (gradY + maxColorHeight) * climateGradient.width + gradX;
+                    color = [grdC[gradI * 4],grdC[gradI * 4 + 1],grdC[gradI * 4 + 2]];
+
+                    pixH[i * 4] = pixH[i * 4 + 1] = pixH[i * 4 + 2] = 0;
                 }
+                pixT[i * 4] = color[0];
+                pixT[i * 4 + 1] = color[1];
+                pixT[i * 4 + 2] = color[2];
             }
             ctxT.putImageData(imgdT, 0, 0);
             ctxH.putImageData(imgdH, 0, 0);

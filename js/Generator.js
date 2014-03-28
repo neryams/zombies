@@ -65,10 +65,11 @@ Planet.prototype.setHeight = function(heightmap) {
 		if(this.data[point] == undefined)
 			this.data[point] = new DataPoint(point, this.config);
 		shift = pps-1;
-		// Subtract height by a bit to prevent people in oceans 
-		height = (heightmap[i] + heightmap[i+shift] + heightmap[i+pps*this.config.w*(shift)] + heightmap[i+heightmapW*(shift) + shift]) / 4 - 0.5;
+		// Subtract height by a bit to prevent people in oceans
+		// this retarded looking shit averages the heights on the higher-resolution heightmap to produce the standard grid
+		height = (heightmap[i] + heightmap[i+shift] + heightmap[i+pps*this.config.w*(shift)] + heightmap[i+heightmapW*(shift) + shift]) / 4 - 0.001;
 		if(height > this.config.waterLevel) 
-			this.data[point].height = (height - this.config.waterLevel)/((256 - this.config.waterLevel)/256);
+			this.data[point].height = (height - this.config.waterLevel)/(1 - this.config.waterLevel) * this.config.height_ratio;
 		else {
 			this.data[point].height = 0;
 			this.data[point].water = true;
@@ -338,7 +339,7 @@ Planet.prototype.calculateClimate = function(turbulence,progressShare,onComplete
 
 				// Initial temperature approximated on approximate solar insolation and elevation. 0.0065 is the ISA temperature lapse rate in Kelvin/meter
 				baseTemperature = (planet.config.temperature + 40*(Math.cos(adjustedLat * Math.PI / 90)) + (0.5-turbulence[current.id])*4);
-				baseTemperatureAlt = baseTemperature - 0.0065 * current.height * planet.config.height_ratio;
+				baseTemperatureAlt = baseTemperature - 0.0065 * current.height;
 
 				// Start the wind front for the first squares at each High zone (subsequent squares will have wind provided by the last iteration)
 				if(current.wind == undefined) { 
@@ -555,7 +556,7 @@ Planet.prototype.generatePerlinSphere = function(P,w,scale,octaves,progressShare
 		i = 0,
 		n = w*h,
 		timer,
-		modifier = this.config.waterLevel/256;
+		modifier = this.config.waterLevel;
 	var storage = new ArrayBuffer(w*h*4); // 4 bytes per element for 32 bit float
 	var landGen = new Float32Array(storage);
 	P.noiseDetail(octaves,.50);
@@ -582,9 +583,7 @@ Planet.prototype.generatePerlinSphere = function(P,w,scale,octaves,progressShare
 				rRidge = Math.pow(1 - Math.abs(landMask-0.5)*2-0.1,6) - rRidge*2.5 // mountains
 				if(rRidge < 0) rRidge = 0;
 
-				result = (rBase+rRidge*1.1)*256;
-				if(result > 256)
-					result = (256 - result)/10 + result;
+				result = rBase+rRidge*1.2;
 				break;
 
 			case "climate":
@@ -643,7 +642,7 @@ Planet.prototype.generateName = function(c){var d=[];switch(c){case"virus":d=[{o
 self.addEventListener('message', function(event) {
 	var data = event.data;
 
-	var CONFIG = { tx_w: 720, tx_h: 0, w: 360, h: 0, waterLevel: 75, horse_lats: 32, polar_lats: 60, wind_mix: 5, temperature: 268.15, pop_ratio: 26991953, height_ratio: 34, world_pop: 6000000000, max_pop: 0 },
+	var CONFIG = { tx_w: 720, tx_h: 0, w: 360, h: 0, waterLevel: 0.3, horse_lats: 32, polar_lats: 60, wind_mix: 5, temperature: 268.15, pop_ratio: 26991953, height_ratio: 8000, world_pop: 6000000000, max_pop: 0 },
 		myEarth,P,seed;
 
 	/* -----------------
