@@ -196,10 +196,7 @@ $(function () {
         generatorWorker.addEventListener('message', function(event) {
             switch (event.data.cmd) {
                 case 'progress':
-                    if(!event.data.progress)
-                        MI.load.progress();
-                    else
-                        MI.load.progress(event.data.progress,event.data.share);
+                    MI.load.progress(event.data.message,event.data.progress);
                     break;
                 case 'ready':
                     if(node && userConfig.saveGenerator) {

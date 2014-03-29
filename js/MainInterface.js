@@ -16,7 +16,7 @@ function MainInterface(UI,R) {
 		start: function() {
 			$('#setup').remove();
 			$('#progress').css('display','block');
-			$('#progress p').html(i18n.t('setup:loading.0'));
+			$('#progress p').html(i18n.t('setup:loading.default'));
 		},
 		endGenerator: function() {
 			buildUI();
@@ -26,18 +26,9 @@ function MainInterface(UI,R) {
 		end: function() {
 			attachEvents();
 		},
-		progress: function(ratio, share) {
-			if(ratio === undefined) {
-				ratio = share = 0;
-			}
-			if(this.loading.curProg > ratio*share || this.loading.curShare === 0 || share === 0) { // A new loading portion started
-				this.loading.done += this.loading.curShare;
-				this.loading.curShare = share;
-				this.loading.curStep++;
-				$('#progress p').html(i18n.t('setup:loading.'+this.loading.curStep));
-			}
-			this.loading.curProg = ratio*share;
-			$('#progress .pace .pace-progress').css('width', ((this.loading.done+this.loading.curProg) * 100) + '%');
+		progress: function(message, totalProgress) {
+			$('#progress p').html(i18n.t('setup:loading.'+message));
+			$('#progress .pace .pace-progress').css('width', (totalProgress * 100) + '%');
 		}
 	},
 
