@@ -131,7 +131,7 @@ self.addEventListener('message', function(event) {
 			tx_h: 0,
 			w: 360,
 			h: 0,
-			waterLevel: 0.3,
+			waterLevel: 0.6,
 			horse_lats: 32,
 			polar_lats: 60,
 			wind_mix: 5,
@@ -337,20 +337,23 @@ Planet.prototype.generate = function(P,callback) {
 		xx *= planet.config.landmass_size;
 		yy *= planet.config.landmass_size;
 		zz *= planet.config.landmass_size;
-		this.P.noiseDetail(8,0.45);
-		var landMask = this.P.noise(xx*0.8, yy*0.8, zz*0.8) - planet.config.waterLevel/2; // landmasses mask
+		this.P.noiseDetail(6,0.45);
+		var landMask = this.P.noise(xx*0.8, yy*0.8, zz*0.8); // landmasses mask
 
-		this.P.noiseDetail(4,0.50);
-		var rBase = landMask - this.P.noise(xx, yy, zz) * planet.config.waterLevel; // base terrain
-		if(rBase > planet.config.waterLevel)
-			rBase = (rBase - planet.config.waterLevel) * 1.5 + planet.config.waterLevel;
+		if(landMask > planet.config.waterLevel) {
+			this.P.noiseDetail(6,0.50);
+			var rBase = this.P.noise(xx, yy, zz);
+			var rRidge = Math.pow(1 - Math.abs(1 - 2 * this.P.noise(2*xx, yy, 2*zz)), 2); // max val of 1.5^4 is 5.0625
 
-		this.P.noiseDetail(6,0.50);
-		var rRidge = Math.pow(this.P.noise(xx*2, yy, zz*2),3);
-		rRidge = Math.pow(1 - Math.abs(landMask - 0.5) * 2 - 0.1,6) - rRidge * 2.5; // mountains
-		if(rRidge < 0) rRidge = 0;
+			var edgeSmoothing = 1 - planet.config.waterLevel;
+			if((landMask - planet.config.waterLevel) < 0.75)
+				edgeSmoothing = Math.sin(1.5*Math.PI*(landMask - planet.config.waterLevel));
+			
+			return (rBase*0.30 + rRidge*0.70) * edgeSmoothing + planet.config.waterLevel;
 
-		return rBase + rRidge * 1.2;
+		} else {
+			return landMask;
+		}
 	});
 	progress.done();
 
@@ -408,7 +411,7 @@ Planet.prototype.setHeight = function(heightmap) {
 		shift = pps-1;
 		// Subtract height by a bit to prevent people in oceans
 		// this retarded looking shit averages the heights on the higher-resolution heightmap to produce the standard grid
-		height = (heightmap[i] + heightmap[i+shift] + heightmap[i+pps*this.config.w*(shift)] + heightmap[i+heightmapW*(shift) + shift]) / 4 - 0.001;
+		height = (heightmap[i] + heightmap[i+shift] + heightmap[i+pps*this.config.w*(shift)] + heightmap[i+heightmapW*(shift) + shift]) / 4;
 		if(height > this.config.waterLevel)
 			this.data[point].height = (height - this.config.waterLevel)/(1 - this.config.waterLevel) * this.config.height_ratio;
 		else {
