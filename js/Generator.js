@@ -300,6 +300,7 @@ Planet.prototype.generate = function(P,callback) {
 		getPoint: planet.P.noise,
 		scale: 1,
 		octaves: 3,
+		rowPointDistance: [],
 		generate: function() {
 			this.h = this.w / 2; // Height is always 1/2 of width in mercator
 			var data_ratio = this.w / planet.config.w, // Determine the resolution of the globe, size must remain constant for consistent results
@@ -307,23 +308,31 @@ Planet.prototype.generate = function(P,callback) {
 				n = this.w * this.h,
 				falloff = 0.5,
 				degToRad = Math.PI / 180,
-				radx,rady,xx,yy,zz;
+				centerRowSquareSize = planet.getDistance(0.5/data_ratio, 0.5/data_ratio, 0.5/data_ratio, 1.5/data_ratio),
+				radx,rady,xx,yy,zz,val,currentRow,currentRowSquareSize;
 
 			var storage = new ArrayBuffer(n * 4); // 4 bytes per element for 32 bit float
 			var landGen = new Float32Array(storage);
 			this.P.noiseDetail(this.octaves, falloff);
 
-			for(var i = 0; i < n; i++) {
-				radx = (i % this.w + 0.5) / data_ratio * degToRad; // we want to use the centers of the lat and long grid squares to avoid calculating with the poles
-				rady = Math.floor(i / this.w + 0.5) / data_ratio * degToRad;
-				xx = Math.sin(rady) * Math.cos(radx);
-				yy = Math.sin(rady) * Math.sin(radx);
-				zz = Math.cos(rady);
+			for(var i = 0, columnsCopied = 1; i < n; i++,columnsCopied++) {
+				if(currentRow != Math.floor(i / this.w) || currentRowSquareSize * columnsCopied >= centerRowSquareSize) {
+					currentRow = Math.floor(i / this.w);
+					columnsCopied = 1;
+					currentRowSquareSize = planet.getDistance((currentRow + 0.5 - this.h / 2)/data_ratio, 0.5/data_ratio, (currentRow + 0.5 - this.h / 2)/data_ratio, 1.5/data_ratio);
 
-				if(this.customFunction === undefined)
-					landGen[i] = this.getPoint(xx * this.scale, yy * this.scale, zz * this.scale);
-				else
-					landGen[i] = this.customFunction(xx,yy,zz);
+					radx = (i % this.w + 0.5) / data_ratio * degToRad; // we want to use the centers of the lat and long grid squares to avoid calculating with the poles
+					rady = (currentRow + 0.5) / data_ratio * degToRad;
+					xx = Math.sin(rady) * Math.cos(radx);
+					yy = Math.sin(rady) * Math.sin(radx);
+					zz = Math.cos(rady);
+
+					if(this.customFunction === undefined)
+						val = this.getPoint(xx * this.scale, yy * this.scale, zz * this.scale);
+					else
+						val = this.customFunction(xx,yy,zz);
+				}
+				landGen[i] = val;
 
 				if(i % reportInterval == reportInterval - 1)
 					planet.progress.advance(i/n);
@@ -332,6 +341,8 @@ Planet.prototype.generate = function(P,callback) {
 			return landGen;
 		}
 	};
+	perlinSphereGenerator.prototype.rowPointDistance[89] =
+	perlinSphereGenerator.prototype.rowPointDistance[90] = planet.getDistance(0, 0, 0, 1);
 
 	var planetSurface = new perlinSphereGenerator(planet.config.tx_w, function (xx, yy, zz) {
 		xx *= planet.config.landmass_size;
@@ -386,11 +397,11 @@ Planet.prototype.generate = function(P,callback) {
 };
 
 // Returns the distance between two points given by ID as a fraction of the radius. Multiply by the radius of globe to get actual distance.
-Planet.prototype.getDistance = function(x, y) {
-	var phi = (this.data[x].lat - this.data[y].lat)/180*Math.PI,
-		theta = (this.data[x].lng - this.data[y].lng)/180*Math.PI,
-		phix = this.data[x].lat/180*Math.PI,
-		phiy = this.data[y].lat/180*Math.PI;
+Planet.prototype.getDistance = function(xLat, xLng, yLat, yLng) {
+	var phi = (xLat - yLat)/180*Math.PI,
+		theta = (xLng - yLng)/180*Math.PI,
+		phix = xLat/180*Math.PI,
+		phiy = yLat/180*Math.PI;
 	
 	var a = (Math.sin(phi/2) * Math.sin(phi/2) +
 	        Math.sin(theta/2) * Math.sin(theta/2) * Math.cos(phix) * Math.cos(phiy));
@@ -471,8 +482,10 @@ Planet.prototype.generatePop = function(heightmap, borderNoise) {
 	// Determine the population multiplier based on the desired total world population
 	this.config.pop_ratio = this.config.world_pop / world_pop;
 
-	var centroidSort = function(x,y) {
-		return planet.getDistance(i,x) - planet.getDistance(i,y);
+	var centroidSort = function(i) {
+		return function(x,y) {
+			return planet.getDistance(i.lat, i.lng, x.lat, x.lng) - planet.getDistance(i.lat, i.lng, y.lat, y.lng);
+		};
 	};
 
 	// Multiply relative populations with the ratio to get the actual number of people living in each square.
@@ -490,7 +503,7 @@ Planet.prototype.generatePop = function(heightmap, borderNoise) {
 			}
 		}
 		if((!current.water && !current.polar) || current.total_pop > 0) {
-			centroids.sort(centroidSort);
+			centroids.sort(centroidSort(i));
 			current.country = this.data[centroids[0]].country;
 		}
 		current.perlinTest = borderNoise[i];

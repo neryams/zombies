@@ -171,7 +171,7 @@ var Renderer = function (scaling,onLoad) {
                     gradI = gradY * climateGradient.width + gradX;
                     color = [grdC[gradI * 4],grdC[gradI * 4 + 1],grdC[gradI * 4 + 2]];
 
-                    var currentHeight = Math.floor((current - generatorConfig.waterLevel)/(1 - generatorConfig.waterLevel) * 50) * 2;
+                    var currentHeight = Math.floor((current - generatorConfig.waterLevel)/(1 - generatorConfig.waterLevel) * 25) * 2;
                     pixH[i * 4] = pixH[i * 4 + 1] = pixH[i * 4 + 2] = Math.min(currentHeight, maxColorWidth - 1);
                 } else {
                     gradX = Math.floor(current/generatorConfig.waterLevel * maxColorWidth);
