@@ -348,19 +348,19 @@ Planet.prototype.generate = function(P,callback) {
 		xx *= planet.config.landmass_size;
 		yy *= planet.config.landmass_size;
 		zz *= planet.config.landmass_size;
-		this.P.noiseDetail(6,0.45);
-		var landMask = this.P.noise(xx*0.8, yy*0.8, zz*0.8); // landmasses mask
+		this.P.noiseDetail(8,0.50);
+		var landMask = this.P.noise(xx*0.8, yy*0.8, zz*0.8); // generate the land edges first
 
 		if(landMask > planet.config.waterLevel) {
 			this.P.noiseDetail(6,0.50);
-			var rBase = this.P.noise(xx, yy, zz);
-			var rRidge = Math.pow(1 - Math.abs(1 - 2 * this.P.noise(2*xx, yy, 2*zz)), 2); // max val of 1.5^4 is 5.0625
+			var rBase = this.P.noise(xx, yy, zz); // Hills and base shape of the landmasses
+			var rRidge = Math.pow(1 - Math.abs(1 - 2 * this.P.noise(2*xx, yy, 2*zz)), 4); // Mountain ridges
 
 			var edgeSmoothing = 1 - planet.config.waterLevel;
 			if((landMask - planet.config.waterLevel) < 0.75)
 				edgeSmoothing = Math.sin(1.5*Math.PI*(landMask - planet.config.waterLevel));
 			
-			return (rBase*0.30 + rRidge*0.70) * edgeSmoothing + planet.config.waterLevel;
+			return (rBase*0.25 + rRidge*0.75) * edgeSmoothing + planet.config.waterLevel;
 
 		} else {
 			return landMask;
@@ -376,7 +376,7 @@ Planet.prototype.generate = function(P,callback) {
 	progress.done();
 
 	Math.seedrandom( Math.random() );
-	var climateTurbulence = new perlinSphereGenerator(planet.config.w, 4, 2);
+	var climateTurbulence = new perlinSphereGenerator(planet.config.w, 3, 0.5);
 	progress.done();
 
 	planet.calculateClimate(climateTurbulence.data);
@@ -420,7 +420,6 @@ Planet.prototype.setHeight = function(heightmap) {
 		if(this.data[point] === undefined)
 			this.data[point] = new DataPoint(point, this.config);
 		shift = pps-1;
-		// Subtract height by a bit to prevent people in oceans
 		// this retarded looking shit averages the heights on the higher-resolution heightmap to produce the standard grid
 		height = (heightmap[i] + heightmap[i+shift] + heightmap[i+pps*this.config.w*(shift)] + heightmap[i+heightmapW*(shift) + shift]) / 4;
 		if(height > this.config.waterLevel)
@@ -699,7 +698,7 @@ Planet.prototype.calculateClimate = function(turbulence) {
 
 				// Initial temperature approximated on approximate solar insolation and elevation. 0.0065 is the ISA temperature lapse rate in Kelvin/meter
 				baseTemperature = planet.config.temperature + 40*(Math.cos(adjustedLat * Math.PI / 90));
-				baseTemperatureAlt = baseTemperature - 0.0085 * current.height;
+				baseTemperatureAlt = baseTemperature - 0.0075 * current.height;
 
 				// Start the wind front for the first squares at each High zone (subsequent squares will have wind provided by the last iteration)
 				if(current.wind === undefined) {
@@ -743,9 +742,9 @@ Planet.prototype.calculateClimate = function(turbulence) {
 
 				// Modify wind based on current conditions
 				if(current.water)
-					current.wind.temperature = current.wind.temperature*0.5+baseTemperatureAlt*0.5;
+					current.wind.temperature = current.wind.temperature * 0.5 + baseTemperatureAlt * 0.5;
 				else
-					current.wind.temperature = current.wind.temperature*0.7 + baseTemperature*0.05 + baseTemperatureAlt*0.25;
+					current.wind.temperature = current.wind.temperature * 0.7 + baseTemperature * 0.05 + baseTemperatureAlt * 0.25;
 				// Equation for saturation pressure vs temperature: http://www.engineeringtoolbox.com/water-vapor-saturation-pressure-air-d_689.html
 				current.wind.saturationPressure = Math.pow(Math.E,77.3450+0.0057*current.wind.temperature-7235/current.wind.temperature)/Math.pow(current.wind.temperature,8.2);
 
@@ -769,19 +768,17 @@ Planet.prototype.calculateClimate = function(turbulence) {
 					if(currLatAbs < planet.config.horse_lats / 6)
 						n2 += 4;
 				}
-				for(k=0;k<n2; k++) {
+				for(k = 0; k < n2; k++) {
 					target[0] = target[0].adjacent[3];
 					target[1] = target[1].adjacent[1];
 					mixFalloff += k+1;
-					for(k2=0;k2<2; k2++) {
+					for(k2 = 0; k2 < 2; k2++) {
 						curTarget = target[k2];
 						if(current.height < curTarget.height)
 							mixFalloff += (curTarget.height/current.height);
-						/*if(((current.wind.direction[0] == 'e' || current.wind.direction[0] == 'p') && k2 == 0) || (current.wind.direction[0] == 'w' && k2 == 1))
-							mixFalloff *= 2;*/
 
-						current.wind.moisture += (curTarget.wind.moisture - current.wind.moisture)/(mixFalloff*Math.log(current.wind.moisture/100+3));
-						current.wind.temperature += (curTarget.wind.temperature - current.wind.temperature)/mixFalloff;
+						current.wind.moisture += (curTarget.wind.moisture - current.wind.moisture) / (mixFalloff * Math.log(current.wind.moisture/100+3));
+						current.wind.temperature += (curTarget.wind.temperature - current.wind.temperature) / mixFalloff;
 					}
 				}
 				current.wind.direction[2] = 'normal';
@@ -846,6 +843,7 @@ Planet.prototype.calculateClimate = function(turbulence) {
 							curTarget = current.adjacent[0];
 						else if(current.wind.direction[1] == 's')
 							curTarget = current.adjacent[2];
+
 						if((current.wind.direction[1] == 'n' && turbulence[curTarget.id] < 0.5) || (current.wind.direction[1] == 's' && turbulence[curTarget.id] > 0.5)) {
 							curTarget.blend = (JSON.parse(JSON.stringify(current.wind))); // clone datapoint object for blending to prevent conflicts
 							curTarget.wind.direction[2] = 'mix';
