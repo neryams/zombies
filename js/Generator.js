@@ -599,7 +599,6 @@ Planet.prototype.generatePop = function(heightmap, borderNoise) {
 		delete this.data[i].border_direction;
 		delete this.data[i].coast_direction;
 		delete this.data[i].wind;
-		delete this.data[i].blend;
 
 		this.data[i].updateNearbyPop();
 		if(i % 1000 === 0)
@@ -661,203 +660,263 @@ Planet.prototype.calculateCoastLine = function() {
 // Going over water 'recharges' the moisture based on latitude (more recharging when warmer), going over land lowers it based on altitude change. (mountains sap all the water)
 // Wind starts at +-32 degrees latitude (Horse Latitude) and at the poles and starts out with no moisture.
 Planet.prototype.calculateClimate = function(turbulence) {
-	var winds = this.data.slice(this.data.length/2-(this.config.horse_lats+1)*this.config.w,this.data.length/2-(this.config.horse_lats-1)*this.config.w).concat(
-				this.data.slice(this.data.length/2+(this.config.horse_lats-1)*this.config.w,this.data.length/2+(this.config.horse_lats+1)*this.config.w),
-				this.data.slice(0,this.config.w),
-				this.data.slice(this.data.length-this.config.w)
-	);
-	var windsToProcess = [];
-	var windsToProcess2 = [];
-	// Run until the winds from the horse latitudes meet, 
-	// need to run three times for each set of latitudes, one for horse latitudes inside, one for horse latitudes outside, one for polar latitudes inside
-	var n = (this.config.horse_lats) * 12;
-	var currLatAbs,
-		adjustedLat,
-		currWind;
+	var ROOT_2 = Math.sqrt(2),
+		AVG_DENOM = 4/Math.sqrt(2) + 4;
+	var i,current,
+		n = this.config.horse_lats * 3,
+		planet = this;
 
-	var planet = this;
-	var i,k,k2,n2,curTarget,mixFalloff,baseTemperature,baseTemperatureAlt,dryModifier;
-	var current,target = [];
+	var Wind = function(location, direction) {
+		this.location = location;
+		this.direction = direction;
+		this.blendWinds = [];
+		this.blendAmts = [];
 
-	// Run in three sets of loops, just to record progress
-	for(i = 0; i < n; i++) {
-		// Only continue if there are actually winds to process
-		if(winds.length > 0) {
-			// Do one set of north/south latitudes at a time, one row at a time, return to for loop after doing one round
-			currLatAbs = Math.abs(winds[0].lat);
-			currWind = winds[0].lat;
+		location.wind = this;
+	};
 
-			// Set base temperature and moisture for each square and determine mixing
-			while(winds.length > 0 && currWind == winds[0].lat) {
-				current = winds.shift();
-				target.length = 0;
-				if(current.water)
-					adjustedLat = currLatAbs*0.7+15;
-				else
-					adjustedLat = currLatAbs;
-
-				// Initial temperature approximated on approximate solar insolation and elevation. 0.0065 is the ISA temperature lapse rate in Kelvin/meter
-				baseTemperature = planet.config.temperature + 40*(Math.cos(adjustedLat * Math.PI / 90));
-				baseTemperatureAlt = baseTemperature - 0.0075 * current.height;
-
-				// Start the wind front for the first squares at each High zone (subsequent squares will have wind provided by the last iteration)
-				if(current.wind === undefined) {
-					current.temperature = baseTemperatureAlt;
-					current.wind = {
-						moisture: 0,
-						temperature: current.temperature,
-						saturationPressure: 0
-					};
-
-					// polar winds
-					if(currLatAbs > planet.config.polar_lats)
-						if(current.lat < 0)
-							current.wind.direction = ['p','n'];
-						else
-							current.wind.direction = ['p','s'];
-
-					// easterly trade winds (towards equator)
-					else if(currLatAbs < planet.config.horse_lats)
-						if(current.lat < 0)
-							current.wind.direction = ['e','n'];
-						else
-							current.wind.direction = ['e','s'];
-
-					// westerly trade winds (away from equator)
-					else
-						if(current.lat < 0)
-							current.wind.direction = ['w','s'];
-						else
-							current.wind.direction = ['w','n'];
-					current.wind.direction[2] = 'normal';
-				} else if(current.wind.direction[2] == 'mix') {
-					current.blend.temperature = current.blend.temperature*0.9 + current.wind.temperature*0.1;
-					current.blend.moisture = current.blend.moisture*0.9 + current.wind.moisture*0.1;
-					current.wind = current.blend;
-					delete current.blend;
-					current.precipitation = 0;
+	Wind.prototype = {
+		temperature: 0,
+		moisture: 0,
+		saturationPressure: 0,
+		blendDistance: 2,
+		options: {
+			wtrChangeTemp: 0.65,
+			gndChangeTemp: 0.5,
+			feedbackChangeTemp: 0.1,
+			wtrAddMoisture: 0.1,
+			rainSpeed: 0.1,
+			gndChangeMoisture: 0.1,
+			centerWeight: 0.5,
+		},
+		loadSurrounding: function(property) {
+			return this.location[property] * this.options.centerWeight +
+				(
+					(
+						this.location.adjacent[0][property] +
+						this.location.adjacent[1][property] +
+						this.location.adjacent[2][property] +
+						this.location.adjacent[3][property]
+					) / 4 / AVG_DENOM * (1 - this.options.centerWeight) +
+					(
+						this.location.adjacent[0].adjacent[1][property] / ROOT_2 +
+						this.location.adjacent[1].adjacent[2][property] / ROOT_2 +
+						this.location.adjacent[2].adjacent[3][property] / ROOT_2 +
+						this.location.adjacent[3].adjacent[0][property] / ROOT_2
+					) / 4 / AVG_DENOM * (1 - this.options.centerWeight)
+				) / 2;
+		},
+		// Changes temperature based on terrain, returns a value of precipitation
+		init: function() {
+			if(this.moveTo !== undefined) {
+				if(this.moveTo.wind === undefined) {
+					this.location.wind = true; // Went through here
+					this.location = this.moveTo;
+					this.location.wind = this;
+				} else {
+					// swap move
 				}
-				if(current.precipitation == -1)
-					current.precipitation = 0;
-
-				// Modify wind based on current conditions
-				if(current.water)
-					current.wind.temperature = current.wind.temperature * 0.5 + baseTemperatureAlt * 0.5;
-				else
-					current.wind.temperature = current.wind.temperature * 0.7 + baseTemperature * 0.05 + baseTemperatureAlt * 0.25;
-				// Equation for saturation pressure vs temperature: http://www.engineeringtoolbox.com/water-vapor-saturation-pressure-air-d_689.html
-				current.wind.saturationPressure = Math.pow(Math.E,77.3450+0.0057*current.wind.temperature-7235/current.wind.temperature)/Math.pow(current.wind.temperature,8.2);
-
-				// Add moisture up to saturation when over water
-				if(current.water)
-					current.wind.moisture += (current.wind.saturationPressure - current.wind.moisture)*0.1;
-
-				windsToProcess.push(current);
 			}
 
-			while(windsToProcess.length > 0) {
-				current = windsToProcess.shift();
-				target[0] = target[1] = current;
-				mixFalloff = 1;
-				n2 = planet.config.wind_mix;
-				if(current.wind.direction[0] == 'e') {
-					if(currLatAbs < planet.config.horse_lats / 1.5)
-						n2++;
-					if(currLatAbs < planet.config.horse_lats / 3)
-						n2 += 2;
-					if(currLatAbs < planet.config.horse_lats / 6)
-						n2 += 4;
-				}
-				for(k = 0; k < n2; k++) {
-					target[0] = target[0].adjacent[3];
-					target[1] = target[1].adjacent[1];
-					mixFalloff += k+1;
-					for(k2 = 0; k2 < 2; k2++) {
-						curTarget = target[k2];
-						if(current.height < curTarget.height)
-							mixFalloff += (curTarget.height/current.height);
+			if(isNaN(this.temperature) || isNaN(this.moisture) || this.moisture < 0)
+				debugger;
 
-						current.wind.moisture += (curTarget.wind.moisture - current.wind.moisture) / (mixFalloff * Math.log(current.wind.moisture/100+3));
-						current.wind.temperature += (curTarget.wind.temperature - current.wind.temperature) / mixFalloff;
-					}
-				}
-				current.wind.direction[2] = 'normal';
-				windsToProcess2.push(current);
+			var adjustedLat = Math.abs(this.location.lat);
+
+			// Temperature function based on insolation and air pressure change due to elevation
+			var baseTemperature = planet.config.temperature + 40*(Math.cos(adjustedLat * Math.PI / 90)) - 0.0075 * this.location.height;
+
+			if(!this.temperature) {
+				this.temperature = baseTemperature;
+			} else {
+				if(this.location.water)
+					this.temperature = this.temperature * (1 - this.options.wtrChangeTemp) + baseTemperature * this.options.wtrChangeTemp;
+				else
+					this.temperature = this.temperature * (1 - this.options.gndChangeTemp) + baseTemperature * this.options.gndChangeTemp;
 			}
 
-			// Process precipitation and move wind up
-			while(windsToProcess2.length > 0) {
-				current = windsToProcess2.shift();
+			// Equation for saturation pressure vs temperature: http://www.engineeringtoolbox.com/water-vapor-saturation-pressure-air-d_689.html
+			this.saturationPressure = Math.pow(Math.E, 77.3450 + 0.0057 * this.temperature - 7235 / this.temperature) / Math.pow(this.temperature, 8.2);
+			if(isNaN(this.temperature) || isNaN(this.moisture) || this.moisture < 0)
+				debugger;
 
-				current.temperature = current.wind.temperature;
-				current.wind.saturationPressure = Math.pow(Math.E,77.3450+0.0057*current.wind.temperature-7235/current.wind.temperature)/Math.pow(current.wind.temperature,8.2);
-				
-				// If temperature decreases for whatever reason and lowers the saturation pressure, rain out the extra water
-				if(current.wind.saturationPressure < current.wind.moisture ) {
-					current.precipitation += (current.wind.moisture - current.wind.saturationPressure)*0.2;
-				}
-				current.precipitation += (current.wind.moisture/current.wind.saturationPressure) * current.wind.moisture * 0.1;
-				current.wind.moisture -= current.precipitation;
-				if(current.water && current.wind.moisture > current.wind.saturationPressure) {
-					current.wind.moisture = current.wind.saturationPressure;
-				}
-				dryModifier = 18/(current.precipitation+1) - 3;
-				if(dryModifier + current.temperature > 312.5)
-					dryModifier = 312.5 - current.temperature;
-				current.temperature += dryModifier;
-				current.wind.temperature = current.wind.temperature * 0.9 + current.temperature * 0.1;
+			// Add moisture up to saturation when over water
+			if(this.location.water)
+				this.moisture += (this.saturationPressure - this.moisture) * this.options.wtrAddMoisture;
 
-				// Advance wind front
-				target.length = 0;
-				switch(current.wind.direction[1]) {
-					case 'n':
-						target[0] = current.adjacent[0];
-						break;
-					case 's':
-						target[0] = current.adjacent[2];
-						break;
-				}
-				switch(current.wind.direction[0]) {
-					case 'e':
-						if(currLatAbs < planet.config.horse_lats / 1.5)
-							target[0] = target[0].adjacent[3];
-						if(currLatAbs < planet.config.horse_lats / 3)
-							target[0] = target[0].adjacent[3];
-						if(currLatAbs < planet.config.horse_lats / 6)
-							target[0] = target[0].adjacent[3];
-						/* falls through */
-					case 'p':
-						target[0] = target[0].adjacent[3];
-						break;
-					case 'w':
-						target[0] = target[0].adjacent[1];
-						break;
-					default:
-						target[0] = null;
-				}
+			if(isNaN(this.temperature) || isNaN(this.moisture) || this.moisture < 0)
+				debugger;
+		},
+		move: function(newLocation) {
+			this.moveTo = newLocation;
+		},
+		apply: function() {
+			if(this.reduce === undefined)
+				this.location.temperature = this.temperature;
+			else
+				this.location.temperature = this.location.temperature * (1 - this.reduce) + this.temperature * this.reduce;
 
-				if(target[0] !== undefined && target[0] !== null) {
-					curTarget = target[0];
-					if(curTarget.wind !== undefined) {
-						if(current.wind.direction[1] == 'n')
-							curTarget = current.adjacent[0];
-						else if(current.wind.direction[1] == 's')
-							curTarget = current.adjacent[2];
+			this.saturationPressure = Math.pow(Math.E,77.3450+0.0057*this.temperature-7235/this.temperature)/Math.pow(this.temperature,8.2);
+			
+			var precipitation = 0;
+			// If temperature decreases for whatever reason and lowers the saturation pressure, rain out the extra water
+			if(this.saturationPressure < this.moisture ) {
+				precipitation += (this.moisture - this.saturationPressure) * this.options.rainSpeed * 2;
+			}
+			precipitation += (this.moisture/this.saturationPressure) * this.moisture * this.options.rainSpeed;
+			if(precipitation > this.moisture)
+				precipitation = this.moisture;
 
-						if((current.wind.direction[1] == 'n' && turbulence[curTarget.id] < 0.5) || (current.wind.direction[1] == 's' && turbulence[curTarget.id] > 0.5)) {
-							curTarget.blend = (JSON.parse(JSON.stringify(current.wind))); // clone datapoint object for blending to prevent conflicts
-							curTarget.wind.direction[2] = 'mix';
-							winds.push(curTarget);
-						}
-					} else {
-						curTarget.wind = current.wind;
-						winds.push(curTarget);
-					}
-				}
+			this.location.precipitation += precipitation;
+			this.moisture -= precipitation;
+
+			if(isNaN(this.temperature) || isNaN(this.moisture) || this.moisture < 0)
+				debugger;
+		},
+		feedback: function() {
+			var dryModifier = 18 / (this.location.precipitation + 1) - 3;
+			if(dryModifier + this.location.temperature > 312.5)
+				dryModifier = 312.5 - this.location.temperature;
+
+			this.location.temperature += dryModifier;
+			this.temperature = this.temperature * (1 - this.options.feedbackChangeTemp) + this.location.temperature * this.options.feedbackChangeTemp;
+
+			if(isNaN(this.temperature) || isNaN(this.moisture) || this.moisture < 0)
+				debugger;
+		},
+		blend: function(blendWith, strength) {
+			this.blendWinds.push(blendWith);
+
+			if(this.reduce !== undefined)
+				this.blendAmts.push(strength * this.reduce);
+			else
+				this.blendAmts.push(strength);
+		},
+		doBlend: function() {
+			var maxAmt = 0,
+				totalAmt = 0,
+				temperature = 0,
+				moisture = 0;
+			var currentcacher = [];
+
+			while(this.blendWinds.length) {
+				var current = this.blendWinds.pop(),
+					currentAmt = this.blendAmts.pop();
+
+				if(currentAmt > maxAmt)
+					maxAmt = currentAmt;
+				totalAmt += currentAmt;
+
+				currentcacher.push(current);
+				currentcacher.push(currentAmt);
+
+				temperature += current.temperature * currentAmt;
+				moisture += current.moisture * currentAmt;
+			}
+
+			if(totalAmt) {
+				this.temperature = this.temperature * (1 - maxAmt) + temperature * maxAmt / totalAmt;
+				this.moisture = this.moisture * (1 - maxAmt) + moisture * maxAmt / totalAmt;
+			}
+
+			if(isNaN(this.temperature) || isNaN(this.moisture) || this.moisture < 0)
+				debugger;
+		}
+	};
+
+	var turns = 0, winds = [];
+	// Create all the wind objects
+	for(i = 0; i < this.config.w; i++) {
+		winds.push(new Wind(this.data[i],                                                                       ['s', 'p']));
+		winds.push(new Wind(this.data[this.data.length / 2 - (this.config.horse_lats + 1) * this.config.w + i], ['n', 'e']));
+		winds.push(new Wind(this.data[this.data.length / 2 - this.config.horse_lats * this.config.w + i],       ['s', 'w']));
+		winds.push(new Wind(this.data[this.data.length / 2 + this.config.horse_lats * this.config.w + i],       ['n', 'w']));
+		winds.push(new Wind(this.data[this.data.length / 2 + (this.config.horse_lats + 1) * this.config.w + i], ['s', 'e']));
+		winds.push(new Wind(this.data[this.data.length - this.config.w + i],                                    ['n', 'p']));
+		/*
+		winds.push(new Wind(this.data[i],                                                                       ['s', 'p']));
+		winds.push(new Wind(this.data[this.data.length / 2 - (this.config.horse_lats - 1) * this.config.w + i], ['n', 'e']));
+		winds.push(new Wind(this.data[this.data.length / 2 - this.config.horse_lats * this.config.w + i],       ['s', 'w']));
+		winds.push(new Wind(this.data[this.data.length / 2 + this.config.horse_lats * this.config.w + i],       ['n', 'w']));
+		winds.push(new Wind(this.data[this.data.length / 2 + (this.config.horse_lats + 1) * this.config.w + i], ['s', 'e']));
+		winds.push(new Wind(this.data[this.data.length - this.config.w + i],                                    ['n', 'p']));
+		*/
+	}
+
+	while(winds.length > 0) {
+		for(i = 0; i < winds.length; i++) {
+			winds[i].init();
+		}
+		for(i = 0; i < winds.length; i++) {
+			current = winds[i];
+
+			var blendStrength = 0.5;
+
+			if(current.reduce !== undefined) {
+				blendStrength *= current.reduce;
+			}
+
+			for(var j = 0; j < current.blendDistance; j++) {
+				if(current.location.adjacent[1].wind.blend)
+					current.location.adjacent[1].wind.blend(current, Math.pow(blendStrength, j + 1));
+				if(current.location.adjacent[3].wind.blend)
+					current.location.adjacent[3].wind.blend(current, Math.pow(blendStrength, j + 1));
 			}
 		}
-		if(i % this.config.horse_lats === 0)
-			this.progress.advance(i/n);
+		for(i = 0; i < winds.length; i++) {
+			current = winds[i];
+
+			current.doBlend();
+			current.apply();
+			current.feedback();
+
+			// Advance wind front
+			var currLatAbs = Math.abs(current.location.lat);
+			var target;
+			switch(current.direction[0]) {
+				case 'n':
+					target = current.location.adjacent[0];
+					break;
+				case 's':
+					target = current.location.adjacent[2];
+					break;
+			}
+
+			switch(current.direction[1]) {
+				case 'w':
+					if(currLatAbs < planet.config.horse_lats / 1.5)
+						target = target.adjacent[3];
+					if(currLatAbs < planet.config.horse_lats / 3)
+						target = target.adjacent[3];
+					if(currLatAbs < planet.config.horse_lats / 6)
+						target = target.adjacent[3];
+					/* falls through */
+				case 'p':
+					target = target.adjacent[3];
+					break;
+				case 'e':
+					target = target.adjacent[1];
+					break;
+			}
+
+			if(target.wind) {
+				if(current.reduce === undefined)
+					current.reduce = 0.5;
+				else
+					current.reduce *= 0.75;
+
+				winds.splice(i, 1);
+				i--;
+			}
+			else {
+				current.move(target);
+			}
+		}
+
+		current.blendDistance++;
+
+		turns++;
+		this.progress.advance(turns/n);
 	}
 };
 
