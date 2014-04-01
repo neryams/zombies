@@ -658,7 +658,7 @@ Planet.prototype.calculateCoastLine = function() {
 // Wind starts at +-32 degrees latitude (Horse Latitude) and at the poles and starts out with no moisture.
 Planet.prototype.calculateClimate = function() {
 	var i,current,
-		n = this.config.horse_lats,
+		n = this.config.horse_lats * 1.5,
 		planet = this;
 
 	var Wind = function(location, direction) {

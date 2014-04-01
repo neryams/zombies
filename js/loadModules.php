@@ -23,7 +23,7 @@ if(is_dir('modules') && !empty($_GET['modules'])) {
 			if(!empty($prepend_name))
 				$module_name = $prepend_name . '.' . $module_name;
 
-			if (is_file($file)) {
+			if (is_file($file) && pathinfo($file, PATHINFO_EXTENSION) == 'js') {
 				echo file_get_contents($file);
 				echo "SimulatorModules['$module_name'] = new Module(exports.type,exports.run,exports.options);\n";
 			}

@@ -137,17 +137,29 @@ $(function () {
                     // Function also initializes UI.
                     UI.setSimulator(S);
                     generatorWorker.terminate();
+                    var loadEnd = false,
+                        startGame = function(strain) {
+                            S.start(strain);
+                            UI.processUpgrades(strain);
+                            MI.load.end();
+                            R.animate();
+                        };
 
                     MI.strainPrompt(S.getStrainOptions(), function(strain) {
-                        S.start(strain);
-                        UI.processUpgrades(strain);
-                        MI.load.end();
-                        R.animate();
+                        if(loadEnd) {
+                            startGame(strain);
+                        } else {
+                            loadEnd = strain;
+                        }
                     });
 
                     // Let window render
                     setTimeout(function() {
                         R.simulatorStart(generatorTexture,generatorConfig,S);
+                        if(loadEnd)
+                            startGame(loadEnd);
+                        else
+                            loadEnd = true;
                     }, 50);
                 }
             },
