@@ -157,8 +157,8 @@ self.addEventListener('message', function(event) {
 	CONFIG.tx_h = CONFIG.tx_w / 2;
 	CONFIG.h = CONFIG.w / 2;
 
-	Math.seedrandom(1396304923488);
-	//Math.seedrandom(CONFIG.seed);
+	// Math.seedrandom(1396304923488); This is a great seed to test climate simulator changes. Very "messy" landscape
+	Math.seedrandom(CONFIG.seed);
 
 	var P = PerlinSimplex; // Set Perlin function to the Simplex object for texture
 	P.setRng(Math);
@@ -270,10 +270,10 @@ Planet.prototype.generate = function(P,callback) {
 	var planet = this,
 		// progress share array should sum 1
 		progress = ProgressCalc([
-			0.55,
+			0.40,
 			0.01,
 			0.01,
-			0.13,
+			0.33,
 			0.05,
 			0.05,
 			0.15,
@@ -657,8 +657,6 @@ Planet.prototype.calculateCoastLine = function() {
 // Going over water 'recharges' the moisture based on latitude (more recharging when warmer), going over land lowers it based on altitude change. (mountains sap all the water)
 // Wind starts at +-32 degrees latitude (Horse Latitude) and at the poles and starts out with no moisture.
 Planet.prototype.calculateClimate = function() {
-	var ROOT_2 = Math.sqrt(2),
-		AVG_DENOM = 4/Math.sqrt(2) + 4;
 	var i,current,
 		n = this.config.horse_lats,
 		planet = this;
@@ -683,46 +681,25 @@ Planet.prototype.calculateClimate = function() {
 			gndChangeTemp: 0.5,
 			feedbackChangeTemp: 0.1,
 			wtrAddMoisture: 0.1,
-			rainSpeed: 0.1,
+			rainSpeed: 0.05,
 			gndChangeMoisture: 0.1,
 			centerWeight: 0.5,
 			coriolisStrength: 250,
-		},
-		loadSurrounding: function(property) {
-			return this.location[property] * this.options.centerWeight +
-				(
-					(
-						this.location.adjacent[0][property] +
-						this.location.adjacent[1][property] +
-						this.location.adjacent[2][property] +
-						this.location.adjacent[3][property]
-					) / 4 / AVG_DENOM * (1 - this.options.centerWeight) +
-					(
-						this.location.adjacent[0].adjacent[1][property] / ROOT_2 +
-						this.location.adjacent[1].adjacent[2][property] / ROOT_2 +
-						this.location.adjacent[2].adjacent[3][property] / ROOT_2 +
-						this.location.adjacent[3].adjacent[0][property] / ROOT_2
-					) / 4 / AVG_DENOM * (1 - this.options.centerWeight)
-				) / 2;
 		},
 		// Changes temperature based on terrain, returns a value of precipitation
 		init: function() {
 			if(this.moveTo !== undefined) {
 				if(this.moveTo.wind) {
-					if(current.reduce === undefined)
-						current.reduce = 1;
+					if(this.reduce === undefined)
+						this.reduce = 1;
 					else
-						current.reduce *= 0.9;
+						this.reduce *= 0.75;
 
-					if(current.reduce < 0.05) {
+					if(this.reduce < 0.025) {
 						return false;
 					}
 				}
-				if(this.moveTo.wind === undefined) {
-					this.location.wind = true; // Went through here
-					this.location = this.moveTo;
-					this.location.wind = this;
-				} else if(this.moveTo.wind instanceof Wind) {
+				if(this.moveTo.wind instanceof Wind) {
 					// swap move
 					var swapWith = this.moveTo.wind;
 					this.location.wind = swapWith;
@@ -736,10 +713,19 @@ Planet.prototype.calculateClimate = function() {
 					this.blend(swapWith, 0.5);
 					swapWith.doBlend();
 					this.doBlend();
-					
+
 					swapWith.blendDistance /= 4;
 					this.blendDistance /= 4;
+
+					swapWith.reduce = 1;
+					this.reduce = 1;
 				}
+				else {
+					this.location.wind = true; // Went through here
+					this.location = this.moveTo;
+					this.location.wind = this;
+				}
+
 				delete this.moveTo;
 			}
 
@@ -770,11 +756,10 @@ Planet.prototype.calculateClimate = function() {
 			this.moveTo = newLocation;
 		},
 		apply: function() {
-			if(this.reduce === undefined)
+			if(this.reduce !== undefined)
+				this.location.temperature = this.location.temperature * (1 - this.reduce) + this.temperature * this.reduce;
+			else
 				this.location.temperature = this.temperature;
-			else {
-				this.temperature = this.location.temperature = this.location.temperature * (1 - this.reduce) + this.temperature * this.reduce;
-			}
 
 			this.saturationPressure = Math.pow(Math.E,77.3450+0.0057*this.temperature-7235/this.temperature)/Math.pow(this.temperature,8.2);
 			
@@ -789,9 +774,10 @@ Planet.prototype.calculateClimate = function() {
 				precipitation = this.moisture;
 
 			if(this.reduce !== undefined)
-				precipitation = this.location.precipitation * (1 - this.reduce) + precipitation * this.reduce;
+				this.location.precipitation = this.location.precipitation * (1 - this.reduce) + precipitation * this.reduce;
+			else
+				this.location.precipitation = precipitation;
 
-			this.location.precipitation = precipitation;
 			this.moisture -= precipitation;
 		},
 		feedback: function() {
@@ -845,12 +831,12 @@ Planet.prototype.calculateClimate = function() {
 
 	var turns = 0, winds = [];
 	// Create all the wind objects
-	
-	for(i = 85; i < 95; i++) {
+	/*
+	for(i = 72; i < 86; i++) {
 		winds.push(new Wind(this.data[this.data.length / 2 - this.config.horse_lats * this.config.w + i],       's'));
 		winds.push(new Wind(this.data[this.data.length / 2 + (planet.config.horse_lats - 1) * this.config.w + i],       'n'));
-	}
-/*
+	}*/
+
 	for(i = 0; i < planet.config.w; i++) {
 		winds.push(new Wind(this.data[i],                                                                       's'));
 		winds.push(new Wind(this.data[this.data.length / 2 - (this.config.horse_lats + 1) * this.config.w + i], 'n'));
@@ -858,7 +844,7 @@ Planet.prototype.calculateClimate = function() {
 		winds.push(new Wind(this.data[this.data.length / 2 + (this.config.horse_lats - 1) * this.config.w + i], 'n'));
 		winds.push(new Wind(this.data[this.data.length / 2 + (this.config.horse_lats) * this.config.w + i],     's'));
 		winds.push(new Wind(this.data[this.data.length - this.config.w + i],                                    'n'));
-	}*/
+	}
 
 	while(winds.length > 0) {
 		for(i = 0; i < winds.length; i++) {
@@ -890,7 +876,7 @@ Planet.prototype.calculateClimate = function() {
 
 			current.doBlend();
 			current.apply();
-			current.feedback();
+			//current.feedback();
 
 			// Advance wind front
 			var target;
