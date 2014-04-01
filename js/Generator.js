@@ -473,132 +473,133 @@ Planet.prototype.generatePop = function(heightmap, borderNoise) {
 		}
 	}
 	this.progress.advance(0.05);
+	if(centroids.length) {
+		// Determine the population multiplier based on the desired total world population
+		this.config.pop_ratio = this.config.world_pop / world_pop;
 
-	// Determine the population multiplier based on the desired total world population
-	this.config.pop_ratio = this.config.world_pop / world_pop;
-
-	var centroidSort = function(i) {
-		return function(x,y) {
-			return planet.getDistance(i.lat, i.lng, x.lat, x.lng) - planet.getDistance(i.lat, i.lng, y.lat, y.lng);
+		var centroidSort = function(i) {
+			return function(x,y) {
+				return planet.getDistance(i.lat, i.lng, x.lat, x.lng) - planet.getDistance(i.lat, i.lng, y.lat, y.lng);
+			};
 		};
-	};
 
-	// Multiply relative populations with the ratio to get the actual number of people living in each square.
-	// Also define the base country divisions using Voronoi analysis of the country centers
-	for(i = 0, n = this.data.length; i < n; i++) {
-		current = this.data[i];
-
-		if(current.total_pop > 0) {
-			if(current.total_pop < 50/this.config.pop_ratio)
-				current.total_pop = 0;
-			else {
-				current.total_pop = Math.floor(current.total_pop*this.config.pop_ratio);
-				if(current.total_pop > this.config.max_pop)
-					this.config.max_pop = current.total_pop;
-			}
-		}
-		if((!current.water && !current.polar) || current.total_pop > 0) {
-			centroids.sort(centroidSort(i));
-			current.country = this.data[centroids[0]].country;
-		}
-		current.perlinTest = borderNoise[i];
-	}
-	this.progress.advance(0.1);
-
-	// Fuzzify the country edges based on perlin noise, otherwise the country borders will be straight lines
-	for(j = 0; j < 10; j++) {
+		// Multiply relative populations with the ratio to get the actual number of people living in each square.
+		// Also define the base country divisions using Voronoi analysis of the country centers
 		for(i = 0, n = this.data.length; i < n; i++) {
 			current = this.data[i];
+
+			if(current.total_pop > 0) {
+				if(current.total_pop < 50/this.config.pop_ratio)
+					current.total_pop = 0;
+				else {
+					current.total_pop = Math.floor(current.total_pop*this.config.pop_ratio);
+					if(current.total_pop > this.config.max_pop)
+						this.config.max_pop = current.total_pop;
+				}
+			}
 			if((!current.water && !current.polar) || current.total_pop > 0) {
-				for(k = 0; k < 4; k++) {
-					if(borderNoise[current.adjacent[k].id] < borderNoise[current.id])
-						current.adjacent[k].country = current.country;
+				centroids.sort(centroidSort(i));
+				current.country = this.data[centroids[0]].country;
+			}
+			current.perlinTest = borderNoise[i];
+		}
+		this.progress.advance(0.1);
+
+		// Fuzzify the country edges based on perlin noise, otherwise the country borders will be straight lines
+		for(j = 0; j < 10; j++) {
+			for(i = 0, n = this.data.length; i < n; i++) {
+				current = this.data[i];
+				if((!current.water && !current.polar) || current.total_pop > 0) {
+					for(k = 0; k < 4; k++) {
+						if(borderNoise[current.adjacent[k].id] < borderNoise[current.id])
+							current.adjacent[k].country = current.country;
+					}
 				}
 			}
 		}
-	}
-	this.progress.advance(0.15);
+		this.progress.advance(0.15);
 
-	for(i = 0, n = this.data.length; i < n; i++) {
-		current = this.data[i];
-		if(current.total_pop > 0) {
-			// Try to get rid of any one-cell wide bits of countries to clean up.
-			if(current.adjacent[0].country !== 0 && current.adjacent[0].country != current.country && current.adjacent[0].country == current.adjacent[2].country)
-				current.country = current.adjacent[0].country;
-			else if(current.adjacent[1].country !== 0 && current.adjacent[1].country != current.country && current.adjacent[1].country == current.adjacent[3].country)
-				current.country = current.adjacent[1].country;
-		}
-	}
-	this.progress.advance(0.2);
-
-	for(i = 0, n = this.data.length; i < n; i++) {
-		current = this.data[i];
-		// Find the biggest squares in each country and designate it as the capitol.
-		if(current.total_pop > 0 && (this.countries[current.country].capitol === null || this.countries[current.country].capitol.total_pop < current.total_pop))
-			this.countries[current.country].capitol = current;
-	}
-	this.progress.advance(0.25);
-
-	// Remove countries without capitols (meaning countries with no population), set capitol names?
-	for(i = 1; i < this.countries.length; i++) {
-		if(this.countries[i].capitol === null) {
-			this.countries.splice(i,1);
-			i--;
-			for(j = 0, n = this.data.length; j < n; j++) {
-				if(this.data[j].country > i)
-					this.data[j].country--;
+		for(i = 0, n = this.data.length; i < n; i++) {
+			current = this.data[i];
+			if(current.total_pop > 0) {
+				// Try to get rid of any one-cell wide bits of countries to clean up.
+				if(current.adjacent[0].country !== 0 && current.adjacent[0].country != current.country && current.adjacent[0].country == current.adjacent[2].country)
+					current.country = current.adjacent[0].country;
+				else if(current.adjacent[1].country !== 0 && current.adjacent[1].country != current.country && current.adjacent[1].country == current.adjacent[3].country)
+					current.country = current.adjacent[1].country;
 			}
-		}/* else {
-			this.countries[i].capitol.name = this.generateName('city');
-		}*/
-	}
+		}
+		this.progress.advance(0.2);
 
-	// Calculate distances to country borders
-	var borderDistRing = this.data.slice(0);
-	var target,dir,dist;
-	while(borderDistRing.length > 0) {
-		current = borderDistRing.shift();
-		if(!current.water && current.country) {
-			// New border tiles detected on first pass through
-			if(current.border_direction === undefined) {
-				if(current.coast_distance == 1 || current.adjacent[0].country != current.country || current.adjacent[1].country != current.country || current.adjacent[2].country != current.country || current.adjacent[3].country != current.country) {
-					current.border_direction = [2,1,3,0];
-					current.border_distance = 1;
-					borderDistRing.push(current);
+		for(i = 0, n = this.data.length; i < n; i++) {
+			current = this.data[i];
+			// Find the biggest squares in each country and designate it as the capitol.
+			if(current.total_pop > 0 && (this.countries[current.country].capitol === null || this.countries[current.country].capitol.total_pop < current.total_pop))
+				this.countries[current.country].capitol = current;
+		}
+		this.progress.advance(0.25);
+
+		// Remove countries without capitols (meaning countries with no population), set capitol names?
+		for(i = 1; i < this.countries.length; i++) {
+			if(this.countries[i].capitol === null) {
+				this.countries.splice(i,1);
+				i--;
+				for(j = 0, n = this.data.length; j < n; j++) {
+					if(this.data[j].country > i)
+						this.data[j].country--;
 				}
-			// Second passthrough, start spreading tiles
-			} else {
-				for(j=0;j<current.border_direction.length;j++) {
-					dir = current.border_direction[j];
-					target = current.adjacent[dir];
-					// If the target to check is the same country and has not been calculated yet, do it
-					if(target.country == current.country) {
-						if(dir == 3 || dir == 1)
-							dist = Math.abs(Math.sin((90 - current.lat) * Math.PI / 180));
-						else
-							dist = 1;
-						if(target.border_distance === 0 || target.border_distance > current.border_distance + dist) {
-							target.border_distance = current.border_distance + dist;
-							target.border_direction = [2,1,3,0];
-							borderDistRing.push(target);
+			}/* else {
+				this.countries[i].capitol.name = this.generateName('city');
+			}*/
+		}
+
+		// Calculate distances to country borders
+		var borderDistRing = this.data.slice(0);
+		var target,dir,dist;
+		while(borderDistRing.length > 0) {
+			current = borderDistRing.shift();
+			if(!current.water && current.country) {
+				// New border tiles detected on first pass through
+				if(current.border_direction === undefined) {
+					if(current.coast_distance == 1 || current.adjacent[0].country != current.country || current.adjacent[1].country != current.country || current.adjacent[2].country != current.country || current.adjacent[3].country != current.country) {
+						current.border_direction = [2,1,3,0];
+						current.border_distance = 1;
+						borderDistRing.push(current);
+					}
+				// Second passthrough, start spreading tiles
+				} else {
+					for(j=0;j<current.border_direction.length;j++) {
+						dir = current.border_direction[j];
+						target = current.adjacent[dir];
+						// If the target to check is the same country and has not been calculated yet, do it
+						if(target.country == current.country) {
+							if(dir == 3 || dir == 1)
+								dist = Math.abs(Math.sin((90 - current.lat) * Math.PI / 180));
+							else
+								dist = 1;
+							if(target.border_distance === 0 || target.border_distance > current.border_distance + dist) {
+								target.border_distance = current.border_distance + dist;
+								target.border_direction = [2,1,3,0];
+								borderDistRing.push(target);
+							}
 						}
 					}
 				}
 			}
 		}
-	}
 
-	this.progress.advance(0.35);
+		this.progress.advance(0.35);
 
-	for(i = 0, n = this.data.length; i < n; i++) {
-		// Clean up unneeded stuff from all the previous steps
-		delete this.data[i].border_direction;
-		delete this.data[i].coast_direction;
-		delete this.data[i].wind;
+		for(i = 0, n = this.data.length; i < n; i++) {
+			// Clean up unneeded stuff from all the previous steps
+			delete this.data[i].border_direction;
+			delete this.data[i].coast_direction;
+			delete this.data[i].wind;
 
-		this.data[i].updateNearbyPop();
-		if(i % 1000 === 0)
-			this.progress.advance(0.35 + 0.6 * i / this.data.length);
+			this.data[i].updateNearbyPop();
+			if(i % 1000 === 0)
+				this.progress.advance(0.35 + 0.6 * i / this.data.length);
+		}
 	}
 	this.progress.advance(1);
 };
@@ -707,13 +708,23 @@ Planet.prototype.calculateClimate = function() {
 		// Changes temperature based on terrain, returns a value of precipitation
 		init: function() {
 			if(this.moveTo !== undefined) {
+				if(this.moveTo.wind) {
+					if(current.reduce === undefined)
+						current.reduce = 1;
+					else
+						current.reduce *= 0.9;
+
+					if(current.reduce < 0.05) {
+						return false;
+					}
+				}
 				if(this.moveTo.wind === undefined) {
 					this.location.wind = true; // Went through here
 					this.location = this.moveTo;
 					this.location.wind = this;
 				} else if(this.moveTo.wind instanceof Wind) {
 					// swap move
-					/*var swapWith = this.moveTo.wind;
+					var swapWith = this.moveTo.wind;
 					this.location.wind = swapWith;
 					swapWith.location = this.location;
 					delete swapWith.moveTo;
@@ -724,7 +735,10 @@ Planet.prototype.calculateClimate = function() {
 					swapWith.blend(this,0.5);
 					this.blend(swapWith, 0.5);
 					swapWith.doBlend();
-					this.doBlend();*/
+					this.doBlend();
+					
+					swapWith.blendDistance /= 4;
+					this.blendDistance /= 4;
 				}
 				delete this.moveTo;
 			}
@@ -749,6 +763,8 @@ Planet.prototype.calculateClimate = function() {
 			// Add moisture up to saturation when over water
 			if(this.location.water)
 				this.moisture += (this.saturationPressure - this.moisture) * this.options.wtrAddMoisture;
+
+			return true;
 		},
 		move: function(newLocation) {
 			this.moveTo = newLocation;
@@ -829,26 +845,29 @@ Planet.prototype.calculateClimate = function() {
 
 	var turns = 0, winds = [];
 	// Create all the wind objects
-	for(i = 0; i < this.config.w; i++) {
-		winds.push(new Wind(this.data[i],                                                                       's'));
-		winds.push(new Wind(this.data[this.data.length / 2 - (this.config.horse_lats + 1) * this.config.w + i], 'n'));
+	
+	for(i = 85; i < 95; i++) {
 		winds.push(new Wind(this.data[this.data.length / 2 - this.config.horse_lats * this.config.w + i],       's'));
-		winds.push(new Wind(this.data[this.data.length / 2 + this.config.horse_lats * this.config.w + i],       'n'));
-		winds.push(new Wind(this.data[this.data.length / 2 + (this.config.horse_lats + 1) * this.config.w + i], 's'));
-		winds.push(new Wind(this.data[this.data.length - this.config.w + i],                                    'n'));
-		/*
-		winds.push(new Wind(this.data[i],                                                                       's'));
-		winds.push(new Wind(this.data[this.data.length / 2 - (this.config.horse_lats + 1) * this.config.w + i], 'n'));
-		winds.push(new Wind(this.data[this.data.length / 2 - this.config.horse_lats * this.config.w + i],       's'));
-		winds.push(new Wind(this.data[this.data.length / 2 + this.config.horse_lats * this.config.w + i],       'n'));
-		winds.push(new Wind(this.data[this.data.length / 2 + (this.config.horse_lats + 1) * this.config.w + i], 's'));
-		winds.push(new Wind(this.data[this.data.length - this.config.w + i],                                    'n'));
-		*/
+		winds.push(new Wind(this.data[this.data.length / 2 + (planet.config.horse_lats - 1) * this.config.w + i],       'n'));
 	}
+/*
+	for(i = 0; i < planet.config.w; i++) {
+		winds.push(new Wind(this.data[i],                                                                       's'));
+		winds.push(new Wind(this.data[this.data.length / 2 - (this.config.horse_lats + 1) * this.config.w + i], 'n'));
+		winds.push(new Wind(this.data[this.data.length / 2 - this.config.horse_lats * this.config.w + i],       's'));
+		winds.push(new Wind(this.data[this.data.length / 2 + (this.config.horse_lats - 1) * this.config.w + i], 'n'));
+		winds.push(new Wind(this.data[this.data.length / 2 + (this.config.horse_lats) * this.config.w + i],     's'));
+		winds.push(new Wind(this.data[this.data.length - this.config.w + i],                                    'n'));
+	}*/
 
 	while(winds.length > 0) {
 		for(i = 0; i < winds.length; i++) {
-			winds[i].init();
+			// If wind init returns false, wind is finished and delete it.
+			if(!winds[i].init()) {
+				winds[i].location.wind = true;
+				winds.splice(i, 1);
+				i--;
+			}
 		}
 		for(i = 0; i < winds.length; i++) {
 			current = winds[i];
@@ -860,9 +879,9 @@ Planet.prototype.calculateClimate = function() {
 			}
 
 			for(var j = 0; j < current.blendDistance; j++) {
-				if(current.location.adjacent[1].wind.blend)
+				if(current.location.adjacent[1].wind instanceof Wind)
 					current.location.adjacent[1].wind.blend(current, Math.pow(blendStrength, j + 1));
-				if(current.location.adjacent[3].wind.blend)
+				if(current.location.adjacent[3].wind instanceof Wind)
 					current.location.adjacent[3].wind.blend(current, Math.pow(blendStrength, j + 1));
 			}
 		}
@@ -900,23 +919,7 @@ Planet.prototype.calculateClimate = function() {
 				}
 			}
 
-			if(target.wind) {
-				if(current.reduce === undefined)
-					current.reduce = 1;
-				else
-					current.reduce -= 0.1;
-				winds.splice(i, 1);
-				i--;
-				/*
-				if(current.reduce < 0.05) {
-					winds.splice(i, 1);
-					i--;
-				} else {
-					current.move(target);
-				}*/
-			} else {
-				current.move(target);
-			}
+			current.move(target);
 		}
 
 		turns++;
@@ -982,4 +985,3 @@ Planet.prototype.getAdj = function(i, direction) {
 		return result;
 	}
 };
-
