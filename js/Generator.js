@@ -151,13 +151,14 @@ self.addEventListener('message', function(event) {
 
 	if(!CONFIG.seed) {
 		var d = new Date();
-		CONFIG.seed = d.getTime();
+		CONFIG.seed = d.getTime().toString();
 	}
 	// Force Mercator projection dimensions on image
 	CONFIG.tx_h = CONFIG.tx_w / 2;
 	CONFIG.h = CONFIG.w / 2;
 
-	Math.seedrandom(CONFIG.seed);
+	Math.seedrandom(1396304923488);
+	//Math.seedrandom(CONFIG.seed);
 
 	var P = PerlinSimplex; // Set Perlin function to the Simplex object for texture
 	P.setRng(Math);
@@ -270,13 +271,12 @@ Planet.prototype.generate = function(P,callback) {
 		// progress share array should sum 1
 		progress = ProgressCalc([
 			0.55,
-			0,
-			0,
+			0.01,
+			0.01,
+			0.13,
 			0.05,
 			0.05,
-			0.05,
-			0.05,
-			0.25,
+			0.15,
 			0
 		]);
 	this.progress = progress;
@@ -375,11 +375,7 @@ Planet.prototype.generate = function(P,callback) {
 	planet.calculateCoastLine();
 	progress.done();
 
-	Math.seedrandom( Math.random() );
-	var climateTurbulence = new perlinSphereGenerator(planet.config.w, 3, 0.5);
-	progress.done();
-
-	planet.calculateClimate(climateTurbulence.data);
+	planet.calculateClimate();
 	progress.done();
 
 	Math.seedrandom( Math.random() );
@@ -659,11 +655,11 @@ Planet.prototype.calculateCoastLine = function() {
 // Simulate the climate by following the wind across the tiles and monitoring the progress
 // Going over water 'recharges' the moisture based on latitude (more recharging when warmer), going over land lowers it based on altitude change. (mountains sap all the water)
 // Wind starts at +-32 degrees latitude (Horse Latitude) and at the poles and starts out with no moisture.
-Planet.prototype.calculateClimate = function(turbulence) {
+Planet.prototype.calculateClimate = function() {
 	var ROOT_2 = Math.sqrt(2),
 		AVG_DENOM = 4/Math.sqrt(2) + 4;
 	var i,current,
-		n = this.config.horse_lats * 3,
+		n = this.config.horse_lats,
 		planet = this;
 
 	var Wind = function(location, direction) {
@@ -679,7 +675,8 @@ Planet.prototype.calculateClimate = function(turbulence) {
 		temperature: 0,
 		moisture: 0,
 		saturationPressure: 0,
-		blendDistance: 2,
+		blendDistance: 4,
+		coriolis: 0,
 		options: {
 			wtrChangeTemp: 0.65,
 			gndChangeTemp: 0.5,
@@ -688,6 +685,7 @@ Planet.prototype.calculateClimate = function(turbulence) {
 			rainSpeed: 0.1,
 			gndChangeMoisture: 0.1,
 			centerWeight: 0.5,
+			coriolisStrength: 250,
 		},
 		loadSurrounding: function(property) {
 			return this.location[property] * this.options.centerWeight +
@@ -713,13 +711,23 @@ Planet.prototype.calculateClimate = function(turbulence) {
 					this.location.wind = true; // Went through here
 					this.location = this.moveTo;
 					this.location.wind = this;
-				} else {
+				} else if(this.moveTo.wind instanceof Wind) {
 					// swap move
-				}
-			}
+					/*var swapWith = this.moveTo.wind;
+					this.location.wind = swapWith;
+					swapWith.location = this.location;
+					delete swapWith.moveTo;
 
-			if(isNaN(this.temperature) || isNaN(this.moisture) || this.moisture < 0)
-				debugger;
+					this.location = this.moveTo;
+					this.location.wind = this;
+
+					swapWith.blend(this,0.5);
+					this.blend(swapWith, 0.5);
+					swapWith.doBlend();
+					this.doBlend();*/
+				}
+				delete this.moveTo;
+			}
 
 			var adjustedLat = Math.abs(this.location.lat);
 
@@ -737,15 +745,10 @@ Planet.prototype.calculateClimate = function(turbulence) {
 
 			// Equation for saturation pressure vs temperature: http://www.engineeringtoolbox.com/water-vapor-saturation-pressure-air-d_689.html
 			this.saturationPressure = Math.pow(Math.E, 77.3450 + 0.0057 * this.temperature - 7235 / this.temperature) / Math.pow(this.temperature, 8.2);
-			if(isNaN(this.temperature) || isNaN(this.moisture) || this.moisture < 0)
-				debugger;
 
 			// Add moisture up to saturation when over water
 			if(this.location.water)
 				this.moisture += (this.saturationPressure - this.moisture) * this.options.wtrAddMoisture;
-
-			if(isNaN(this.temperature) || isNaN(this.moisture) || this.moisture < 0)
-				debugger;
 		},
 		move: function(newLocation) {
 			this.moveTo = newLocation;
@@ -753,8 +756,9 @@ Planet.prototype.calculateClimate = function(turbulence) {
 		apply: function() {
 			if(this.reduce === undefined)
 				this.location.temperature = this.temperature;
-			else
-				this.location.temperature = this.location.temperature * (1 - this.reduce) + this.temperature * this.reduce;
+			else {
+				this.temperature = this.location.temperature = this.location.temperature * (1 - this.reduce) + this.temperature * this.reduce;
+			}
 
 			this.saturationPressure = Math.pow(Math.E,77.3450+0.0057*this.temperature-7235/this.temperature)/Math.pow(this.temperature,8.2);
 			
@@ -764,14 +768,15 @@ Planet.prototype.calculateClimate = function(turbulence) {
 				precipitation += (this.moisture - this.saturationPressure) * this.options.rainSpeed * 2;
 			}
 			precipitation += (this.moisture/this.saturationPressure) * this.moisture * this.options.rainSpeed;
+
 			if(precipitation > this.moisture)
 				precipitation = this.moisture;
 
-			this.location.precipitation += precipitation;
-			this.moisture -= precipitation;
+			if(this.reduce !== undefined)
+				precipitation = this.location.precipitation * (1 - this.reduce) + precipitation * this.reduce;
 
-			if(isNaN(this.temperature) || isNaN(this.moisture) || this.moisture < 0)
-				debugger;
+			this.location.precipitation = precipitation;
+			this.moisture -= precipitation;
 		},
 		feedback: function() {
 			var dryModifier = 18 / (this.location.precipitation + 1) - 3;
@@ -779,13 +784,14 @@ Planet.prototype.calculateClimate = function(turbulence) {
 				dryModifier = 312.5 - this.location.temperature;
 
 			this.location.temperature += dryModifier;
-			this.temperature = this.temperature * (1 - this.options.feedbackChangeTemp) + this.location.temperature * this.options.feedbackChangeTemp;
 
-			if(isNaN(this.temperature) || isNaN(this.moisture) || this.moisture < 0)
-				debugger;
+			this.temperature = this.temperature * (1 - this.options.feedbackChangeTemp) + this.location.temperature * this.options.feedbackChangeTemp;
 		},
 		blend: function(blendWith, strength) {
-			this.blendWinds.push(blendWith);
+			this.blendWinds.push({
+				temperature: blendWith.temperature,
+				moisture: blendWith.moisture
+			});
 
 			if(this.reduce !== undefined)
 				this.blendAmts.push(strength * this.reduce);
@@ -818,28 +824,25 @@ Planet.prototype.calculateClimate = function(turbulence) {
 				this.temperature = this.temperature * (1 - maxAmt) + temperature * maxAmt / totalAmt;
 				this.moisture = this.moisture * (1 - maxAmt) + moisture * maxAmt / totalAmt;
 			}
-
-			if(isNaN(this.temperature) || isNaN(this.moisture) || this.moisture < 0)
-				debugger;
 		}
 	};
 
 	var turns = 0, winds = [];
 	// Create all the wind objects
 	for(i = 0; i < this.config.w; i++) {
-		winds.push(new Wind(this.data[i],                                                                       ['s', 'p']));
-		winds.push(new Wind(this.data[this.data.length / 2 - (this.config.horse_lats + 1) * this.config.w + i], ['n', 'e']));
-		winds.push(new Wind(this.data[this.data.length / 2 - this.config.horse_lats * this.config.w + i],       ['s', 'w']));
-		winds.push(new Wind(this.data[this.data.length / 2 + this.config.horse_lats * this.config.w + i],       ['n', 'w']));
-		winds.push(new Wind(this.data[this.data.length / 2 + (this.config.horse_lats + 1) * this.config.w + i], ['s', 'e']));
-		winds.push(new Wind(this.data[this.data.length - this.config.w + i],                                    ['n', 'p']));
+		winds.push(new Wind(this.data[i],                                                                       's'));
+		winds.push(new Wind(this.data[this.data.length / 2 - (this.config.horse_lats + 1) * this.config.w + i], 'n'));
+		winds.push(new Wind(this.data[this.data.length / 2 - this.config.horse_lats * this.config.w + i],       's'));
+		winds.push(new Wind(this.data[this.data.length / 2 + this.config.horse_lats * this.config.w + i],       'n'));
+		winds.push(new Wind(this.data[this.data.length / 2 + (this.config.horse_lats + 1) * this.config.w + i], 's'));
+		winds.push(new Wind(this.data[this.data.length - this.config.w + i],                                    'n'));
 		/*
-		winds.push(new Wind(this.data[i],                                                                       ['s', 'p']));
-		winds.push(new Wind(this.data[this.data.length / 2 - (this.config.horse_lats - 1) * this.config.w + i], ['n', 'e']));
-		winds.push(new Wind(this.data[this.data.length / 2 - this.config.horse_lats * this.config.w + i],       ['s', 'w']));
-		winds.push(new Wind(this.data[this.data.length / 2 + this.config.horse_lats * this.config.w + i],       ['n', 'w']));
-		winds.push(new Wind(this.data[this.data.length / 2 + (this.config.horse_lats + 1) * this.config.w + i], ['s', 'e']));
-		winds.push(new Wind(this.data[this.data.length - this.config.w + i],                                    ['n', 'p']));
+		winds.push(new Wind(this.data[i],                                                                       's'));
+		winds.push(new Wind(this.data[this.data.length / 2 - (this.config.horse_lats + 1) * this.config.w + i], 'n'));
+		winds.push(new Wind(this.data[this.data.length / 2 - this.config.horse_lats * this.config.w + i],       's'));
+		winds.push(new Wind(this.data[this.data.length / 2 + this.config.horse_lats * this.config.w + i],       'n'));
+		winds.push(new Wind(this.data[this.data.length / 2 + (this.config.horse_lats + 1) * this.config.w + i], 's'));
+		winds.push(new Wind(this.data[this.data.length - this.config.w + i],                                    'n'));
 		*/
 	}
 
@@ -850,7 +853,7 @@ Planet.prototype.calculateClimate = function(turbulence) {
 		for(i = 0; i < winds.length; i++) {
 			current = winds[i];
 
-			var blendStrength = 0.5;
+			var blendStrength = (0.8 - 1/current.blendDistance) + 0.1;
 
 			if(current.reduce !== undefined) {
 				blendStrength *= current.reduce;
@@ -871,9 +874,8 @@ Planet.prototype.calculateClimate = function(turbulence) {
 			current.feedback();
 
 			// Advance wind front
-			var currLatAbs = Math.abs(current.location.lat);
 			var target;
-			switch(current.direction[0]) {
+			switch(current.direction) {
 				case 'n':
 					target = current.location.adjacent[0];
 					break;
@@ -882,41 +884,43 @@ Planet.prototype.calculateClimate = function(turbulence) {
 					break;
 			}
 
-			switch(current.direction[1]) {
-				case 'w':
-					if(currLatAbs < planet.config.horse_lats / 1.5)
-						target = target.adjacent[3];
-					if(currLatAbs < planet.config.horse_lats / 3)
-						target = target.adjacent[3];
-					if(currLatAbs < planet.config.horse_lats / 6)
-						target = target.adjacent[3];
-					/* falls through */
-				case 'p':
-					target = target.adjacent[3];
-					break;
-				case 'e':
+			// Calculate Coriolis Force 
+			current.coriolis += Math.asin(Math.sin((90 - current.location.lat) * Math.PI / 180) - Math.sin((90 - target.lat) * Math.PI / 180)) * current.options.coriolisStrength;
+			if(current.coriolis > 0) { // Coriolis force is positive, move the wind east (positive lat)
+				while(current.coriolis > 1) {
 					target = target.adjacent[1];
-					break;
+					current.coriolis--;
+					current.blendDistance++;
+				}
+			} else { // Coriolis force is negative, move the wind west (negative lat)
+				while(current.coriolis < -1) {
+					target = target.adjacent[3];
+					current.coriolis++;
+					current.blendDistance++;
+				}
 			}
 
 			if(target.wind) {
 				if(current.reduce === undefined)
-					current.reduce = 0.5;
+					current.reduce = 1;
 				else
-					current.reduce *= 0.75;
-
+					current.reduce -= 0.1;
 				winds.splice(i, 1);
 				i--;
-			}
-			else {
+				/*
+				if(current.reduce < 0.05) {
+					winds.splice(i, 1);
+					i--;
+				} else {
+					current.move(target);
+				}*/
+			} else {
 				current.move(target);
 			}
 		}
 
-		current.blendDistance++;
-
 		turns++;
-		this.progress.advance(turns/n);
+		planet.progress.advance(turns/n);
 	}
 };
 

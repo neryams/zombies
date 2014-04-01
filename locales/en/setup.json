@@ -20,12 +20,11 @@
 		"0":"generating textures",
 		"1":"setting height",
 		"2":"calculating coastline",
-		"3":"generating heat",
-		"4":"simulating climate",
-		"5":"populating world",
-		"6":"playing the game of thrones",
-		"7":"curing cancer",
-		"8":"calculating caches",
-		"9":"reticulating splines"
+		"3":"simulating climate",
+		"4":"populating world",
+		"5":"playing the game of thrones",
+		"6":"curing cancer",
+		"7":"calculating caches",
+		"8":"reticulating splines"
 	}
 }
