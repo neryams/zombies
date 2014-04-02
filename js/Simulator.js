@@ -434,7 +434,7 @@ Simulator.prototype.start = function(strainId) {
 
 		// Initialize all the other modules
 		for(var id in that.modules)
-			if(that.modules[id].onStart !== undefined && that.modules[id].type != 'strain')
+			if(that.modules[id].onStart && that.modules[id].type != 'strain')
 				that.modules[id].onStart(startSq);
 
 		that.R.lookAt(startSq);
@@ -497,7 +497,7 @@ Simulator.prototype.addModule = function(id,moduleArray) {
 			for(i = 0, n = newModule.dependencies.length; i < n; i++)
 				this.addModule(newModule.dependencies[i],moduleArray);
 
-			if(newModule.init !== undefined)
+			if(newModule.init)
 				newModule.init();
 
 			// Add children recursively
@@ -537,7 +537,7 @@ Simulator.prototype.addActive = function(id) {
 					this.activeModules[addModule.type][i].activeId = i;
 				}
 			}
-			if(addModule.onActivate !== undefined)
+			if(addModule.onActivate)
 				addModule.onActivate();
 		}
 
@@ -557,7 +557,7 @@ Simulator.prototype.removeActive = function(id) {
 				this.removeActive(removeModule.children[i]);
 
 		// Run the ondeactivate function
-		if(removeModule.onDeactivate !== undefined)
+		if(removeModule.onDeactivate)
 			removeModule.onDeactivate();
 
 		// Replace this module with the next in line and shift all subsequent modules down the queue
@@ -834,7 +834,7 @@ Simulator.prototype.tick_begin = function(options) {
 		current.passData.target = target;
 	}
 };
-Simulator.prototype.tick_module = function(process, moduleName, options) {
+Simulator.prototype.tick_hordes = function(process, moduleName, options) {
 	var simplifyCof = 1;
 	for(var i = 0, n = this.hordes.length; i < n; i += simplifyCof) {
 		// Don't process every horde every turn. Smaller hordes can be skipped the majority of turns 
@@ -854,13 +854,21 @@ Simulator.prototype.tick_module = function(process, moduleName, options) {
 			debugMenu.console.reportOutput(current, moduleName, result);
 	}
 };
+Simulator.prototype.tick_activePoints = function(process) {
+	for (var point in this.pointsToWatch) {
+		// If item is array index
+		if (String(point >>> 0) == point && point >>> 0 != 0xffffffff) {
+			process(this.points[point]);
+		}
+	}
+};
 
 Simulator.prototype.tick = function() {
 	var S = this,
 		R = this.R;
 
-	this.date.setTime(1577880000000 + 86400000*this.iteration);
-	if(this.paused)
+	S.date.setTime(1577880000000 + 86400000*S.iteration);
+	if(S.paused)
 		return false;
 
 	var i,
@@ -868,30 +876,38 @@ Simulator.prototype.tick = function() {
 			simplifyAt: 2000,
 			reportPassData: false
 		};
-	if(this.strain !== null) {
+	if(S.strain !== null) {
 		if(debugMenu.active) {
 			debugMenu.console.initTick();
 			
 			if(debugMenu.console.options.profileTick)
-				console.profile('Tick ' + this.iteration);
+				console.profile('Tick ' + S.iteration);
 			console.time('tickTime');
 		}
 
-		this.tick_begin(options);
+		S.tick_begin(options);
 
-		this.tick_module(this.strain.process, this.strain.id, options);
+		if(S.strain.onTick)
+			S.strain.onTick();
+		for(i = 0; i < S.activeModules.infect.length; i++)
+			if(S.activeModules.infect[i].onTick)
+				S.activeModules.infect[i].onTick();
+		for(i = 0; i < S.activeModules.spread.length; i++)
+			if(S.activeModules.spread[i].onTick)
+				S.activeModules.spread[i].onTick();
+		for(i = 0; i < S.activeModules.event.length; i++)
+			if(S.activeModules.event[i].onTick)
+				S.activeModules.event[i].onTick();
+
+		S.tick_hordes(S.strain.process, S.strain.id, options);
 
 		options.reportPassData = true;
-		for(i = 0; i < this.activeModules.infect.length; i++) {
-			this.tick_module(this.activeModules.infect[i].process, this.activeModules.infect[i].id, options);
+		for(i = 0; i < S.activeModules.infect.length; i++) {
+			S.tick_hordes(S.activeModules.infect[i].process, S.activeModules.infect[i].id, options);
 		}
 		options.reportPassData = false;
 
-		for(i = 0; i < this.activeModules.spread.length; i++) {
-			this.tick_module(this.activeModules.spread[i].process, this.activeModules.spread[i].id, options);
-		}
-
-		this.tick_module(function(current) {
+		S.tick_hordes(function(current) {
 			// Update nearby square populations
 			current.location.updateNearbyPop(S.iteration);
 
@@ -901,6 +917,11 @@ Simulator.prototype.tick = function() {
 				current.renderer.cacheLng = current.location.lng;
 			}
 		}, 'system', options);
+		
+
+		for(i = 0; i < S.activeModules.spread.length; i++) {
+			S.tick_activePoints(S.activeModules.spread[i].process);
+		}
 
 		if(debugMenu.active) {
 			console.timeEnd('tickTime');
@@ -911,44 +932,42 @@ Simulator.prototype.tick = function() {
 		}
 
 		// Run event modules once
-		for(i = 0; i < this.activeModules.event.length; i++) {
+		for(i = 0; i < S.activeModules.event.length; i++) {
 			if(debugMenu.active)
-				debugMenu.console.reportOutput(null, this.activeModules.event[i].id, this.activeModules.event[i].process());
+				debugMenu.console.reportOutput(null, S.activeModules.event[i].id, S.activeModules.event[i].process());
 			else
-				this.activeModules.event[i].process();
+				S.activeModules.event[i].process();
 		}
 
 		// Update all the points in the renderer that may have been affected 
 		// Iterate over the sparse array
-		for (var point in this.pointsToWatch) {
-			// If item is array index
-			if (String(point >>> 0) == point && point >>> 0 != 0xffffffff) {
-				this.updateSquare(this.points[point]);
-			}
-		}
-		this.pointsToWatch.length = 0;
+		S.tick_activePoints(function(point) {
+			S.updateSquare.call(S, point);
+		});
+		
+		S.pointsToWatch.length = 0;
 
-		this.R.updateMatrix();
+		S.R.updateMatrix();
 
-		this.UIData.gridSize = this.properties.gridSize;
-		this.UIData.iteration = this.iteration;
-		this.UI.updateUI(this.UIData);
+		S.UIData.gridSize = S.properties.gridSize;
+		S.UIData.iteration = S.iteration;
+		S.UI.updateUI(S.UIData);
 
-		this.hordes.addAllNew();
+		S.hordes.addAllNew();
 
 		if(debugMenu.active && debugMenu.console.options.manualTicks) {
-			if(this.interval) {
-				clearInterval(this.interval);
-				this.interval = false;
+			if(S.interval) {
+				clearInterval(S.interval);
+				S.interval = false;
 			}
 		} else {
-			if(!this.interval)
-				this.interval = setInterval( (function(self) { return function() {self.tick();};} )(this), 500);
+			if(!S.interval)
+				S.interval = setInterval( function() { S.tick.call(S); } , 500);
 		}
 		if(debugMenu.active)
 			debugMenu.console.newTick();
 
-		this.iteration++;
+		S.iteration++;
 	}
 };
 Simulator.prototype.updateSquare = function(target, force) {
@@ -1066,6 +1085,13 @@ Module.prototype = {
 	runtime: 10, // Smaller numbers run sooner
 	dependencies: [],
 	children: [],
+
+	init: false,
+	onStart: false,
+	onActivate: false,
+	onDeactivate: false,
+	onTick: false,
+
 	process: function() { return 0; },
 	isActive: function() {
 		return this.activeId !== undefined;
