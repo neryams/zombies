@@ -2,7 +2,7 @@
 	Movement: causes zombies to wander around.
 	Zombies walking around, distance probability distribution function based in movement strength (Speed). mobility being in km/h, and radius of planet being 6378.1 km
 */
-exports.type = 'spread';
+exports.type = 'infect';
 exports.run = function(current,passData,multiplier) {
 	if(passData.mobility > 0) {
 		var currentLocation = current.location;
@@ -15,39 +15,38 @@ exports.run = function(current,passData,multiplier) {
 		if(true) { this.humanSense = 1500;
 			var direction = this.S.iteration%4;
 			if(!current.smellCache) {
-				current.smellCache = [-1,-1,-1,-1,-1,-1,-1,-1];				
+				current.smellCache = [-1,-1,-1,-1,-1,-1,-1,-1];
 			}
 			// If humans in this direction have never been calculated, do this direction and the opposing one (for symmetry)
 			// Go around the square once doing the opposing directions
 			if(current.smellCache[this.S.iteration%4] < 0) {
-				var direction = this.S.iteration%4;
 				current.smellCache[direction]   = this.getSmells(currentLocation, direction, this.humanSense);
-				current.smellCache[direction+4] = this.getSmells(currentLocation, direction+4, this.humanSense);				
+				current.smellCache[direction+4] = this.getSmells(currentLocation, direction+4, this.humanSense);
 			// If this direction has been calculated, only update squares once every 2 turns and only one direction at a time. TODO: raise this if it seems OK for speed
 			} else {
-				var direction = this.S.iteration%8;
+				direction = this.S.iteration%8;
 				current.smellCache[direction]   = this.getSmells(currentLocation, direction, this.humanSense);
 			}
-			delete direction;
 		}
 
 		// Get the random numbers for the movement.
 		// randAngle is the randomly picked direction, where 0-7 are adjacent squares clockwise from top
-	    var rand = Math.sqrt(passData.rand),
+		var rand = Math.sqrt(passData.rand),
 			randAngle = Math.random()*8, // modify this to point towards more people
 			chances = this.getChances(currentLocation.lat, current.movement);
 
 		if(current.smellCache) {
 			// Weight randAngle based on the weighting values calculated earler
-			var topStrength;
-			var newRandAngle;
+			var topStrength,
+				thisStrength,
+				newRandAngle;
 			// go up to 8 so the random direction weighting wraps around
 			for(var i = 0; i <= 8; i++) {
 				if(current.smellCache[i%8] > 1) {
-					var thisStrength = (randAngle - i)/current.smellCache[i%8];
+					thisStrength = (randAngle - i)/current.smellCache[i%8];
 				}
 				else {
-					var thisStrength = randAngle - i;				
+					thisStrength = randAngle - i;
 				}
 
 				// Keep track of which grid square is strongest after weighting
@@ -59,65 +58,65 @@ exports.run = function(current,passData,multiplier) {
 			randAngle = newRandAngle;
 		}
 
-	    var ratioA = 1 - randAngle%1,
-	    	ratioB = randAngle%1,
-	    	targetA = Math.floor(randAngle),
-	    	targetB = Math.ceil(randAngle)%8;
-	    var chanceA = targetA%4,
-	    	chanceB = targetB%4;
-    	if(targetA > 4)
-    		chanceA = 4 - chanceA;
-    	if(targetB > 4)
-    		chanceB = 4 - chanceB;
+		var ratioA = 1 - randAngle%1,
+			ratioB = randAngle%1,
+			targetA = Math.floor(randAngle),
+			targetB = Math.ceil(randAngle)%8;
+		var chanceA = targetA%4,
+			chanceB = targetB%4;
+		if(targetA > 4)
+			chanceA = 4 - chanceA;
+		if(targetB > 4)
+			chanceB = 4 - chanceB;
 
-	    var chance = chances[chanceA]*ratioA + chances[chanceB]*ratioB;
-	    var cumChance = (chances[0] + chances[1] + chances[2] + chances[3]) * 2;
+		var chance = chances[chanceA]*ratioA + chances[chanceB]*ratioB;
 
-	    if(rand > 1 - chance*current.size) {
-	    	// Move the zombies
-	    	if(targetA % 2 == 0) {
-	    		targetA = currentLocation.adjacent[targetA/2];
-	    	} else {
-	    		targetA = currentLocation.adjacent[Math.floor(targetA/2)].adjacent[Math.ceil(targetA/2)%4];
-	    	}
-	    	if(targetB % 2 == 0) {
-	    		targetB = currentLocation.adjacent[targetB/2];
-	    	} else {
-	    		targetB = currentLocation.adjacent[Math.floor(targetB/2)].adjacent[Math.ceil(targetB/2)%4];
-	    	}
+		if(rand > 1 - chance*current.size) {
+			// Move the zombies
+			if(targetA % 2 === 0) {
+				targetA = currentLocation.adjacent[targetA/2];
+			} else {
+				targetA = currentLocation.adjacent[Math.floor(targetA/2)].adjacent[Math.ceil(targetA/2)%4];
+			}
+			if(targetB % 2 === 0) {
+				targetB = currentLocation.adjacent[targetB/2];
+			} else {
+				targetB = currentLocation.adjacent[Math.floor(targetB/2)].adjacent[Math.ceil(targetB/2)%4];
+			}
 
 			// if the zombies don't swim, don't send them in that direction
+			var allWater = false;
 			if(!this.swimming) {
 				if(targetA.water && !targetB.water) {
 					chances[chanceA] = 0;
 				}
 				else if(!targetA.water && targetB.water) {
-					chances[chanceB] = 0;			
+					chances[chanceB] = 0;
 				}
 				else if(targetA.water && targetB.water) {
-					var allWater = true;
+					allWater = true;
 					this.smellCache[Math.floor(randAngle)] = 0;
 					this.smellCache[Math.ceil(randAngle)] = 0;
 				}
 			}
 			if(!allWater) {
 				current.movement = 0;
-		    	if(chances[chanceA]*ratioA > chances[chanceB]*ratioB) {
-		    		current.move(targetA);
-		    	} else {
-		    		current.move(targetB);
-		    	}
+				if(chances[chanceA]*ratioA > chances[chanceB]*ratioB) {
+					current.move(targetA);
+				} else {
+					current.move(targetB);
+				}
 			}
-	    } else {
-	    	// zombie horde did not move, possibly combine with a horde in the same square
-	    	if(current.location.hordes.length > 1 && passData.rand > 1 - (this.S.hordes.length / 40000)) {
-	    		var newRand = Math.pow(((passData.rand*100)%10)/10, 3);
-	    			combineWith = Math.floor(current.location.hordes.length*newRand);
-	    		if(current.location.hordes[combineWith].id != current.id) {
-	    			current.location.hordes[combineWith].size += current.size;
-	    			current.size = 0;
-	    		}
-	    	}
+		} else {
+			// zombie horde did not move, possibly combine with a horde in the same square
+			if(current.location.hordes.length > 1 && passData.rand > 1 - (this.S.hordes.length / 40000)) {
+				var newRand = Math.pow(((passData.rand * 100) % 10) / 10, 3),
+					combineWith = Math.floor(current.location.hordes.length*newRand);
+				if(current.location.hordes[combineWith].id != current.id) {
+					current.location.hordes[combineWith].size += current.size;
+					current.size = 0;
+				}
+			}
 	    }
 	}
 };
@@ -128,60 +127,64 @@ exports.options = {
 		this.smellSense = 0;
 		this.swimming = false;
 		this.getChances = function (lat,movement) {
-			var lat = Math.floor(Math.abs(lat)),
-				movement = Math.floor(movement);
-			var chances = this.S.bakedValues.latCumChance[lat];
+			lat = Math.floor(Math.abs(lat));
+			movement = Math.floor(movement);
+			//var chances = this.S.bakedValues.latCumChance[lat];
 			if(!this.bakedMoveChance[lat])
 				this.bakedMoveChance[lat] = [];
 			if(!this.bakedMoveChance[lat][movement]) {
 				var result = [],
 					meanMovement = Math.sqrt(24*movement),
 					sigma = meanMovement/3,
-					totalDistance = (this.S.bakedValues.latDistances[lat][0] + this.S.bakedValues.latDistances[lat][1] + 
-						this.S.bakedValues.latDistances[lat][4] + this.S.bakedValues.latDistances[lat][5]);
+					distance;
 
 				/* Old change generation. Makes zombies never spread to lesser change squares*/
 				for(var direction = 0; direction < 4; direction++) {
-					if(direction%2 == 0)
-						var distance = this.S.bakedValues.latDistances[lat][direction/2];
+					if(direction%2 === 0)
+						distance = this.S.bakedValues.latDistances[lat][direction/2];
 					else
-						var distance = this.S.bakedValues.latDistances[lat][Math.floor(direction/2)+4];
+						distance = this.S.bakedValues.latDistances[lat][Math.floor(direction/2)+4];
 					// Normal curve approximation formula
-			    	var x = (distance*0.5 - meanMovement)/(1.414213562*sigma),
-			    		t = 1.0/(1.0 + 0.3275911*x);
+					var x = (distance*0.5 - meanMovement)/(1.414213562*sigma),
+						t = 1.0/(1.0 + 0.3275911*x);
 					result[direction] = (((((1.061405429*t - 1.453152027)*t) + 1.421413741)*t - 0.284496736)*t + 0.254829592)*t*Math.pow(Math.E,-x*x);
 				}
 				
 				this.bakedMoveChance[lat][movement] = result;
 			}
 			return this.bakedMoveChance[lat][movement].slice(0); // return a copy so the array can be manipulated without destroying the cache
-		}
-		this.getSmells = function (dataPoint,direction,maxDistance) {
-	    	/*var surroundPop = current.adjacent[0].total_pop + current.adjacent[1].total_pop + current.adjacent[2].total_pop + current.adjacent[3].total_pop + 
-	    		current.adjacent[1].adjacent[0].total_pop + current.adjacent[1].adjacent[2].total_pop + current.adjacent[3].adjacent[0].total_pop + current.adjacent[3].adjacent[2].total_pop;*/
-	    	var returnAmount = 0,
-	    		totalDistance = 0,
-	    		i = 0;
-	    	while(totalDistance < maxDistance) {
-		    	if(direction % 2 == 0) { // horizontal and vertical
-		    		totalDistance += this.S.bakedValues.latDistances[Math.floor(Math.abs(dataPoint.lat))][direction/2];
-	    			dataPoint = dataPoint.adjacent[direction/2];
+		};
+		this.getSmells = function (dataPoint, direction, maxDistance) {
+			/*var surroundPop = current.adjacent[0].total_pop + current.adjacent[1].total_pop + current.adjacent[2].total_pop + current.adjacent[3].total_pop + 
+				current.adjacent[1].adjacent[0].total_pop + current.adjacent[1].adjacent[2].total_pop + current.adjacent[3].adjacent[0].total_pop + current.adjacent[3].adjacent[2].total_pop;*/
+			var returnAmount = 0,
+				totalDistance = 0,
+				i = 0;
+			while(totalDistance < maxDistance) {
+				if(direction % 2 === 0) { // horizontal and vertical
+					totalDistance += this.S.bakedValues.latDistances[Math.floor(Math.abs(dataPoint.lat))][direction/2];
+					dataPoint = dataPoint.adjacent[direction/2];
 
-		    	} else { // diagonal
-		    		totalDistance += this.S.bakedValues.latDistances[Math.floor(Math.abs(dataPoint.lat))][Math.floor(direction/2)+4];
-	    			dataPoint = dataPoint.adjacent[Math.floor(direction/2)].adjacent[Math.ceil(direction/2)%4];		    		
-		    	}
+				} else { // diagonal
+					totalDistance += this.S.bakedValues.latDistances[
+							Math.floor( Math.abs(dataPoint.lat) )
+						][
+							Math.floor(direction / 2) + 4
+						];
+					dataPoint = dataPoint.adjacent[Math.floor(direction/2)].adjacent[Math.ceil(direction/2)%4];
+				}
 
-		    	if(dataPoint.nearby_pop)
-		    		if(i < dataPoint.nearby_pop.length) {
-		    			returnAmount += dataPoint.nearby_pop[i] / (totalDistance*totalDistance);
-		    		} else {
-		    			returnAmount += dataPoint.nearby_pop[dataPoint.nearby_pop.length - 1] / (totalDistance*totalDistance);		    			
-		    		}
-		    	i++;
-	    	}
-	    	return returnAmount;
-		}
+				if(dataPoint.nearby_pop)
+					if(i < dataPoint.nearby_pop.length) {
+						returnAmount += dataPoint.nearby_pop[i] / (totalDistance*totalDistance);
+					} else {
+						returnAmount += dataPoint.nearby_pop[dataPoint.nearby_pop.length - 1] / (totalDistance*totalDistance);
+					}
+				i++;
+			}
+			return returnAmount;
+		};
 	},
+	runtime: 30,
 	dependencies: ['movement.base']
 };

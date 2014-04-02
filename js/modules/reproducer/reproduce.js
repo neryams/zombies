@@ -4,8 +4,11 @@ exports.run = function(current, passData, multiplier) {
 		if(current.collected === undefined)
 			current.collected = 0;
 
-		var resource_collected = passData.collect * current.size * multiplier;
+		var resource_collected = passData.collect * current.size;
 
+		passData.panic += resource_collected;
+
+		resource_collected *= multiplier;
 		if(current.location.tech < resource_collected)
 			resource_collected = current.location.tech;
 		current.location.tech -= resource_collected;
