@@ -341,15 +341,13 @@ function Evolution(name,levels,options) {
 		// Draw gene shape image, (the tetris peices)
 		if(currentLevel.gene) {
 			var img = this.drawGene(this.imageCanvas, this.SQUARE_SIZE, currentLevel.gene);
-			var imgSmall = this.drawGene(this.imageCanvas, Math.floor(this.SQUARE_SIZE/4), currentLevel.gene);
+			var imgSmall = this.drawGene(this.imageCanvas, Math.round(this.SQUARE_SIZE/2.5), currentLevel.gene);
 
 			// Copy a image elemnt for the user interface and put the gene image into it.
 			currentLevel.gene.imageElement = $('<img />').attr('src', img);
 			currentLevel.gene.imageThumbnail = $('<img />').attr('src', imgSmall);
-		}
 
-		// Add gene graphic to evolution panel icons
-		if(currentLevel.gene) {
+			// Add gene graphic to evolution panel icons
 			var geneGraphic = currentLevel.gene.imageThumbnail.clone();
 			currentElement.append(geneGraphic.addClass('geneIcon').css('bottom',this.imageCanvas.height/-2).css('right',this.imageCanvas.height/-2));
 		}
