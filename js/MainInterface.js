@@ -345,12 +345,12 @@ function MainInterface(UI,R) {
 				var mouseOffsetGrid = { left: mousePosition.left - gridElementPosition.left, top: mousePosition.top - gridElementPosition.top };
 
 				// if the grid point you clicked on isn't actually this element, mousedown on the gridpoint owner and stop this at once
-				if(!grid[Math.floor(mouseOffsetGrid.left/10)][Math.floor(mouseOffsetGrid.top/10)]) {
+				if(!grid[Math.floor(mouseOffsetGrid.left/gridSquareSize)][Math.floor(mouseOffsetGrid.top/gridSquareSize)]) {
 					event.stopImmediatePropagation();
 					return false;
 				}
-				else if(grid[Math.floor(mouseOffsetGrid.left/10)][Math.floor(mouseOffsetGrid.top/10)].id != currentUpgrade.id) {
-					currentUpgrade = grid[Math.floor(mouseOffsetGrid.left/10)][Math.floor(mouseOffsetGrid.top/10)];
+				else if(grid[Math.floor(mouseOffsetGrid.left/gridSquareSize)][Math.floor(mouseOffsetGrid.top/gridSquareSize)].id != currentUpgrade.id) {
+					currentUpgrade = grid[Math.floor(mouseOffsetGrid.left/gridSquareSize)][Math.floor(mouseOffsetGrid.top/gridSquareSize)];
 					element = gene = $('.gene_'+currentUpgrade.id,gridElement);
 					geneImage = gene.find('img');
 				}
@@ -387,8 +387,8 @@ function MainInterface(UI,R) {
 				event.data.mousePosition.top = event.clientY;
 				if(event.data.gridElementPosition.left - gridSquareSize/2 < event.data.position.left && event.data.gridElementPosition.top - gridSquareSize/2 < event.data.position.top &&
 					event.data.gridElementPosition.left + event.data.gridElement.width() + gridSquareSize/2 > event.data.position.left + event.data.currentGene.width*gridSquareSize && event.data.gridElementPosition.top + event.data.gridElement.height() + gridSquareSize/2 > event.data.position.top + event.data.currentGene.height*gridSquareSize) {
-					event.data.currentGene.placement.x = Math.round((event.data.position.left - event.data.gridElementPosition.left) / 10);
-					event.data.currentGene.placement.y = Math.round((event.data.position.top - event.data.gridElementPosition.top) / 10);
+					event.data.currentGene.placement.x = Math.round((event.data.position.left - event.data.gridElementPosition.left) / gridSquareSize);
+					event.data.currentGene.placement.y = Math.round((event.data.position.top - event.data.gridElementPosition.top) / gridSquareSize);
 					event.data.element.css('left',event.data.gridElementPosition.left + event.data.currentGene.placement.x*gridSquareSize - 1)
 						.css('top',event.data.gridElementPosition.top + event.data.currentGene.placement.y*gridSquareSize - 1);
 					valid = true;

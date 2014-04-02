@@ -340,89 +340,17 @@ function Evolution(name,levels,options) {
 
 		// Draw gene shape image, (the tetris peices)
 		if(currentLevel.gene) {
-			// Get canvas for drawing the image
-			var imageCtx = this.imageCanvas.getContext('2d'),
-				currPoint;
-			// Clear the last gene graphic and set the canvas size to the final shape size
-			this.imageCanvas.height = this.SQUARE_SIZE * currentLevel.gene.height;
-			this.imageCanvas.width = this.SQUARE_SIZE * currentLevel.gene.width;
-
-			// Drawing styles
-			switch(currentLevel.gene.color) {
-				case 'red':
-					imageCtx.fillStyle = 'rgba(120, 0, 0, 255)';
-					imageCtx.strokeStyle = 'rgba(255, 0, 0, 255)';
-					break;
-				case 'green':
-					imageCtx.fillStyle = 'rgba(30, 150, 30, 255)';
-					imageCtx.strokeStyle = 'rgba(0, 220, 0, 255)';
-					break;
-				case 'blue':
-					imageCtx.fillStyle = 'rgba(0, 30, 220, 255)';
-					imageCtx.strokeStyle = 'rgba(20, 80, 255, 255)';
-					break;
-				case 'yellow':
-					imageCtx.fillStyle = 'rgba(220, 150, 0, 255)';
-					imageCtx.strokeStyle = 'rgba(255, 255, 0, 255)';
-					break;
-				case 'purple':
-					imageCtx.fillStyle = 'rgba(170, 0, 160, 255)';
-					imageCtx.strokeStyle = 'rgba(255, 0, 220, 255)';
-					break;
-				case 'grey':
-					imageCtx.fillStyle = 'rgba(160, 180, 180, 255)';
-					imageCtx.strokeStyle = 'rgba(230, 230, 230, 255)';
-					break;
-			}
-			imageCtx.lineWidth = 1;
-
-			// array for removing points that are not on the outside
-			var borders = [];
-			// For each point, draw a square at the coordinates
-			for(j = 0; j < currentLevel.gene.shape.length; j++) {
-				currPoint = currentLevel.gene.shape[j];
-				imageCtx.beginPath();
-				imageCtx.rect(currPoint.x*this.SQUARE_SIZE, currPoint.y*this.SQUARE_SIZE, this.SQUARE_SIZE, this.SQUARE_SIZE);
-				imageCtx.fill();
-				borders[currPoint.y*currentLevel.gene.width + currPoint.x] = j;
-			}
-			for(j = 0; j < borders.length; j++) {
-				if(borders[j] !== undefined) {
-					currPoint = currentLevel.gene.shape[borders[j]];
-					if(borders[j - 1] === undefined || currPoint.x === 0) {
-						imageCtx.beginPath();
-						imageCtx.moveTo(currPoint.x*this.SQUARE_SIZE + 0.5,currPoint.y*this.SQUARE_SIZE );
-						imageCtx.lineTo(currPoint.x*this.SQUARE_SIZE + 0.5,(currPoint.y+1)*this.SQUARE_SIZE );
-						imageCtx.stroke();
-					}
-					if(borders[j - currentLevel.gene.width] === undefined || currPoint.y === 0) {
-						imageCtx.beginPath();
-						imageCtx.moveTo(currPoint.x*this.SQUARE_SIZE ,currPoint.y*this.SQUARE_SIZE + 0.5);
-						imageCtx.lineTo((currPoint.x+1)*this.SQUARE_SIZE ,currPoint.y*this.SQUARE_SIZE + 0.5);
-						imageCtx.stroke();
-					}
-					if(borders[j + 1] === undefined || currPoint.x == currentLevel.gene.width - 1) {
-						imageCtx.beginPath();
-						imageCtx.moveTo((currPoint.x+1)*this.SQUARE_SIZE - 0.5,currPoint.y*this.SQUARE_SIZE);
-						imageCtx.lineTo((currPoint.x+1)*this.SQUARE_SIZE - 0.5,(currPoint.y+1)*this.SQUARE_SIZE);
-						imageCtx.stroke();
-					}
-					if(borders[j + currentLevel.gene.width] === undefined || currPoint.y == currentLevel.gene.height - 1) {
-						imageCtx.beginPath();
-						imageCtx.moveTo(currPoint.x*this.SQUARE_SIZE,(currPoint.y+1)*this.SQUARE_SIZE - 0.5);
-						imageCtx.lineTo((currPoint.x+1)*this.SQUARE_SIZE,(currPoint.y+1)*this.SQUARE_SIZE - 0.5);
-						imageCtx.stroke();
-					}
-				}
-			}
+			var img = this.drawGene(this.imageCanvas, this.SQUARE_SIZE, currentLevel.gene);
+			var imgSmall = this.drawGene(this.imageCanvas, Math.floor(this.SQUARE_SIZE/4), currentLevel.gene);
 
 			// Copy a image elemnt for the user interface and put the gene image into it.
-			currentLevel.gene.imageElement = $('<img />').attr('src', this.imageCanvas.toDataURL());
+			currentLevel.gene.imageElement = $('<img />').attr('src', img);
+			currentLevel.gene.imageThumbnail = $('<img />').attr('src', imgSmall);
 		}
 
 		// Add gene graphic to evolution panel icons
 		if(currentLevel.gene) {
-			var geneGraphic = currentLevel.gene.imageElement.clone();
+			var geneGraphic = currentLevel.gene.imageThumbnail.clone();
 			currentElement.append(geneGraphic.addClass('geneIcon').css('bottom',this.imageCanvas.height/-2).css('right',this.imageCanvas.height/-2));
 		}
 
@@ -449,7 +377,7 @@ Evolution.prototype.selectedUpgrades = [];
 Evolution.prototype.mutation = [];
 
 // Prototype properties for drawing gene shapes
-Evolution.prototype.SQUARE_SIZE = 10;
+Evolution.prototype.SQUARE_SIZE = 20;
 // Canvas to draw the shape on
 Evolution.prototype.imageCanvas = document.createElement( 'canvas' );
 Evolution.prototype.imageCanvas.width = 100;
@@ -457,109 +385,84 @@ Evolution.prototype.imageCanvas.height = 100;
 Evolution.prototype.connectorArrow = new Image();
 Evolution.prototype.connectorArrow.src = './ui/evol_arrow.png';
 
-Evolution.prototype.refresh = function() {
-	var available = this.S.availableUpgrades(this.selectedUpgrades);
-	this.evolveMenu.element.find('.available').removeClass('available');
-	for (var key in this.all)
-		if (this.all.hasOwnProperty(key)) {
-			this.all[key].available = false;
-			if(this.all[key].active || this.all[key].selected)
-				this.all[key].element.addClass('active');
-		}
+Evolution.prototype.drawGene = function(imageCanvas, squareSize, gene) {
+	// Get canvas for drawing the image
+	var imageCtx = imageCanvas.getContext('2d'),
+		currPoint,i;
+	// Clear the last gene graphic and set the canvas size to the final shape size
+	imageCanvas.height = squareSize * gene.height;
+	imageCanvas.width = squareSize * gene.width;
 
-	for(var i = 0; i < available.length; i++) {
-		this.all[available[i]].element.addClass('available');
-		this.all[available[i]].available = true;
+	// Drawing styles
+	switch(gene.color) {
+		case 'red':
+			imageCtx.fillStyle = 'rgba(120, 0, 0, 255)';
+			imageCtx.strokeStyle = 'rgba(255, 0, 0, 255)';
+			break;
+		case 'green':
+			imageCtx.fillStyle = 'rgba(30, 150, 30, 255)';
+			imageCtx.strokeStyle = 'rgba(0, 220, 0, 255)';
+			break;
+		case 'blue':
+			imageCtx.fillStyle = 'rgba(0, 30, 220, 255)';
+			imageCtx.strokeStyle = 'rgba(20, 80, 255, 255)';
+			break;
+		case 'yellow':
+			imageCtx.fillStyle = 'rgba(220, 150, 0, 255)';
+			imageCtx.strokeStyle = 'rgba(255, 255, 0, 255)';
+			break;
+		case 'purple':
+			imageCtx.fillStyle = 'rgba(170, 0, 160, 255)';
+			imageCtx.strokeStyle = 'rgba(255, 0, 220, 255)';
+			break;
+		case 'grey':
+			imageCtx.fillStyle = 'rgba(160, 180, 180, 255)';
+			imageCtx.strokeStyle = 'rgba(230, 230, 230, 255)';
+			break;
 	}
-};
-/*
-for (key in this.all)
-	if (this.all.hasOwnProperty(key) && this.all[key].cost < money && this.all[key].available) {
-		this.all[key].element.addClass('available');
-		this.all[key].available = true;
-	}*/
+	imageCtx.lineWidth = 1;
 
-Evolution.prototype.buyEvolutions = function() {
-	var upgrade,
-		success = this.S.purchaseUpgrades(this.selectedUpgrades.slice(0));
-	while(this.selectedUpgrades.length) {
-		upgrade = this.all[this.selectedUpgrades.pop()];
-		if(success) {
-			upgrade.active = true;
-
-			// Draw gene shape image
-			if(upgrade.gene) {
-				// Copy a gene for the user interface and put the gene into it.
-				var current = $('#tb_gene',this.mutationMenu.element).clone().removeAttr('id').addClass('active geneBlock gene_'+upgrade.id).data('geneId',upgrade.id);
-				$('img',current).replaceWith(upgrade.gene.imageElement.clone());
-				$('.name',current).html(upgrade.name);
-				upgrade.gene.element = current;
-
-				this.mutationMenu.element.append(current);
+	// array for removing points that are not on the outside
+	var borders = [];
+	// For each point, draw a square at the coordinates
+	for(i = 0; i < gene.shape.length; i++) {
+		currPoint = gene.shape[i];
+		imageCtx.beginPath();
+		imageCtx.rect(currPoint.x*squareSize, currPoint.y*squareSize, squareSize, squareSize);
+		imageCtx.fill();
+		borders[currPoint.y*gene.width + currPoint.x] = i;
+	}
+	for(i = 0; i < borders.length; i++) {
+		if(borders[i] !== undefined) {
+			currPoint = gene.shape[borders[i]];
+			if(borders[i - 1] === undefined || currPoint.x === 0) {
+				imageCtx.beginPath();
+				imageCtx.moveTo(currPoint.x*squareSize + 0.5,currPoint.y*squareSize );
+				imageCtx.lineTo(currPoint.x*squareSize + 0.5,(currPoint.y+1)*squareSize );
+				imageCtx.stroke();
+			}
+			if(borders[i - gene.width] === undefined || currPoint.y === 0) {
+				imageCtx.beginPath();
+				imageCtx.moveTo(currPoint.x*squareSize ,currPoint.y*squareSize + 0.5);
+				imageCtx.lineTo((currPoint.x+1)*squareSize ,currPoint.y*squareSize + 0.5);
+				imageCtx.stroke();
+			}
+			if(borders[i + 1] === undefined || currPoint.x == gene.width - 1) {
+				imageCtx.beginPath();
+				imageCtx.moveTo((currPoint.x+1)*squareSize - 0.5,currPoint.y*squareSize);
+				imageCtx.lineTo((currPoint.x+1)*squareSize - 0.5,(currPoint.y+1)*squareSize);
+				imageCtx.stroke();
+			}
+			if(borders[i + gene.width] === undefined || currPoint.y == gene.height - 1) {
+				imageCtx.beginPath();
+				imageCtx.moveTo(currPoint.x*squareSize,(currPoint.y+1)*squareSize - 0.5);
+				imageCtx.lineTo((currPoint.x+1)*squareSize,(currPoint.y+1)*squareSize - 0.5);
+				imageCtx.stroke();
 			}
 		}
-		delete upgrade.selected;
 	}
-	this.evolveMenu.element.find('.available').removeClass('available');
-};
 
-Evolution.prototype.refreshGenes = function() {
-	var i,j,n;
-	for(i = 0, n = this.mutation.length; i < n; i++) {
-		var geneElement = $('.geneBlock.active.gene_'+this.mutation[i].upgrade),
-			geneImage = geneElement.find('img'),
-			currentUpgrade = this.all[this.mutation[i].upgrade],
-			//overlayPosition = geneImage.parents('.overlay').offset(),
-			gridElement = $('#tb_board .grid'),
-			//gridElementPosition = gridElement.offset(),
-			gridSquareSize = this.SQUARE_SIZE;
-
-		currentUpgrade.gene.placement = this.mutation[i].placement;
-		currentUpgrade.gene.used = true;
-
-		var element = geneElement.clone(true).removeClass('active').empty().append(geneImage.clone());
-		element.css('left',currentUpgrade.gene.placement.x*gridSquareSize)
-			.css('top',currentUpgrade.gene.placement.y*gridSquareSize).addClass('placed').appendTo(gridElement);
-		geneElement.addClass('used');
-
-		for(j = 0; j < currentUpgrade.gene.shape.length; j++) {
-			this.grid[currentUpgrade.gene.shape[j].x + currentUpgrade.gene.placement.x][currentUpgrade.gene.shape[j].y + currentUpgrade.gene.placement.y] = currentUpgrade;
-		}
-	}
-};
-Evolution.prototype.mutate = function() {
-	this.mutation.length = 0;
-	for (var key in this.all)
-		if (this.all.hasOwnProperty(key) && this.all[key].gene) {
-			if(this.all[key].gene.used) {
-				this.all[key].gene.active = this.mutation.length;
-				this.mutation.push({ upgrade: key, placement: this.all[key].gene.placement });
-			} else {
-				if(this.all[key].gene.active !== undefined)
-					delete this.all[key].gene.active;
-			}
-		}
-
-	if(this.mutation.length > 0)
-		if(!this.S.purchaseMutation(this.mutation.slice(0)))
-			console.error('mutation not valid!');
-
-	this.mutationMenu.hide();
-};
-Evolution.prototype.cleanMutation = function() {
-	this.clearGrid();
-};
-Evolution.prototype.clearGrid = function() {
-	for (var key in this.all)
-		if (this.all.hasOwnProperty(key) && this.all[key].gene && this.all[key].gene.used) {
-			this.all[key].gene.used = false;
-			delete this.all[key].gene.placement;
-		}
-	for (var i = 0; i < this.grid.length; i++) {
-		this.grid[i].length = 0;
-	}
-	$('.geneBlock.placed').remove();
-	$('.geneBlock.active').removeClass('used');
+	return imageCanvas.toDataURL();
 };
 
 Evolution.prototype.buildWeb = function(focusUpgrade) {
@@ -749,6 +652,111 @@ Evolution.prototype.buildWeb = function(focusUpgrade) {
 	for (key in this.all)
 		if (this.all.hasOwnProperty(key))
 			drawUpgradeConnectors(this.all[key]);
+};
+
+Evolution.prototype.refresh = function() {
+	var available = this.S.availableUpgrades(this.selectedUpgrades);
+	this.evolveMenu.element.find('.available').removeClass('available');
+	for (var key in this.all)
+		if (this.all.hasOwnProperty(key)) {
+			this.all[key].available = false;
+			if(this.all[key].active || this.all[key].selected)
+				this.all[key].element.addClass('active');
+		}
+
+	for(var i = 0; i < available.length; i++) {
+		this.all[available[i]].element.addClass('available');
+		this.all[available[i]].available = true;
+	}
+};
+/*
+for (key in this.all)
+	if (this.all.hasOwnProperty(key) && this.all[key].cost < money && this.all[key].available) {
+		this.all[key].element.addClass('available');
+		this.all[key].available = true;
+	}*/
+
+Evolution.prototype.buyEvolutions = function() {
+	var upgrade,
+		success = this.S.purchaseUpgrades(this.selectedUpgrades.slice(0));
+	while(this.selectedUpgrades.length) {
+		upgrade = this.all[this.selectedUpgrades.pop()];
+		if(success) {
+			upgrade.active = true;
+
+			// Draw gene shape image
+			if(upgrade.gene) {
+				// Copy a gene for the user interface and put the gene into it.
+				var current = $('#tb_gene',this.mutationMenu.element).clone().removeAttr('id').addClass('active geneBlock gene_'+upgrade.id).data('geneId',upgrade.id);
+				$('img',current).replaceWith(upgrade.gene.imageElement.clone());
+				$('.name',current).html(upgrade.name);
+				upgrade.gene.element = current;
+
+				this.mutationMenu.element.append(current);
+			}
+		}
+		delete upgrade.selected;
+	}
+	this.evolveMenu.element.find('.available').removeClass('available');
+};
+
+Evolution.prototype.refreshGenes = function() {
+	var i,j,n;
+	for(i = 0, n = this.mutation.length; i < n; i++) {
+		var geneElement = $('.geneBlock.active.gene_'+this.mutation[i].upgrade),
+			geneImage = geneElement.find('img'),
+			currentUpgrade = this.all[this.mutation[i].upgrade],
+			//overlayPosition = geneImage.parents('.overlay').offset(),
+			gridElement = $('#tb_board .grid'),
+			//gridElementPosition = gridElement.offset(),
+			gridSquareSize = this.SQUARE_SIZE;
+
+		currentUpgrade.gene.placement = this.mutation[i].placement;
+		currentUpgrade.gene.used = true;
+
+		var element = geneElement.clone(true).removeClass('active').empty().append(geneImage.clone());
+		element.css('left',currentUpgrade.gene.placement.x*gridSquareSize)
+			.css('top',currentUpgrade.gene.placement.y*gridSquareSize).addClass('placed').appendTo(gridElement);
+		geneElement.addClass('used');
+
+		for(j = 0; j < currentUpgrade.gene.shape.length; j++) {
+			this.grid[currentUpgrade.gene.shape[j].x + currentUpgrade.gene.placement.x][currentUpgrade.gene.shape[j].y + currentUpgrade.gene.placement.y] = currentUpgrade;
+		}
+	}
+};
+Evolution.prototype.mutate = function() {
+	this.mutation.length = 0;
+	for (var key in this.all)
+		if (this.all.hasOwnProperty(key) && this.all[key].gene) {
+			if(this.all[key].gene.used) {
+				this.all[key].gene.active = this.mutation.length;
+				this.mutation.push({ upgrade: key, placement: this.all[key].gene.placement });
+			} else {
+				if(this.all[key].gene.active !== undefined)
+					delete this.all[key].gene.active;
+			}
+		}
+
+	if(this.mutation.length > 0)
+		if(!this.S.purchaseMutation(this.mutation.slice(0)))
+			console.error('mutation not valid!');
+
+	this.mutationMenu.hide();
+};
+Evolution.prototype.cleanMutation = function() {
+	this.clearGrid();
+};
+Evolution.prototype.clearGrid = function() {
+	for (var key in this.all)
+		if (this.all.hasOwnProperty(key) && this.all[key].gene && this.all[key].gene.used) {
+			this.all[key].gene.used = false;
+			delete this.all[key].gene.placement;
+		}
+	for (var i = 0; i < this.grid.length; i++) {
+		this.grid[i].length = 0;
+	}
+	$('.geneBlock.placed').remove();
+	$('.geneBlock.active').removeClass('used');
 };
 
 var UserInterface = function UserInterface(Renderer) {

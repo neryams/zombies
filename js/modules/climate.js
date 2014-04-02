@@ -46,7 +46,7 @@ exports.options = {
 				},
 				style: {
 					bg: 2,
-					angle: 1.0833,
+					angle: 1,
 					arcTangent: -0.0833,
 					distance: 120
 				}
@@ -80,7 +80,7 @@ exports.options = {
 				},
 				style: {
 					bg: 3,
-					angle: 1.25,
+					angle: 1.3333,
 					arcTangent: 0.0833,
 					distance: 120
 				}
