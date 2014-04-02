@@ -427,7 +427,7 @@ function Evolution(name,levels,options) {
 		}
 
 		// Mouseover tooltip for evolution
-		icon.on('mouseover.evolutionTooltip', this, evolutionTooltip);
+		icon.on('mouseenter.evolutionTooltip', this, evolutionTooltip);
 
 		// Click event for evolution in the upgrade menu
 		icon.on('click.evolutionSelect', { S: this.S, evolution: this }, evolutionSelect);
@@ -579,12 +579,14 @@ Evolution.prototype.buildWeb = function(focusUpgrade) {
 	var placeUpgrades = function(upgrade, position, theta, depth) {
 		if(!upgrade.position) {
 			var currentOffset = upgrade.style.offset || E.defaultStyle.offset,
-				upgradeDistance = upgrade.style.distance || E.defaultStyle.distance;
+				upgradeDistance = upgrade.style.distance || E.defaultStyle.distance,
+				arcTangent = upgrade.style.arcTangent || 0;
 			var offsetX = currentOffset[0] + Math.round( upgradeDistance * Math.cos(theta) );
 			var offsetY = currentOffset[1] - Math.round( upgradeDistance * Math.sin(theta) );
 			upgrade.position = {
 				top: position.top + offsetY,
-				left: position.left + offsetX
+				left: position.left + offsetX,
+				arcTangent: arcTangent * Math.PI
 			};
 
 			upgrade.element.css('top', upgrade.position.top).css('left', upgrade.position.left);
@@ -596,6 +598,7 @@ Evolution.prototype.buildWeb = function(focusUpgrade) {
 		}
 		
 		depth++;
+		theta -= upgrade.position.arcTangent;
 		for(var i = 0, n = upgrade.children.length; i < n; i++) {
 			var currentChild = upgrade.children[i],
 				newTheta;
@@ -616,8 +619,8 @@ Evolution.prototype.buildWeb = function(focusUpgrade) {
 			maxHeight = 4,
 			elementSize = upgrade.style.size || E.defaultStyle.size;
 		for(i = 0, n = upgrade.children.length; i < n; i++) {
-			x = upgrade.children[i].position.x = (upgrade.children[i].position.left - upgrade.position.left);
-			y = upgrade.children[i].position.y = (upgrade.children[i].position.top - upgrade.position.top);
+			x = upgrade.children[i].position.parentOffsetX = (upgrade.children[i].position.left - upgrade.position.left);
+			y = upgrade.children[i].position.parentOffsetY = (upgrade.children[i].position.top - upgrade.position.top);
 			x = Math.abs(x);
 			y = Math.abs(y);
 
@@ -627,18 +630,40 @@ Evolution.prototype.buildWeb = function(focusUpgrade) {
 
 		var bgCtx = evolutionBg.getContext('2d');
 
-		var drawArrow = function (startX, startY, moveVector) {
-			var theta = Math.atan2(moveVector.y,moveVector.x);
-			bgCtx.save();
+		var makePath = function(ctx, x, y, tangentsAngle) {
+			ctx.beginPath();
+			if(tangentsAngle) {
+				var distance = Math.sqrt(x*x + y*y),
+					radius = distance / (2 * Math.sin(Math.abs(tangentsAngle))),
+					tangent, centerX, centerY;
 
-			bgCtx.translate(startX, startY);
-			bgCtx.rotate(theta);
-			bgCtx.drawImage(Evolution.prototype.connectorArrow, elementSize/2 - 2, -(arrowWidth/2));
+				if(x > 0)
+					tangent = Math.asin(y / distance);
+				else
+					tangent = Math.PI - Math.asin(y / distance);
 
-			bgCtx.restore();
+				if(tangentsAngle > 0) {
+					centerX = x/2 + Math.sqrt(radius * radius - Math.pow(distance / 2, 2)) * (-y) / distance;
+					centerY = y/2 + Math.sqrt(radius * radius - Math.pow(distance / 2, 2)) * (x) / distance;
+				} else {
+					centerX = x/2 - Math.sqrt(radius * radius - Math.pow(distance / 2, 2)) * (-y) / distance;
+					centerY = y/2 - Math.sqrt(radius * radius - Math.pow(distance / 2, 2)) * (x) / distance;
+				}
 
-			delete moveVector.x;
-			delete moveVector.y;
+				if(tangentsAngle > 0)
+					tangent -= Math.PI / 2;
+				else
+					tangent += Math.PI / 2;
+					
+				if(tangentsAngle > 0)
+					ctx.arc(centerX, centerY, radius, tangent - tangentsAngle, tangent + tangentsAngle);
+				else
+					ctx.arc(centerX, centerY, radius, tangent - tangentsAngle, tangent + tangentsAngle, true);
+			} else {
+				ctx.moveTo(0, 0);
+				ctx.lineTo(x, y);
+			}
+			ctx.stroke();
 		};
 
 		var drawConnector = function (startX, startY, moveVector) {
@@ -647,32 +672,39 @@ Evolution.prototype.buildWeb = function(focusUpgrade) {
 
 			bgCtx.lineWidth = 4;
 			bgCtx.strokeStyle = 'rgba(95,66,16,255)';
-			bgCtx.beginPath();
-			bgCtx.moveTo(0, 0);
-			bgCtx.lineTo(moveVector.x, moveVector.y);
-			bgCtx.stroke();
+			makePath(bgCtx, moveVector.parentOffsetX, moveVector.parentOffsetY, moveVector.arcTangent);
 
 			bgCtx.lineWidth = 1;
 			bgCtx.strokeStyle = 'rgba(188,128,28,255)';
-			bgCtx.beginPath();
-			bgCtx.moveTo(0, 0);
-			bgCtx.lineTo(moveVector.x, moveVector.y);
-			bgCtx.stroke();
+			makePath(bgCtx, moveVector.parentOffsetX, moveVector.parentOffsetY, moveVector.arcTangent);
+
 			bgCtx.restore();
+		};
+
+		var drawArrow = function (startX, startY, moveVector, buttonSize) {
+			var theta = Math.atan2(moveVector.parentOffsetY,moveVector.parentOffsetX) - moveVector.arcTangent * (1 - buttonSize / 2);
+			bgCtx.save();
+
+			bgCtx.translate(startX, startY);
+			bgCtx.rotate(theta);
+			bgCtx.drawImage(Evolution.prototype.connectorArrow, elementSize/2 - 2, -(arrowWidth/2));
+
+			bgCtx.restore();
+
+			delete moveVector.parentOffsetX;
+			delete moveVector.parentOffsetY;
 		};
 
 		evolutionBg.width = maxWidth*2;
 		evolutionBg.height = maxHeight*2;
-		maxWidth = Math.floor(maxWidth) + 0.5;
-		maxHeight = Math.floor(maxHeight) + 0.5;
 		for(i = 0, n = upgrade.children.length; i < n; i++) {
-			drawConnector(maxWidth, maxHeight, upgrade.children[i].position);
+			drawConnector(Math.floor(maxWidth) + 0.5, Math.floor(maxHeight), upgrade.children[i].position);
 		}
 		upgrade.element.append($('<img class="connector" />').attr('src', evolutionBg.toDataURL()).css('left', evolutionBg.width/-2).css('top', evolutionBg.height/-2));
 
 		evolutionBg.height = evolutionBg.width = elementSize + arrowLength * 2;
 		for(i = 0, n = upgrade.children.length; i < n; i++) {
-			drawArrow(Math.floor(evolutionBg.width/2) + 0.5, Math.floor(evolutionBg.height/2) + 0.5, upgrade.children[i].position);
+			drawArrow(Math.floor(evolutionBg.width/2) + 0.5, Math.floor(evolutionBg.height/2) + 0.5, upgrade.children[i].position, (elementSize - arrowLength) / upgrade.children[i].style.distance);
 		}
 		upgrade.element.append($('<img class="arrows" />').attr('src', evolutionBg.toDataURL()).css('left', evolutionBg.width/-2).css('top', evolutionBg.height/-2));
 
@@ -832,7 +864,7 @@ var UserInterface = function UserInterface(Renderer) {
 			tooltip.css('display','none').css('visibility','visible').fadeIn('fast');
 		}
 
-		element.on('mouseout',this ,function (event) {
+		element.on('mouseleave',this ,function (event) {
 			event.data.hideTooltip();
 		});
 	};

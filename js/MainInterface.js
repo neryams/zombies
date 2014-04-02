@@ -245,9 +245,13 @@ function MainInterface(UI,R) {
 			status.mouse.down = true;
 			status.mouse.x = event.clientX;
 			status.mouse.y = event.clientY;
-			if($(this).hasClass('.draggable')) {
+
+			if($(this).hasClass('draggable')) {
 				elements = $(this).parent().find('.draggable');
-				elements.maxPos = { top: $(this).parent().height() - elements.height(), left: $(this).parent().width() - elements.width() };
+				if($(this).hasClass('draggable-bind'))
+					elements.maxPos = { top: $(this).parent().height() - elements.height(), left: $(this).parent().width() - elements.width() };
+				else
+					elements.maxPos = false;
 			}
 			else {
 				elements = $(this).find('.draggable');
@@ -280,7 +284,6 @@ function MainInterface(UI,R) {
 			status.mouse.down = false;
 			$(this).off('mousemove.dragging');
 		});
-		$('.draggable, .draggable-parent').on('mouseout.draggable', function () { $(this).trigger('mouseup'); });
 
 		$('#ui').on('mousedown.moveCamera', function (event) {
 			if(!status.pauseR && status.mouse.bound === null) {

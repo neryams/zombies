@@ -277,6 +277,7 @@ canvas.draggable {
 }
 .evolution>div div a.evoIcon img {
 	margin-top: -200%;
+	pointer-events: none;
 }
 .evolution>div div.available a.evoIcon img {
 	margin-top: -100%;

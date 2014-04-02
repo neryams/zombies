@@ -46,24 +46,8 @@ exports.options = {
 				},
 				style: {
 					bg: 2,
-					angle: 1,
-					distance: 120
-				}
-			},
-			{
-				cost: 200,
-				paths:['zombie.strain','reproducer.strain'],
-				name:'Cold Affinity I',
-				onUpgrade: coldAcc,
-				description:'Zombies become stronger in cold.',
-				gene:{
-					size: 3,
-					shape: 'r',
-					color: 'green'
-				},
-				style: {
-					bg: 3,
-					angle: 1.333,
+					angle: 1.0833,
+					arcTangent: -0.0833,
 					distance: 120
 				}
 			},
@@ -80,7 +64,25 @@ exports.options = {
 				},
 				style: {
 					bg: 1,
-					angle:1.166
+					angle:1.1667
+				}
+			},
+			{
+				cost: 200,
+				paths:['zombie.strain','reproducer.strain'],
+				name:'Cold Affinity I',
+				onUpgrade: coldAcc,
+				description:'Zombies become stronger in cold.',
+				gene:{
+					size: 3,
+					shape: 'r',
+					color: 'green'
+				},
+				style: {
+					bg: 3,
+					angle: 1.25,
+					arcTangent: 0.0833,
+					distance: 120
 				}
 			},
 			{
@@ -98,6 +100,20 @@ exports.options = {
 					bg: 2
 				}
 			},
+			{cost: 400,
+				paths:['climate_2'],
+				name:'Water Affinity II',
+				onUpgrade: wetAcc,
+				description:'Zombies become stronger in wet conditions.',
+				gene:{
+					size: 3,
+					shape: 'r',
+					color: 'blue'
+				},
+				style: {
+					bg: 1
+				}
+			},
 			{
 				cost: 400,
 				paths:['climate_1'],
@@ -111,20 +127,6 @@ exports.options = {
 				},
 				style: {
 					bg: 3
-				}
-			},
-			{cost: 400,
-				paths:['climate_2'],
-				name:'Water Affinity II',
-				onUpgrade: wetAcc,
-				description:'Zombies become stronger in wet conditions.',
-				gene:{
-					size: 3,
-					shape: 'r',
-					color: 'blue'
-				},
-				style: {
-					bg: 1
 				}
 			}
 		);

@@ -20,7 +20,8 @@ exports.options = {
 					color: 'red'
 				},
 				style: {
-					angle: 0.125
+					angle: 0.125,
+					arcTangent: 0.5
 				}
 			},
 			{
