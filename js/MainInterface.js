@@ -214,7 +214,13 @@ function MainInterface(UI,R) {
 		});
 		uiSidebarStatic.addDataField('money',{
 			title: 'Evolution Points',
-			dynamic: 'money'
+			dynamic: 'money',
+			dynamicFormat: function(value) {
+				var money = parseInt(value);
+				for(var i = 0; i < Evolution.prototype.selectedUpgrades.length; i++)
+					money -= Evolution.prototype.all[Evolution.prototype.selectedUpgrades[i]].cost;
+				return money;
+			}
 		});
 
 		var uiSidebarAccordion = uiSidebar.addDataField('sidebarAccordion',{

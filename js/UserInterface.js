@@ -232,7 +232,7 @@ DataField.prototype = {
 };
 
 function Evolution(name,levels,options) {
-	var i,j,evol = this;
+	var i,evol = this;
 
 	if(!options)
 		options = {};
@@ -766,6 +766,9 @@ var UserInterface = function UserInterface(Renderer) {
 			showToolTip: false,
 			toolTipMode: '',
 			mutateGridSize: 0
+		},
+		changedStatus = {
+
 		};
 
 	/*
@@ -819,33 +822,6 @@ var UserInterface = function UserInterface(Renderer) {
 	addDataField = function(id,options) {
 		var newDataField = new DataField(id,options);
 		return newDataField;
-	},
-
-	updateUI = function(dataField,data) {
-		if(data.money) {
-			var money = parseInt(data.money);
-			for(i = 0; i < Evolution.prototype.selectedUpgrades.length; i++)
-				money -= Evolution.prototype.all[Evolution.prototype.selectedUpgrades[i]].cost;
-			status.money = money;
-		}
-		if(dataField.visible) {
-			// Refresh the evolution menu if it is visible so you get updated availability of evolutions as you make money etc.
-			if(dataField.id == 'evolveMenu') {
-				Evolution.prototype.refresh();
-			}
-
-			// Recurse into a visible datafield's children
-			for(var i = 0, n = dataField.children.length; i < n; i++) {
-				updateUI(dataField.children[i],data);
-			}
-			if(dataField.dynamic) {
-				if(dataField.dynamic == 'money') {
-					dataField.val(status.money);
-				}
-				else
-					dataField.val(data[dataField.dynamic]);
-			}
-		}
 	},
 
 	hideTooltip = function() {
@@ -921,9 +897,27 @@ var UserInterface = function UserInterface(Renderer) {
 			DataField.prototype.S = S;
 		},
 		updateUI: function(data) {
-			for (var key in interfaceParts)
-				if (interfaceParts.hasOwnProperty(key)) {
-					updateUI(interfaceParts[key],data);
+			for (var key in data)
+				if (data.hasOwnProperty(key) && changedStatus[key] === undefined) {
+					status[key] = data[key];
+				}
+
+			for (key in changedStatus)
+				if (changedStatus.hasOwnProperty(key)) {
+					status[key] = changedStatus[key];
+				}
+			changedStatus = {};
+
+			for (key in interfaceParts)
+				if (interfaceParts.hasOwnProperty(key) && interfaceParts[key].dynamic) {
+					if(status[interfaceParts[key].dynamic] !== undefined) {
+						var val = status[interfaceParts[key].dynamic];
+						if(interfaceParts[key].dynamicFormat) {
+							interfaceParts[key].val(interfaceParts[key].dynamicFormat(val));
+						} else {
+							interfaceParts[key].val(val);
+						}
+					}
 				}
 
 			if(status.mutateGridSize < data.gridSize) {
@@ -936,6 +930,8 @@ var UserInterface = function UserInterface(Renderer) {
 				}
 				$('#tb_board .grid', Evolution.prototype.mutationMenu.element).css('width',data.gridSize*Evolution.prototype.SQUARE_SIZE).css('height',data.gridSize*Evolution.prototype.SQUARE_SIZE);
 			}
+
+			return status;
 		},
 		addNews: function(item) {
 			if(arguments.length === 0)

@@ -230,14 +230,14 @@ function Simulator(R, UI, generatorConfig, generatorData) {
 		virus_name: '',
 		money: 500000,
 		panic: 0,
-		gridSize: 5
+		gridSize: 5,
+		date: new Date()
 	};
+	this.status.date.setTime(1577880000000); // Jan 1st, 2030
 	this.modules = {};
 	this.strainOptions = [];
 	this.activeModules = {infect:[],spread:[],event:[]};
 	this.iteration = 0;
-	this.date = new Date();
-	this.date.setTime(1577880000000); // Jan 1st, 2030
 	this.UIData = {};
 	this.upgrades = {};
 
@@ -867,7 +867,7 @@ Simulator.prototype.tick = function() {
 	var S = this,
 		R = this.R;
 
-	S.date.setTime(1577880000000 + 86400000*S.iteration);
+	S.status.date.setTime(1577880000000 + 86400000*S.iteration);
 	if(S.paused)
 		return false;
 
@@ -949,10 +949,10 @@ Simulator.prototype.tick = function() {
 
 		S.R.updateMatrix();
 
-
-		S.UIData.gridSize = S.status.gridSize;
-		S.UIData.iteration = S.iteration;
-		S.UI.updateUI(S.UIData);
+		var updatedStatus = S.UI.updateUI(S.status);
+		for (var key in updatedStatus)
+			if (updatedStatus.hasOwnProperty(key))
+				S.status[key] = updatedStatus[key];
 
 		S.hordes.addAllNew();
 

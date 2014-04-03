@@ -23,7 +23,7 @@ exports.run = function() {
 		}
 
 		// Panic to display is progress to next level, so (panic increase since last level up) / (difference between this level and next level)
-		this.S.UIData['world_panic'] = (this.S.status.panic - this.panicThresholds[this.currPanicLevel - 1]) / (this.panicThresholds[this.currPanicLevel] - this.panicThresholds[this.currPanicLevel - 1]);
+		this.S.status.world_panic = (this.S.status.panic - this.panicThresholds[this.currPanicLevel - 1]) / (this.panicThresholds[this.currPanicLevel] - this.panicThresholds[this.currPanicLevel - 1]);
 
 		// Check country panic levels, level up is panic is higher than the defined threshold
 		for(var i = 1; i < this.S.countries.length; i++) {
