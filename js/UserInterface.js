@@ -16,6 +16,7 @@ Date.prototype.getMonthNameShort = function() {
 
 function DataField(id,options,parent) {
 	var newElement, fullElement,
+		status = this.UIStatus,
 		className = 'dataField';
 
 	if(typeof id == 'object') {
@@ -34,6 +35,15 @@ function DataField(id,options,parent) {
 		delete options.type;
 	}
 	className += ' dataField-'+this.dataType;
+
+	if(options)
+		for (var key in options)
+			if (options.hasOwnProperty(key)) {
+				this[key] = options[key];
+
+				if(typeof(options[key]) === 'function')
+					this[key].bind(this);
+			}
 
 	this.children = [];
 
@@ -59,6 +69,16 @@ function DataField(id,options,parent) {
 			newElement = $(i18n.t('dom:interface.dataField.default',{ element:'div', className:className }));
 			fullElement = $(i18n.t('dom:interface.dataField.default',{ element:'dd', className:'' })).append(newElement);
 		break;
+		case 'slider':
+			newElement = $(i18n.t('dom:interface.dataField.slider',{ options: this.dataOptions }));
+			if(this.dynamic)
+				newElement.on('change', function() {
+					var element = $(this),
+						value = parseFloat(element.attr('data-slider'));
+					if(value != status[element.data('dynamic')])
+						status[element.data('dynamic')] = value;
+				});
+		break;
 		default:
 			newElement = fullElement = $(i18n.t('dom:interface.dataField.default',{ element:this.dataType, className:className }));
 	}
@@ -76,16 +96,9 @@ function DataField(id,options,parent) {
 	
 	this.element = newElement;
 	this.fullElement = fullElement;
-
-	if(options)
-		for (var key in options)
-			if (options.hasOwnProperty(key)) {
-				this[key] = options[key];
-
-				if(typeof(options[key]) === 'function')
-					this[key].bind(this);
-			}
-
+	newElement.data('source', this);
+	if(this.dynamic)
+		newElement.data('dynamic', this.dynamic);
 
 	if(this.dataType == 'accordion_child') {
 		var uniqueId = 'accordion_' + Object.keys(this.interfaceParts).length;
@@ -127,9 +140,6 @@ function DataField(id,options,parent) {
 				that.UIStatus.mouse.bound = null;
 			});
 	}
-
-	if(this.parent)
-		this.parent.element.foundation('reflow');
 }
 DataField.prototype = {
 	dataType: 'text',
@@ -144,6 +154,7 @@ DataField.prototype = {
 	overlay: false,
 	mousePriority:false,
 	interfaceParts: null,
+	dataOptions: '',
 	UIStatus: null,
 	remove: function() {
 		this.fullElement.remove();
@@ -225,6 +236,8 @@ DataField.prototype = {
 				bar.html('').css('width',Math.round(this.width*value));
 			}
 		}
+		else if(this.dataType == 'slider')
+			this.element.foundation('slider', 'set_value', value);
 		else
 			this.element.html(value);
 		return this;

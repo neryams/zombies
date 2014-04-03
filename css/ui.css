@@ -2,6 +2,18 @@
  * Common interface elements
  */
 
+h1 {
+	font-size: 1.5rem;
+	font-weight: bold;
+}
+h2 {
+	font-size: 1.25rem;
+}
+h3 {
+	font-size: 1rem;
+	margin-top: 1rem;
+}
+
 .dataField {
 	z-index: 11;
 	position: absolute;	
@@ -80,13 +92,6 @@ canvas.draggable {
 }
 .stats a {
 	color: #6666ff;
-}
-.stats h1 {
-	font-size: 1.5rem;
-}
-.stats h3 {
-	font-size: 1rem;
-	margin-top: 1rem;
 }
 
 .main_menu {

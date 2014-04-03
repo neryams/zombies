@@ -38,6 +38,7 @@ exports.options = {
 			}
 		}
 
+		// Add data view options for the resources
 		var dataViews = this.S.UI.interfaceParts.dataViewSelector;
 		dataViews.addDataField({
 			type:'button',
@@ -59,6 +60,14 @@ exports.options = {
 				});
 			}
 		}).label('ui:buttons.dataviews_inner.trees');
+
+		// Add slider for zombie behavior: how much 
+		this.S.UI.interfaceParts.menu.addDataField('control_collect',{
+			title: 'Resource to put towards reproduction',
+			type:'slider',
+			dynamic: 'control_moneyRatio',
+			dataOptions: 'start: 0; end: 10; initial: 9; step: 0.1;'
+		});
 	},
 	onStart: function(callback) {
 		// Code to start the simulation

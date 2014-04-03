@@ -25,6 +25,16 @@ function MainInterface(UI,R) {
 		},
 		end: function() {
 			attachEvents();
+			$(document).foundation(/*{
+				slider: {
+					on_change: function(){
+						var element = $(this),
+							value = parseFloat(element.attr('data-slider'));
+						if(value !== status[element.data('dynamic')])
+							status[element.data('dynamic')] = value;
+					}
+				}
+			}*/);
 		},
 		progress: function(message, totalProgress) {
 			$('#progress p').html(i18n.t('setup:loading.'+message));
