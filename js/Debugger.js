@@ -1,3 +1,4 @@
+/* globals webix */
 var Simulator = null,
 	Console = null,
 	Renderer = null;
@@ -5,14 +6,14 @@ var Simulator = null,
 var Debugger = function() {
 	var buildTreeFromObject = function(data, maxDepth, name, id) {
 		if(id === undefined)
-			var id = '';
+			id = '';
 
 		if(maxDepth < 0)
 			return { id: id, value: name, property: data.toString() };
 		else {
 			var returnData = [];
 
-			for (key in data)
+			for(var key in data)
 				if (data.hasOwnProperty(key)) {
 					var newId = id ? id + '.' + key : key;
 					if(typeof data[key] === 'object') {
@@ -26,17 +27,17 @@ var Debugger = function() {
 				return returnData;
 			else if(returnData.length > 0)
 				return { id: id, value: name, data: returnData };
-			else 
+			else
 				return { id: id, value: name };
 		}
-	}
+	};
 
 	return {
 		selectedTab: 'infoHordes',
 		editHorde: function(data, rowId) {
 			var hordeTable = $$('infoHordes');
 			if(rowId === undefined) {
-				var rowId = hordeTable.add( {
+				rowId = hordeTable.add( {
 					id: 'hordeRow'+data.id,
 					uid: data.id,
 					size: data.size,
@@ -53,7 +54,7 @@ var Debugger = function() {
 					row.lat = data.location.lat;
 					row.lng = data.location.lng;
 				}
-			} 
+			}
 			return rowId;
 		},
 		editPoint: function(data) {
@@ -89,32 +90,32 @@ var Debugger = function() {
 				rowToAdd = { module: moduleId },
 				columnsAdded = false;
 			for (var key in passData)
-	    		if (passData.hasOwnProperty(key)) {
-	    			if(moduleTable.getColumnConfig(key) === undefined) {
-	    				moduleTable.config.columns.push({ id:key, header: key, width: 60 });
-	    				columnsAdded = true;
-	    			}
-	    			rowToAdd[key] = passData[key];
-	    		}
+				if (passData.hasOwnProperty(key)) {
+					if(moduleTable.getColumnConfig(key) === undefined) {
+						moduleTable.config.columns.push({ id:key, header: key, width: 60 });
+						columnsAdded = true;
+					}
+					rowToAdd[key] = passData[key];
+				}
 
-	    	if(columnsAdded)
-	    		moduleTable.refreshColumns();
+			if(columnsAdded)
+				moduleTable.refreshColumns();
 
-	    	moduleTable.add(rowToAdd);
+			moduleTable.add(rowToAdd);
 		},
 		updateGlobalInfo: function(data) {
-			$$("infoGlobal").setValues(data);
+			$$('infoGlobal').setValues(data);
 			$$('windowHeader').setValue('Simulator Active, Turn ' + data.iteration);
 
 			if(Console.options.manualTicks) {
 				$$('infoHordes').enable();
 				$$('infoPoints').enable();
-		        $$('endTickButton').enable();
+				$$('endTickButton').enable();
 			}
 			else {
 				$$('infoHordes').disable();
 				$$('infoPoints').disable();
-		        $$('endTickButton').disable();
+				$$('endTickButton').disable();
 			}
 
 			$$('hordeToolbarCount').setValue($$('infoHordes').count() + ' Hordes found');
@@ -133,7 +134,7 @@ var Debugger = function() {
 			if(selectedTabView.getSelectedId()) {
 				var selected = selectedTabView.getItem(selectedTabView.getSelectedId(false,true));
 				if(selected.pointer)
-					ui.insertInfo(selected.pointer)
+					ui.insertInfo(selected.pointer);
 			}
 		},
 		insertTarget: function() {
@@ -178,13 +179,13 @@ var Debugger = function() {
 			$$('hordeToolbarCount').setValue(hordeTable.count() + ' Hordes');
 		},
 		selectSquare: function(lat, lng) {
-			var pointsTable = $$('infoPoints')
+			var pointsTable = $$('infoPoints');
 			if(lat && lng && pointsTable.count() > 0) {
 				pointsTable.filter('#lat#',lat, false);
 				pointsTable.filter('#lng#',lng, true);
 
 				if(pointsTable.getFirstId()) {
-					pointsTable.select(pointsTable.getFirstId());	
+					pointsTable.select(pointsTable.getFirstId());
 					var selected = pointsTable.getSelectedId(false,true);
 					pointsTable.filter('','', false);
 					pointsTable.select(selected);
@@ -194,52 +195,52 @@ var Debugger = function() {
 					pointsTable.filter('','', false);
 			}
 		}
-	}
-}
+	};
+};
 
 var ui = Debugger();
 
 webix.ui({
 	rows:[
 		{
-		    view:"toolbar",
-		    id:"mainToolbar",
-		    cols:[
-		    	{ id:"windowHeader", view:"label", label:'0' },
-		    	{},
-		        { view:"toggle", offLabel:"Freeze", onLabel:"Resume", width:100, align:"center",
-    				on:{'onChange': function(newval) {
-    					Console.options.manualTicks = !!newval;
-    					if(!Console.options.manualTicks) {
-		        			Simulator.endTurn();
-    					}
-		        	}}
-		        },
-		        { view:"button", id:"endTickButton", disabled: true, value:"End Turn", width:100, align:"center", click: function() {
-		        	Simulator.endTurn();
-		        }},
-		        { view:"toggle", offLabel:"Enable Mouseover Debug", onLabel:"Disable Mouseover Debug", width:180, align:"center", 
-    				on:{'onChange': function(newval) {
-    					Console.options.mouseOverDebugData = !!newval; // 1 -> true
-		        	}}
-		        },
-		        { id:"profileTick", view:"toggle", offLabel:"Profile Next Turn", onLabel:"Stop Profiling", width:125, align:"center",
-    				on:{'onChange': function(newval) {
-    					Console.options.profileTick = !!newval;
-		        	}}
-		        },
-		        { view:"button", id:"closeButton", value:"Close", width:100, align:"center", click: function() {
-		        	Console.close();
-		        }}
-		    ]
+			view:'toolbar',
+			id:'mainToolbar',
+			cols:[
+				{ id:'windowHeader', view:'label', label:'0' },
+				{},
+				{ view:'toggle', offLabel:'Freeze', onLabel:'Resume', width:100, align:'center',
+					on:{'onChange': function(newval) {
+						Console.options.manualTicks = !!newval;
+						if(!Console.options.manualTicks) {
+							Simulator.endTurn();
+						}
+					}}
+				},
+				{ view:'button', id:'endTickButton', disabled: true, value:'End Turn', width:100, align:'center', click: function() {
+					Simulator.endTurn();
+				}},
+				{ view:'toggle', offLabel:'Enable Mouseover Debug', onLabel:'Disable Mouseover Debug', width:180, align:'center',
+					on:{'onChange': function(newval) {
+						Console.options.mouseOverDebugData = !!newval; // 1 -> true
+					}}
+				},
+				{ id:'profileTick', view:'toggle', offLabel:'Profile Next Turn', onLabel:'Stop Profiling', width:125, align:'center',
+					on:{'onChange': function(newval) {
+						Console.options.profileTick = !!newval;
+					}}
+				},
+				{ view:'button', id:'closeButton', value:'Close', width:100, align:'center', click: function() {
+					Console.close();
+				}}
+			]
 		},
 		{cols:[
 			{
-				id:"infoGlobal",
-				view: "property",
+				id:'infoGlobal',
+				view: 'property',
 				elements:[
-					{ label:"Horde Count", type:"text", id:"hordeCount"},
-					{ label:"Iteration", type:"text", id:"iteration"}
+					{ label:'Horde Count', type:'text', id:'hordeCount'},
+					{ label:'Iteration', type:'text', id:'iteration'}
 				],
 				editable: false,
 				width:200,
@@ -247,54 +248,54 @@ webix.ui({
 				maxWidth:250
 			},
 			{
-				view:"resizer"
+				view:'resizer'
 			},
 			{
 				rows:[
 					{
-						view:"tabbar",
+						view:'tabbar',
 						multiview:true,
 						options: [
-							{ value: "Hordes", id: 'infoHordes.outer' },
-							{ value: "Modules", id: 'infoModules' },
-							{ value: "Globe Points", id: 'infoPoints' }
+							{ value: 'Hordes', id: 'infoHordes.outer' },
+							{ value: 'Modules', id: 'infoModules' },
+							{ value: 'Globe Points', id: 'infoPoints' }
 						],
 						height:40,
-	    				on:{'onChange': function(newCell) {
-	    					var cell = $$(newCell.split('.')[0]);
-	    					ui.selectedTab = cell.config.id;
-	    					if(cell.getSelectedId()) {
-	    						var selected = cell.getItem(cell.getSelectedId(false,true));
-	    						if(selected.pointer !== undefined)
+						on:{'onChange': function(newCell) {
+							var cell = $$(newCell.split('.')[0]);
+							ui.selectedTab = cell.config.id;
+							if(cell.getSelectedId()) {
+								var selected = cell.getItem(cell.getSelectedId(false,true));
+								if(selected.pointer !== undefined)
 									ui.insertInfo(selected.pointer);
-	    					}
-			        	}}
+							}
+						}}
 					},{
-        				css:"mainView",
+						css:'mainView',
 						animate: false,
 						cells:[
-					        {
-						        id:"infoHordes.outer",
+							{
+								id:'infoHordes.outer',
 								rows:[
 									{
-									    view:"toolbar",
-									    id:"hordeToolbar",
+										view:'toolbar',
+										id:'hordeToolbar',
 										height:30,
-									    cols:[
-									    	{ id:"hordeToolbarHeader", view:"label", label:'', width: 265 },
-									    	{ id:"hordeToolbarCount", view:"label", label:'' },
-									    	{},
-									        { view:"button", id:"hordeButtonClearFilter", disabled: true, value:"Clear Filter", width:100, align:"center", click: function() {
-									        	ui.clearHordeFilter();
-									        }}
-									    ]
+										cols:[
+											{ id:'hordeToolbarHeader', view:'label', label:'', width: 265 },
+											{ id:'hordeToolbarCount', view:'label', label:'' },
+											{},
+											{ view:'button', id:'hordeButtonClearFilter', disabled: true, value:'Clear Filter', width:100, align:'center', click: function() {
+												ui.clearHordeFilter();
+											}}
+										]
 									},
 									{
-						            	id:"infoHordes",
-										view:"datatable",
+										id:'infoHordes',
+										view:'datatable',
 										disabled: true,
 										resizeColumn:true,
-										select: "row",
+										select: 'row',
 										on:{
 											onSelectChange: function(){
 												if($$('infoHordes').getSelectedId()) {
@@ -308,29 +309,29 @@ webix.ui({
 											}
 										},
 										columns:[
-											{ id:"uid", header: "Horde ID", width:100, sort:"int"},
-											{ id:"lat", width: 100, header: "Latitude"},
-											{ id:"lng", width: 100, header: "Longitude"},
-											{ id:"size",header: "Size", fillspace:true, sort:"int"}
+											{ id:'uid', header: 'Horde ID', width:100, sort:'int'},
+											{ id:'lat', width: 100, header: 'Latitude'},
+											{ id:'lng', width: 100, header: 'Longitude'},
+											{ id:'size',header: 'Size', fillspace:true, sort:'int'}
 										]
 									}
 								]
-					        },
-					        {
-				            	id:"infoModules",
-								view:"datatable",
-        						css:"contentTooltip",
+							},
+							{
+								id:'infoModules',
+								view:'datatable',
+								css:'contentTooltip',
 								resizeColumn:true,
 								columns:[
-									{ id:"module", header: "Module", width: 150, fillspace:true }
+									{ id:'module', header: 'Module', width: 150, fillspace:true }
 								]
-					        },
-					        {
-				            	id:"infoPoints",
-								view:"datatable",
+							},
+							{
+								id:'infoPoints',
+								view:'datatable',
 								resizeColumn:true,
 								disabled: true,
-								select: "row",
+								select: 'row',
 								on:{
 									onSelectChange:function(){
 										if($$('infoPoints').getSelectedId()){
@@ -343,29 +344,29 @@ webix.ui({
 									}
 								},
 								columns:[
-									{ id:"lat", width: 100, header: "Latitude"},
-									{ id:"lng", width: 100, header: "Longitude"},
-									{ id:"population", width: 150, header: "Population", sort:"int"},
-									{ id:"infected", width: 150, header: "Infected", sort:"int"},
-									{ id:"country", header: "Country", fillspace:true}
+									{ id:'lat', width: 100, header: 'Latitude'},
+									{ id:'lng', width: 100, header: 'Longitude'},
+									{ id:'population', width: 150, header: 'Population', sort:'int'},
+									{ id:'infected', width: 150, header: 'Infected', sort:'int'},
+									{ id:'country', header: 'Country', fillspace:true}
 								]
-					        }
-					    ]
+							}
+						]
 					}
 				]
 			},
 			{
-				view:"resizer"
+				view:'resizer'
 			},
 			{
-				id:"infoSelected",
-				view:"treetable",
+				id:'infoSelected',
+				view:'treetable',
 				minWidth:150,
 				width:200,
 				resizeColumn:true,
 				columns: [
-			        { id:"value", header:"Property", template:"{common.treetable()} #value#",  width:100},
-			        { id:"property", header:"Value", fillspace:true}
+					{ id:'value', header:'Property', template:'{common.treetable()} #value#',  width:100},
+					{ id:'property', header:'Value', fillspace:true}
 				]
 			}
 		]}

@@ -24,7 +24,7 @@ exports.run = function(current, passData, multiplier) {
 
 			current.size += create_count;
 		}
-		this.S.properties.money += money_collected;
+		this.S.status.money += money_collected;
 	}
 };
 exports.options = {

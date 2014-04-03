@@ -701,7 +701,7 @@ Evolution.prototype.buyEvolutions = function() {
 Evolution.prototype.refreshGenes = function() {
 	var i,j,n;
 	for(i = 0, n = this.mutation.length; i < n; i++) {
-		var geneElement = $('.geneBlock.active.gene_'+this.mutation[i].upgrade),
+		var geneElement = $('.geneBlock.active.gene_'+this.mutation[i].upgrade.replace('.','\\.')),
 			geneImage = geneElement.find('img'),
 			currentUpgrade = this.all[this.mutation[i].upgrade],
 			//overlayPosition = geneImage.parents('.overlay').offset(),

@@ -9,7 +9,7 @@ exports.run = function() {
 	this.S.UIData['world_infected'] = this.world_infected;
 
 	this.S.UIData['cur_date'] = this.S.date.getMonthName() + ' ' + this.S.date.getDate() + ', ' + this.S.date.getFullYear();
-	this.S.UIData['money'] = this.S.properties.money;
+	this.S.UIData['money'] = this.S.status.money;
 
 };
 exports.options = {
@@ -26,7 +26,7 @@ exports.options = {
         this.S.UI.interfaceParts.stats.addDataField({
         	dynamic: 'cur_date'
         });
-        this.S.UI.interfaceParts.stats.addDataField({title: 'ui:labels.virus_name'}).val(this.S.properties.virus_name);
+        this.S.UI.interfaceParts.stats.addDataField({title: 'ui:labels.virus_name'}).val(this.S.status.virus_name);
         this.S.UI.interfaceParts.stats.addDataField({
         	title: 'ui:labels.population_world',
         	dynamic: 'world_pop',

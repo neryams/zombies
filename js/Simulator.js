@@ -226,7 +226,7 @@ if(typeof global !== 'undefined')
 
 function Simulator(R, UI, generatorConfig, generatorData) {
 	// Game and virus properties!
-	this.properties = {
+	this.status = {
 		virus_name: '',
 		money: 500000,
 		panic: 0,
@@ -391,7 +391,7 @@ Simulator.prototype = {
 	interval: null,
 	loadModules: null,
 	setName: function (name) {
-		this.properties.virus_name = name;
+		this.status.virus_name = name;
 	},
 	getStrainOptions: function() {
 		return this.strainOptions;
@@ -653,7 +653,7 @@ Simulator.prototype.availableUpgrades = function(selectedUpgrades) {
 		if(!validPath)
 			return false;
 	}
-	if (this.properties.money < totalCost)
+	if (this.status.money < totalCost)
 		return false;
 
 	// Selected upgrades are valid, now return which ones are selectable
@@ -662,7 +662,7 @@ Simulator.prototype.availableUpgrades = function(selectedUpgrades) {
 			upgrade = this.upgrades[key];
 			if(upgrade.active)
 				for(j = 0; j < upgrade.children.length; j++) {
-					if(upgrade.children[j].cost >= 0 && this.properties.money >= totalCost + upgrade.children[j].cost)
+					if(upgrade.children[j].cost >= 0 && this.status.money >= totalCost + upgrade.children[j].cost)
 						available.push(upgrade.children[j].id);
 				}
 		}
@@ -670,7 +670,7 @@ Simulator.prototype.availableUpgrades = function(selectedUpgrades) {
 	for(i = 0; i < selectedUpgrades.length; i++) {
 		upgrade = this.upgrades[selectedUpgrades[i]];
 		for(j = 0; j < upgrade.children.length; j++) {
-			if(upgrade.children[j].cost >= 0 && this.properties.money >= totalCost + upgrade.children[j].cost)
+			if(upgrade.children[j].cost >= 0 && this.status.money >= totalCost + upgrade.children[j].cost)
 				available.push(upgrade.children[j].id);
 		}
 	}
@@ -684,7 +684,7 @@ Simulator.prototype.purchaseUpgrades = function(upgrades) {
 	else
 		while(upgrades.length) {
 			upgrade = this.upgrades[upgrades.pop()];
-			this.properties.money -= upgrade.cost;
+			this.status.money -= upgrade.cost;
 			upgrade.purchase();
 		}
 
@@ -696,7 +696,7 @@ Simulator.prototype.purchaseMutation = function(mutations) {
 
 	var grid = [];
     // Create the grid storage object for keeping track of each gene location
-	while(grid.length < this.properties.gridSize) {
+	while(grid.length < this.status.gridSize) {
 		grid.push([]);
 	}
 
@@ -715,7 +715,7 @@ Simulator.prototype.purchaseMutation = function(mutations) {
 				grid[mutations[i].placement.x + upgrade.gene.shape[j].x][mutations[i].placement.y + upgrade.gene.shape[j].y] = upgrade.gene;
 		}
 	}
-	if(totalCost > this.properties.money)
+	if(totalCost > this.status.money)
 		return false;
 
 	// Reset the last mutations to prep modules for new mutation.
@@ -949,7 +949,8 @@ Simulator.prototype.tick = function() {
 
 		S.R.updateMatrix();
 
-		S.UIData.gridSize = S.properties.gridSize;
+
+		S.UIData.gridSize = S.status.gridSize;
 		S.UIData.iteration = S.iteration;
 		S.UI.updateUI(S.UIData);
 

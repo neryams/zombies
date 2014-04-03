@@ -3,9 +3,9 @@
 */
 exports.type = 'event';
 exports.run = function() {
-	if(this.S.properties.panic > 0) {
+	if(this.S.status.panic > 0) {
 		// Check world panic, level up is panic is higher than the defined threshold
-		if(this.S.properties.panic > this.panicThresholds[this.currPanicLevel]) {
+		if(this.S.status.panic > this.panicThresholds[this.currPanicLevel]) {
 			if(this.panicThresholds.length > this.currPanicLevel){
 				this.S.UI.addNews('world_research.' + this.currPanicLevel);
 				this.currPanicLevel++;
@@ -18,12 +18,12 @@ exports.run = function() {
 		}
 
 		// Clamp panic above minimum for the level
-		if(this.S.properties.panic < this.panicThresholds[this.currPanicLevel - 1]) {
-			this.S.properties.panic = this.panicThresholds[this.currPanicLevel - 1];
+		if(this.S.status.panic < this.panicThresholds[this.currPanicLevel - 1]) {
+			this.S.status.panic = this.panicThresholds[this.currPanicLevel - 1];
 		}
 
 		// Panic to display is progress to next level, so (panic increase since last level up) / (difference between this level and next level)
-		this.S.UIData['world_panic'] = (this.S.properties.panic - this.panicThresholds[this.currPanicLevel - 1]) / (this.panicThresholds[this.currPanicLevel] - this.panicThresholds[this.currPanicLevel - 1]);
+		this.S.UIData['world_panic'] = (this.S.status.panic - this.panicThresholds[this.currPanicLevel - 1]) / (this.panicThresholds[this.currPanicLevel] - this.panicThresholds[this.currPanicLevel - 1]);
 
 		// Check country panic levels, level up is panic is higher than the defined threshold
 		for(var i = 1; i < this.S.countries.length; i++) {

@@ -10,7 +10,7 @@ exports.run = function(location) {
 		this.globalPanic += location.panic;
 
 		location.country.panic = this.countryPanic[location.country.id];
-		this.S.properties.panic = this.globalPanic;
+		this.S.status.panic = this.globalPanic;
 	}
 };
 exports.options = {
