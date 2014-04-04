@@ -911,14 +911,15 @@ var UserInterface = function UserInterface(Renderer) {
 					status[key] = data[key];
 				}
 
-			for (key in interfaceParts)
-				if (interfaceParts.hasOwnProperty(key) && interfaceParts[key].dynamic) {
-					if(status[interfaceParts[key].dynamic] !== undefined) {
-						var val = status[interfaceParts[key].dynamic];
-						if(interfaceParts[key].dynamicFormat) {
-							interfaceParts[key].val(interfaceParts[key].dynamicFormat(val));
+			for (var id in interfaceParts)
+				if (interfaceParts.hasOwnProperty(id) && interfaceParts[id].dynamic) {
+					key = interfaceParts[id].dynamic;
+					if(status[key] !== undefined && !changedStatus[key]) {
+						var val = status[key];
+						if(interfaceParts[id].dynamicFormat) {
+							interfaceParts[id].val(interfaceParts[id].dynamicFormat(val));
 						} else {
-							interfaceParts[key].val(val);
+							interfaceParts[id].val(val);
 						}
 					}
 				}
