@@ -44,7 +44,8 @@ function MainInterface(UI,R) {
 
 		var uiMenu = UI.addDataField('menu',{
 			type: 'div',
-			class: 'main_menu'
+			class: 'main_menu',
+			mousePriority: true
 		});
 
 		var uiMenuDataviews = uiMenu.addDataField('dataViewSelector',{

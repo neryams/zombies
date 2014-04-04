@@ -951,7 +951,7 @@ Simulator.prototype.tick = function() {
 
 		var updatedStatus = S.UI.updateUI(S.status);
 		for (var key in updatedStatus)
-			if (updatedStatus.hasOwnProperty(key))
+			if (updatedStatus.hasOwnProperty(key) && key != 'money')
 				S.status[key] = updatedStatus[key];
 
 		S.hordes.addAllNew();

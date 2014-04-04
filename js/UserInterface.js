@@ -22,7 +22,7 @@ var UserInterface = function UserInterface(Renderer) {
 			pauseRenderer: false,
 			showToolTip: false,
 			toolTipMode: '',
-			mutateGridSize: 0
+			gridSize: 0
 		},
 		changedStatus = {
 
@@ -30,7 +30,6 @@ var UserInterface = function UserInterface(Renderer) {
 
 	function DataField(id,options,parent) {
 		var newElement, fullElement,
-			status = this.UIStatus,
 			className = 'dataField';
 
 		if(typeof id == 'object') {
@@ -39,8 +38,8 @@ var UserInterface = function UserInterface(Renderer) {
 		}
 
 		if(!id)
-			id = '_' + Object.keys(this.interfaceParts).length;
-		this.interfaceParts[id] = this;
+			id = '_' + Object.keys(interfaceParts).length;
+		interfaceParts[id] = this;
 		this.id = id;
 		className += ' dataField-'+id;
 
@@ -89,8 +88,10 @@ var UserInterface = function UserInterface(Renderer) {
 					newElement.on('change', function() {
 						var element = $(this),
 							value = parseFloat(element.attr('data-slider'));
-						if(value != status[element.data('dynamic')])
+						if(value != status[element.data('dynamic')]) {
 							status[element.data('dynamic')] = value;
+							changedStatus[element.data('dynamic')] = true;
+						}
 					});
 			break;
 			default:
@@ -115,7 +116,7 @@ var UserInterface = function UserInterface(Renderer) {
 			newElement.data('dynamic', this.dynamic);
 
 		if(this.dataType == 'accordion_child') {
-			var uniqueId = 'accordion_' + Object.keys(this.interfaceParts).length;
+			var uniqueId = 'accordion_' + Object.keys(interfaceParts).length;
 			fullElement.prepend($(i18n.t('dom:interface.dataField.accordionTitle',{ title:this.title, link: uniqueId})));
 			newElement.addClass('content');
 			newElement.attr('id',uniqueId);
@@ -145,13 +146,12 @@ var UserInterface = function UserInterface(Renderer) {
 		if(!this.visible)
 			newElement.css('display','none');
 		if(this.mousePriority) {
-			var that = this;
 			newElement
 				.mouseenter(function() {
-					that.UIStatus.mouse.bound = newElement;
+					status.mouse.bound = newElement;
 				})
 				.mouseleave(function() {
-					that.UIStatus.mouse.bound = null;
+					status.mouse.bound = null;
 				});
 		}
 	}
@@ -169,10 +169,9 @@ var UserInterface = function UserInterface(Renderer) {
 		mousePriority:false,
 		interfaceParts: null,
 		dataOptions: '',
-		UIStatus: null,
 		remove: function() {
 			this.fullElement.remove();
-			delete this.interfaceParts[this.id];
+			delete interfaceParts[this.id];
 		},
 		addDataField: function(id,options) {
 			if(typeof id == 'object') {
@@ -195,15 +194,15 @@ var UserInterface = function UserInterface(Renderer) {
 				this.opener.element.addClass('selected');
 			if(this.overlay) {
 				// Hide any other visible overlays
-				for (var key in this.interfaceParts)
-					if (this.interfaceParts.hasOwnProperty(key) && this.interfaceParts[key].overlay && this.interfaceParts[key].visible) {
-						this.interfaceParts[key].hide();
+				for (var key in interfaceParts)
+					if (interfaceParts.hasOwnProperty(key) && interfaceParts[key].overlay && interfaceParts[key].visible) {
+						interfaceParts[key].hide();
 					}
 				var that = this;
 				$('#ui_mask').css('visibility','visible').on('click.closeOverlay', function () {
 					that.hide();
 				});
-				this.UIStatus.pauseRenderer = true;
+				status.pauseRenderer = true;
 				if(this.S)
 					this.S.pause();
 			}
@@ -224,11 +223,11 @@ var UserInterface = function UserInterface(Renderer) {
 				this.opener.element.removeClass('selected');
 			if(this.overlay) {
 				$('#ui_mask').css('visibility','hidden').off('click.closeOverlay');
-				this.UIStatus.pauseRenderer = false;
+				status.pauseRenderer = false;
 				if(this.S)
 					this.S.unPause();
 			}
-			this.hideTooltip();
+			hideTooltip();
 
 			return this;
 		},
@@ -256,6 +255,29 @@ var UserInterface = function UserInterface(Renderer) {
 				this.element.html(value);
 			return this;
 		}
+	};
+
+	DataField.prototype.showToolTip = function (text,element,width) {
+		if(!element)
+			element = this.element;
+		var position = element.offset();
+
+		var tooltip = $('#tooltip');
+		if(tooltip.css('visibility') == 'hidden' && text) {
+			tooltip.empty();
+			if(width)
+				tooltip.css('width',width);
+			if(text.appendTo)
+				tooltip.append(text);
+			else
+				tooltip.html(text);
+			tooltip.css('top',position.top - (tooltip.height() + 20)).css('left',position.left).addClass('');
+			tooltip.css('display','none').css('visibility','visible').fadeIn('fast');
+		}
+
+		element.on('mouseleave', function () {
+			hideTooltip();
+		});
 	};
 
 	function Evolution(name,levels,options) {
@@ -297,8 +319,8 @@ var UserInterface = function UserInterface(Renderer) {
 				if(upgrade.available) {
 					selectedUpgrades.push(upgradeId);
 					upgrade.selected = true;
-					evol.UIStatus.money -= upgrade.cost;
-					evol.interfaceParts.money.val(evol.UIStatus.money);
+					status.money -= upgrade.cost;
+					interfaceParts.money.val(status.money);
 				}
 			// User is undoing the purchase
 			} else {
@@ -308,8 +330,8 @@ var UserInterface = function UserInterface(Renderer) {
 				for(i = 0; i < selectedUpgrades.length; i++)
 					if(selectedUpgrades[i] == upgrade.id) {
 						selectedUpgrades.splice(i,1);
-						evol.UIStatus.money += upgrade.cost;
-						evol.interfaceParts.money.val(evol.UIStatus.money);
+						status.money += upgrade.cost;
+						interfaceParts.money.val(status.money);
 						delete upgrade.selected;
 						upgrade.element.removeClass('active');
 						break;
@@ -841,33 +863,6 @@ var UserInterface = function UserInterface(Renderer) {
 		$('#tooltip').css('visibility','hidden');
 	};
 
-	DataField.prototype.showToolTip = function (text,element,width) {
-		if(!element)
-			element = this.element;
-		var position = element.offset();
-
-		var tooltip = $('#tooltip');
-		if(tooltip.css('visibility') == 'hidden' && text) {
-			tooltip.empty();
-			if(width)
-				tooltip.css('width',width);
-			if(text.appendTo)
-				tooltip.append(text);
-			else
-				tooltip.html(text);
-			tooltip.css('top',position.top - (tooltip.height() + 20)).css('left',position.left).addClass('');
-			tooltip.css('display','none').css('visibility','visible').fadeIn('fast');
-		}
-
-		element.on('mouseleave',this ,function (event) {
-			event.data.hideTooltip();
-		});
-	};
-	DataField.prototype.hideTooltip = hideTooltip;
-	DataField.prototype.interfaceParts = interfaceParts;
-	DataField.prototype.UIStatus = status;
-	DataField.prototype.R = Renderer;
-
 	// Function that runs on every frame, sending mouse movement from UI as coordinates to the renderer to move 3-d elements around
 	Renderer.onRender(function() {
 		if(!status.pauseRenderer) {
@@ -912,15 +907,9 @@ var UserInterface = function UserInterface(Renderer) {
 		},
 		updateUI: function(data) {
 			for (var key in data)
-				if (data.hasOwnProperty(key) && changedStatus[key] === undefined) {
+				if (data.hasOwnProperty(key) && !changedStatus[key]) {
 					status[key] = data[key];
 				}
-
-			for (key in changedStatus)
-				if (changedStatus.hasOwnProperty(key)) {
-					status[key] = changedStatus[key];
-				}
-			changedStatus = {};
 
 			for (key in interfaceParts)
 				if (interfaceParts.hasOwnProperty(key) && interfaceParts[key].dynamic) {
@@ -934,8 +923,10 @@ var UserInterface = function UserInterface(Renderer) {
 					}
 				}
 
-			if(status.mutateGridSize < data.gridSize) {
-				Evolution.prototype.gridSize = status.mutateGridSize = data.gridSize;
+			changedStatus = {};
+
+			if(status.gridSize < data.gridSize) {
+				Evolution.prototype.gridSize = status.gridSize = data.gridSize;
 				if(!Evolution.prototype.grid)
 					Evolution.prototype.grid = [];
 				// Create the grid storage object for keeping track of each gene location

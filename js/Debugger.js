@@ -8,8 +8,12 @@ var Debugger = function() {
 		if(id === undefined)
 			id = '';
 
-		if(maxDepth < 0)
-			return { id: id, value: name, property: data.toString() };
+		if(maxDepth < 0) {
+			if(data)
+				return { id: id, value: name, property: data.toString() };
+			else
+				return { id: id, value: name };
+		}
 		else {
 			var returnData = [];
 
