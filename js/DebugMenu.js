@@ -1,8 +1,31 @@
 /* global debugMenu:true */
+/* global sass */
+/* global node */
+/* global fs */
 var debugMenu = {
 	active: false,
     logModules: false,
     openConsole: function () {
+		if(node) {
+			sass.render({
+				data: '@import "third-party/webix","debugger";',
+				success: function(css){
+					fs.writeFile('zombies/css/debugger.css', css, function (err) {
+						if (err) throw err;
+
+						var queryString = '?reload=' + new Date().getTime();
+						$('link.debugger').each(function () {
+							this.href = this.href.replace(/\?.*|$/, queryString);
+						});
+					});
+				},
+				error: function(error) {
+					console.log(error);
+				},
+				includePaths: [ 'zombies/sass/' ],
+				outputStyle: 'nested'
+			});
+		}
 		if(!this.console.window) {
 			var newConsole = window.open('debugger.htm', '_blank', 'height=800,width=1200,location=no'),
 				menu = this;

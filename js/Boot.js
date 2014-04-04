@@ -48,8 +48,29 @@ if(typeof global !== 'undefined')
 // Global variables
 var S,debugMenu,
     node = typeof require !== 'undefined';
-if(node)
+if(node) {
     var fs = require('fs');
+    var sass = require('node-sass');
+
+    sass.render({
+        data: '@import "third-party/normalize","third-party/foundation","main","setup","ui";',
+        success: function(css){
+            fs.writeFile('zombies/css/compiled.css', css, function (err) {
+                if (err) throw err;
+
+                var queryString = '?reload=' + new Date().getTime();
+                $('link.main').each(function () {
+                    this.href = this.href.replace(/\?.*|$/, queryString);
+                });
+            });
+        },
+        error: function(error) {
+            console.log(error);
+        },
+        includePaths: [ 'zombies/sass/' ],
+        outputStyle: 'nested'
+    });
+}
 
 $(function () {
     // Select Resolution closes to device pixel ratio
@@ -113,8 +134,9 @@ $(function () {
                 saveGenerator: !!$('#s_save:checked').val()
             },
             onLoadModules = function () {
-                // Open debug menu by default.
-                debugMenu.openConsole();
+                // Open debug menu by default in node.
+                if(node)
+                    debugMenu.openConsole();
 
                 R = Renderer(userConfig.resolution, function() {
                     UI = UserInterface(R);

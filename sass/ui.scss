@@ -259,12 +259,12 @@ canvas.draggable {
 .evolution>div div img.connector,
 .evolution>div div img.arrows,
 .evolution>div div a.evoIcon {
-	filter: grayscale(90%);
-	-webkit-filter: grayscale(90%);	
+	filter: #{'grayscale(90%)'};
+	-webkit-filter: #{'grayscale(90%)'};	
 }
 .evolution>div div.active img,
 .evolution>div div.active a.evoIcon {
-	-webkit-filter: grayscale(0%);
+	-webkit-filter: #{'grayscale(0%)'};
 	opacity: 1;
 }
 
@@ -278,7 +278,7 @@ canvas.draggable {
 	background-image: url(../js/modules/sprite.png);
 }
 .evolution>div div.available a.evoIcon {
-	-webkit-filter: grayscale(0%);
+	-webkit-filter: #{'grayscale(0%)'};
 }
 .evolution>div div a.evoIcon img {
 	margin-top: -200%;
