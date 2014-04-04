@@ -1,5 +1,4 @@
 /* exported MainInterface */
-/* globals Evolution */
 function MainInterface(UI,R) {
 	var status = UI.status;
 	/*
@@ -25,16 +24,7 @@ function MainInterface(UI,R) {
 		},
 		end: function() {
 			attachEvents();
-			$(document).foundation(/*{
-				slider: {
-					on_change: function(){
-						var element = $(this),
-							value = parseFloat(element.attr('data-slider'));
-						if(value !== status[element.data('dynamic')])
-							status[element.data('dynamic')] = value;
-					}
-				}
-			}*/);
+			$(document).foundation();
 		},
 		progress: function(message, totalProgress) {
 			$('#progress p').html(i18n.t('setup:loading.'+message));
@@ -128,10 +118,10 @@ function MainInterface(UI,R) {
 			title: 'Evolution',
 			overlay: true,
 			onHide: function() {
-				Evolution.prototype.buyEvolutions();
+				UI.evolutions.buyEvolutions();
 			}
 		});
-		Evolution.prototype.evolveMenu = evolveMenuOuter.addDataField({
+		UI.evolutions.evolveMenu = evolveMenuOuter.addDataField({
 			type: 'div',
 			class: 'draggable'
 		});
@@ -140,7 +130,7 @@ function MainInterface(UI,R) {
 			class: 'primary',
 			onClick: function() {
 				if(!this.opens[0].visible) {
-					Evolution.prototype.refresh();
+					UI.evolutions.refresh();
 					this.opens[0].display();
 				}
 				else
@@ -149,30 +139,30 @@ function MainInterface(UI,R) {
 			opens: [evolveMenuOuter]
 		}).label('ui:buttons.evolution');
 
-		Evolution.prototype.mutationMenu = UI.addDataField('mutationMenu',{
+		UI.evolutions.mutationMenu = UI.addDataField('mutationMenu',{
 			type: 'div',
 			class: 'toolbox',
 			title: 'Mutation',
 			overlay: true,
 			onHide: function() {
-				Evolution.prototype.clearGrid();
+				UI.evolutions.clearGrid();
 			}
 		});
-		Evolution.prototype.mutationMenu.element.append($(i18n.t('dom:interface.mutation.menu')));
+		UI.evolutions.mutationMenu.element.append($(i18n.t('dom:interface.mutation.menu')));
 		uiMenu.addDataField('mutationMenu_button',{
 			type: 'button',
 			class: 'primary',
 			onClick: function() {
 				if(!this.opens[0].visible) {
-					Evolution.prototype.refreshGenes();
+					UI.evolutions.refreshGenes();
 					this.opens[0].display();
 				}
 				else
 					this.opens[0].hide();
 			},
-			opens: [Evolution.prototype.mutationMenu]
+			opens: [UI.evolutions.mutationMenu]
 		}).label('ui:buttons.mutation');
-		var mutationMenu_controls = Evolution.prototype.mutationMenu.addDataField({
+		var mutationMenu_controls = UI.evolutions.mutationMenu.addDataField({
 			type: 'div',
 			class: 'menu'
 		});
@@ -183,7 +173,7 @@ function MainInterface(UI,R) {
 				this.showToolTip( 'Clear the mutation grid.' );
 			},
 			onClick: function() {
-				Evolution.prototype.clearGrid();
+				UI.evolutions.clearGrid();
 			}
 		}).val('Clear');
 		mutationMenu_controls.addDataField('mutationMenu_submit',{
@@ -191,15 +181,15 @@ function MainInterface(UI,R) {
 			class: 'primary',
 			onHover: function() {
 				var totalPrice = 0;
-				for (var key in Evolution.prototype.all)
-					if (Evolution.prototype.all.hasOwnProperty(key) && Evolution.prototype.all[key].gene && Evolution.prototype.all[key].gene.used)
-						if(Evolution.prototype.all[key].gene.active === undefined || !Evolution.prototype.mutation[Evolution.prototype.all[key].gene.active].placement.equals(Evolution.prototype.all[key].gene.placement))
-							totalPrice += Evolution.prototype.all[key].cost;
+				for (var key in UI.evolutions.all)
+					if (UI.evolutions.all.hasOwnProperty(key) && UI.evolutions.all[key].gene && UI.evolutions.all[key].gene.used)
+						if(UI.evolutions.all[key].gene.active === undefined || !UI.evolutions.mutation[UI.evolutions.all[key].gene.active].placement.equals(UI.evolutions.all[key].gene.placement))
+							totalPrice += UI.evolutions.all[key].cost;
 
 				this.showToolTip( 'Mutate your infection for <span class="strong">'+totalPrice+'</span> evolution points' );
 			},
 			onClick: function() {
-				Evolution.prototype.mutate();
+				UI.evolutions.mutate();
 			}
 		}).val('Mutate');
 		mutationMenu_controls.addDataField('mutationMenu_cancel',{
@@ -209,7 +199,7 @@ function MainInterface(UI,R) {
 				this.showToolTip( 'Revert all changes.' );
 			},
 			onClick: function() {
-				Evolution.prototype.mutationMenu.hide();
+				UI.evolutions.mutationMenu.hide();
 			}
 		}).val('Cancel');
 
@@ -227,8 +217,8 @@ function MainInterface(UI,R) {
 			dynamic: 'money',
 			dynamicFormat: function(value) {
 				var money = parseInt(value);
-				for(var i = 0; i < Evolution.prototype.selectedUpgrades.length; i++)
-					money -= Evolution.prototype.all[Evolution.prototype.selectedUpgrades[i]].cost;
+				for(var i = 0; i < UI.evolutions.selectedUpgrades.length; i++)
+					money -= UI.evolutions.all[UI.evolutions.selectedUpgrades[i]].cost;
 				return money;
 			}
 		});
@@ -347,13 +337,13 @@ function MainInterface(UI,R) {
 			var i,valid,element,position,
 				gene = $(this),
 				geneImage = gene.find('img'),
-				currentUpgrade = Evolution.prototype.all[gene.data('geneId')],
+				currentUpgrade = UI.evolutions.all[gene.data('geneId')],
 				overlayPosition = geneImage.parents('.overlay').offset(),
 				mousePosition = { left:event.clientX , top:event.clientY },
-				grid = Evolution.prototype.grid,
+				grid = UI.evolutions.grid,
 				gridElement = $('#tb_board .grid'),
 				gridElementPosition = gridElement.offset(),
-				gridSquareSize = Evolution.prototype.SQUARE_SIZE;
+				gridSquareSize = UI.evolutions.SQUARE_SIZE;
 
 			// If gene has been placed on the board, pick it up to move it
 			if(gene.hasClass('placed')) {
