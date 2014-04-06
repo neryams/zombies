@@ -8,6 +8,7 @@ exports.run = function(current,passData) {
 	passData.mobility = 0;
 	passData.panic = 0;
 	passData.collect = 10;
+	this.S.modules['reproducer.reproduce'].val('ratio_money',Math.min(Math.max(this.S.status.control_moneyRatio - 1, 0), 10)/10);
 };
 exports.options = {
 	init: function() {
@@ -66,7 +67,7 @@ exports.options = {
 			title: 'Resource to put towards reproduction',
 			type:'slider',
 			dynamic: 'control_moneyRatio',
-			dataOptions: 'start: 0; end: 10; initial: 9; step: 0.1;'
+			dataOptions: 'start: 0; end: 12; initial: 2; step: 0.1;'
 		});
 	},
 	onStart: function(callback) {

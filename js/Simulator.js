@@ -1110,7 +1110,7 @@ Module.prototype = {
 	},
 	val: function(name, newval, operation, upgrade) {
 		/* jshint -W087 */
-		if(!newval)
+		if(!newval && newval !== 0)
 			return this[name];
 		else {
 			// Gene upgrades should store a default value to it gcan be reverted when the gene is removed. 
