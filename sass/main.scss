@@ -1,3 +1,14 @@
+html,
+body {
+	height: 100%;
+	background-color: #222;
+}
+
+@mixin grey-filter($amount) {
+	filter: #{'grayscale('}$amount#{')'};
+	-webkit-filter: #{'grayscale('}$amount#{')'};	
+}
+
 .strong {
 	font-weight: bold;
 }
@@ -7,6 +18,10 @@
 
 #container, body {
 	overflow: hidden;
+}
+
+#container, #ui {
+	display: none;
 }
 
 #ui, #ui_mask {

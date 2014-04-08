@@ -63,7 +63,7 @@ exports.options = {
 		}).label('ui:buttons.dataviews_inner.trees');
 
 		// Add slider for zombie behavior: how much 
-		this.S.UI.interfaceParts.menu.addDataField('control_collect',{
+		this.S.UI.interfaceParts.main_control.addDataField('control_collect',{
 			title: 'Resource to put towards reproduction',
 			type:'slider',
 			dynamic: 'control_moneyRatio',

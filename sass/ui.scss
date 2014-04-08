@@ -1,31 +1,57 @@
-/*
- * Common interface elements
- */
+$titlebar-height: 2.5rem;
+$sidebar-width: 12.5em;
+$body-font: 'Arial', sans-serif;
 
-h1 {
-	font-size: 1.5rem;
-	font-weight: bold;
+#container.active {
+	display: block;	
 }
-h2 {
-	font-size: 1.25rem;
-}
-h3 {
-	font-size: 1rem;
-	margin-top: 1rem;
+#ui.active {
+	display: block;
 }
 
-.dataField {
-	z-index: 11;
-	position: absolute;	
-	color: white;
-	font-size: small;
-	font-family: monospace;
-}
-.dataField .dataField {
-	position: static;	
+.main_ui {
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	height: 100%;
+	width: 100%;
+	
+	> div {
+		position: absolute;
+		bottom: 0;
+	}
+	> .dataField-main_info {
+		width: $sidebar-width;
+		left: 0;
+	}
+	> .dataField-main_control {
+		width: $sidebar-width;
+		right: 0;
+	}
 }
 
-div.overlay {
+/* Datafield Type Styling */
+.dataField-button {
+	@include button(rem-calc(8));
+}
+
+
+/* Overlay Styling */
+
+.draggable {
+	width: 0;
+	height: 0;
+	top: 50%;
+	left: 50%;
+	position: absolute !important;
+	z-index: 21;
+}
+canvas.draggable {
+	z-index: 20;
+	background-image: url('../ui/hash.gif');
+}
+
+.overlay {
 	z-index: 20;
 	width: 800px;
 	height: 600px;
@@ -37,351 +63,20 @@ div.overlay {
 	background-color: #080808;
 	border: 1px solid #111;
 	overflow: hidden;
-}
-div.overlay h3, div.overlay p {
-	margin-left: 16px;
-}
-div.overlay .menu {
-	position: absolute;
-	bottom: 16px;
-	right: 16px;
-	width: 768px;
-}
-div.overlay .dragging {
-	position: absolute;
-	z-index: 30;
-	opacity: 0.3;
-}
-div.overlay .dragging.valid {
-	opacity: 0.8;
-}
-
-div.overlay .menu button {
-	float: right;
-}
-div.overlay .menu button.dataField-mutationMenu_clear {
-	float: left;
-	background-image: url('../ui/refresh.png');
-}
-.draggable, canvas.draggable {
-	width: 0;
-	height: 0;
-	top: 50%;
-	left: 50%;
-	position: absolute !important;
-	z-index: 20;
-}
-.draggable {
-	z-index: 21;
-}
-canvas.draggable {
-	background-image: url('../ui/hash.gif');
-}
-
-
-/*
- * Permanant Interface
- */
-
-.stats {
-	left: 0px;
-	top: 0px;
-	height: 300px;
-	width: 200px;
-	padding: 12px;
-}
-.stats a {
-	color: #6666ff;
-}
-
-.main_menu {
-	left: 0px;
-	bottom: 0px;
-	width: 200px;
-	padding: 12px;
-}
-.main_menu a.button {
-	width: 100%;
-	padding-left: 0;
-	padding-right: 0;
-}
-.main_menu .dataViewList {
-	position: absolute;
-	margin-top: -12px;
-	padding: 12px;
-	left: 0;
-}
-.main_menu .dataViewList a.button {
-	margin-bottom: 1px;
-	padding-top: 0.25rem;
-	padding-bottom: 0.25rem;
-	opacity: 0.8;
-}
-
-.sidebar {
-	position: absolute;
-	height: 100%;
-	width: 240px;
-	right: 0;
-	display: table;
-}
-.sidebar .dataField-sidebarStatic>.dataField {
-	margin-bottom: 16px;
-}
-.sidebar .dataField-money {
-	margin-right: 6px;
-	text-align: right;
-	color: white;
-	font-size: small;
-}
-.sidebar .dataField-money span {
-	font-size: 200%;
-}
-.sidebar>.dataField {
-	display: table-row;
-}
-.sidebar .dataField-sidebarAccordion {
-	height: 100%;
-}
-.sidebar .accordion dd>a {
-	padding: 0.2rem 0.6rem;
-	background-color: #333;
-	color: white;
-}
-.sidebar .accordion dd>a:hover {
-	background-color: #444;
-}
-.sidebar .accordion dd.active>a {
-	background-color: #008cba;
-}
-.sidebar .accordion dd .content.active {
-	background: none;
-	overflow: scroll;
-}
-
-
-.shipping {
-	overflow-y: scroll;
-	overflow-x: hidden;
-}
-.shipping h3 {
-	width: 100%;
-}
-
-.news p {
-	margin-top: 0.5em;
-	margin-bottom: 0.5em;
-}
-
-.dataField-progressBar {
-	height: 60px;
-	width: 100%;
-}
-.dataField-progressBar h3{
-	font-size: small;
-	font-weight: normal;
-}
-.dataField-progressBar .progress {
-	width: 188px;
-	height: 22px;
-	float: left;
-	position: relative;
-	background: #222277;
-	padding: 0;
-	border: 0;
-	margin-left: 1em;
-}
-.dataField-progressBar .progress>div {
-	background: #008cba;
-	height: 22px;
-}
-.dataField-progressBar .date {
-	background: transparent;
-}
-.dataField-progressBar .date div {
-	background: transparent;
-}
-
-.bottom_stats {
-	height: 80px;
-	width: 100%;
-	position: absolute;
-	bottom: 0;
-	left: 0;
-	z-index: 10;
-}
-.bottom_stats .dataField-progressBar {
-	width: 300px;
-	position: absolute;
-	bottom: 0;
-	left: 50%;
-	margin-left: -150px;
-}
-.bottom_stats .dataField-progressBar .progress, .bottom_stats .dataField-progressBar .progress div {
-	width: 300px;
-	height: 10px;
-}
-
-
-/*
- * Evolution skill tree
- */
-
-.evolution>h3 {
-	margin-left: 16px;
-	z-index: 24;
-	position: absolute;
-	top: 0;
-	left: 0;
-}
-.evolution>div div {
-	width: 30px;
-	height: 30px;
-	margin-left: -15px;
-	margin-top: -15px;
-	position: absolute;
-}
-
-.evolution>div div img {
-	max-width: none;
-	position: absolute;
-	opacity: .7;
-}
-.evolution>div div img.geneIcon {
-	z-index: 24;
-}
-.evolution>div div img.connector {
-	z-index: -2;
-}
-.evolution>div div img.arrows {
-	z-index: -1;
-}
-.evolution>div div img.connector,
-.evolution>div div img.arrows,
-.evolution>div div a.evoIcon {
-	filter: #{'grayscale(90%)'};
-	-webkit-filter: #{'grayscale(90%)'};	
-}
-.evolution>div div.active img,
-.evolution>div div.active a.evoIcon {
-	-webkit-filter: #{'grayscale(0%)'};
-	opacity: 1;
-}
-
-.evolution>div div a.evoIcon {
-	width: 30px;
-	height: 30px;
-	border-radius: 15px;
-	display: block;
-	z-index: 23;
-	overflow: hidden;
-	background-image: url(../js/modules/sprite.png);
-}
-.evolution>div div.available a.evoIcon {
-	-webkit-filter: #{'grayscale(0%)'};
-}
-.evolution>div div a.evoIcon img {
-	margin-top: -200%;
-	pointer-events: none;
-}
-.evolution>div div.available a.evoIcon img {
-	margin-top: -100%;
-}
-.evolution>div div.active a.evoIcon img {
-	margin-top: 0;
+	
+	h1, h2, h3, p {
+		margin-left: 16px;
+	}
 }
 
 .alert {
+	@extend .overlay;
 	width: 400px;
 	height: 300px;
 	margin-left: -200px;
 	margin-top: -150px;
 	background-image: url('../ui/hash.gif');
 }
-
-
-/*
- * Mutation Menu
- */
-
-.toolbox {
-	width: 800px;
-	float: left;
-	height: 600px;
-}
-.toolbox #tb_board {
-	float: left;
-	background-color: #151515;
-	margin-left: 5px;
-	margin-top: 5px;
-	width: 335px;
-	height: 334px;
-	display: table;
-}
-.toolbox #tb_board>div {
-	display: table-cell;
-	vertical-align: middle;
-}
-.toolbox #tb_board .grid {
-	background-image: url('../ui/grid.gif');
-	margin: 0 auto;
-	position: relative;
-	overflow: hidden;
-}
-.toolbox #tb_gene {
-	display: none;
-}
-.toolbox .geneBlock.active {
-	padding: 10px;
-	margin-left: 5px;
-	margin-top: 5px;
-	background-color: #151515;
-	float: left;
-	width: 88px;
-	height: 88px;
-	display: table;
-	position: static;
-}
-.toolbox .geneBlock.active:nth-child(2n) {
-	width: 89px;
-}
-.toolbox .geneBlock.active p.image {
-	display: table-row;
-	text-align: center;
-	vertical-align: middle;
-}
-.toolbox .geneBlock>img {
-	float: left;
-}
-.toolbox .geneBlock.active p.image img {
-	margin: 10px;
-}
-.toolbox .geneBlock.active p.name{
-	color: white;
-	margin: 0;
-	font-size: small;
-	text-align: center;
-	display: table-row;
-	height: 1px;
-}
-.toolbox .geneBlock.active.used {
-	opacity: 0.3;
-}
-.toolbox .grid .placed {
-	position: absolute;
-	z-index: 29;
-}
-.toolbox .grid .grid_overlay {
-	z-index: 28;
-	background: #99ffff;
-	position: absolute;
-	opacity: 0.4;
-}
-
-
-/*
- * Setup prompt
- */
 
 .strain_prompt a.button {
 	width: 250px;
@@ -390,10 +85,7 @@ canvas.draggable {
 	font-family: helvetica;
 }
 
-
-/*
- * Tooltips
- */
+/* Tooltips */
 
 .tooltip {
 	z-index: 25;
@@ -413,26 +105,29 @@ canvas.draggable {
 #tooltip {
 	color: black;
 	background-color: #ffcc00;
+	
+	table {
+		border-spacing: 6px;
+		border-collapse: separate;
+		width: 100%;
+	}
+	td, #tooltip th {
+		padding: 0;
+		vertical-align: middle;
+	}
+	tr th {
+		padding-bottom: 10px;
+		font-size: 130%;
+		vertical-align: top;
+		font-weight: bold;
+		text-align: left;
+	}
+	td p {
+		margin-top: 0.5em;
+	}
+	table td:first-child {
+		width: 4em;
+	}
 }
-#tooltip table {
-	border-spacing: 6px;
-	border-collapse: separate;
-	width: 100%;
-}
-#tooltip td, #tooltip th {
-	padding: 0;
-	vertical-align: middle;
-}
-#tooltip tr th {
-	padding-bottom: 10px;
-	font-size: 130%;
-	vertical-align: top;
-	font-weight: bold;
-	text-align: left;
-}
-#tooltip td p {
-	margin-top: 0.5em;
-}
-#tooltip table td:first-child {
-	width: 4em;
-}
+
+@import "ui/main_info","ui/main_control","ui/top_bar","ui/evolution","ui/mutation";

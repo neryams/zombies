@@ -1,0 +1,28 @@
+.top_bar {
+	position: absolute;
+	top: 0;
+	left: 0;
+	height: $titlebar-height;
+	width: 100%;
+	z-index: 13;
+	background: #eee;
+	border-bottom: 1px solid white;
+
+	h1 {
+		font-size: 24px;
+		float: left;
+		margin-left: 1rem;
+	}
+	div {
+		float: right;
+		margin-right: 1.5rem;
+		text-align: right;
+		
+		label {
+			font-size: 12px;
+		}
+		&.dataField-money {
+			font-weight: bold;
+		}
+	}
+}

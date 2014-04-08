@@ -14,13 +14,13 @@ function MainInterface(UI,R) {
 		},
 		start: function() {
 			$('#setup').remove();
-			$('#progress').css('display','block');
+			$('#progress').addClass('display','block');
 			$('#progress p').html(i18n.t('setup:loading.default'));
 		},
 		endGenerator: function() {
 			buildUI();
 			$('#progress').remove();
-			$('#container').css('display','block');
+			$('#container').addClass('active');
 		},
 		end: function() {
 			attachEvents();
@@ -35,37 +35,40 @@ function MainInterface(UI,R) {
 	buildUI = function() {
 		$('#ui').append($('<div id="render_tooltip" class="tooltip"></div><div id="tooltip" class="tooltip"></div>'));
 
-		UI.addDataField('stats',{
-			type: 'div',
-			class: 'stats'
-		}).addDataField({
+		var mainControl = UI.interfaceParts.main_control,
+			mainInfo = UI.interfaceParts.main_info,
+			mainBar = UI.interfaceParts.top_bar;
+
+		mainBar.addDataField({
 			type: 'h1'
 		}).label('setup:title');
 
-		var uiMenu = UI.addDataField('menu',{
-			type: 'div',
-			class: 'main_menu',
-			mousePriority: true
+		mainBar.addDataField('money',{
+			title: 'Evolution Points',
+			dynamic: 'money',
+			dynamicFormat: function(value) {
+				var money = parseInt(value);
+				for(var i = 0; i < UI.evolutions.selectedUpgrades.length; i++)
+					money -= UI.evolutions.all[UI.evolutions.selectedUpgrades[i]].cost;
+				return money;
+			}
 		});
 
-		var uiMenuDataviews = uiMenu.addDataField('dataViewSelector',{
+		mainInfo.addDataField('sidebarAccordion',{
+			type: 'accordion'
+		}).addDataField('newsTicker',{
+			type: 'accordion_child',
+			title: 'ui:buttons.news',
+			class: 'news'
+		});
+
+		var dataViewList = UI.interfaceParts.main_control.addDataField('dataViewSelector',{
 			type: 'div',
 			visible: false,
 			class: 'dataViewList'
 		});
 
-		uiMenu.addDataField({
-			type: 'button',
-			onClick: function() {
-				if(!this.opens[0].visible)
-					this.opens[0].display();
-				else
-					this.opens[0].hide();
-			},
-			opens: [uiMenuDataviews]
-		}).label('ui:buttons.dataviews').element.position();
-
-		uiMenuDataviews.addDataField({
+		dataViewList.addDataField({
 			type:'button',
 			onClick: function() {
 				R.closeVisualization();
@@ -73,7 +76,7 @@ function MainInterface(UI,R) {
 				UI.toggleGlobeTooltip(false);
 			}
 		}).label('ui:buttons.dataviews_inner.disable');
-		uiMenuDataviews.addDataField({
+		dataViewList.addDataField({
 			type:'button',
 			onClick: function() {
 				R.setVisualization('country');
@@ -85,7 +88,7 @@ function MainInterface(UI,R) {
 				});
 			}
 		}).label('ui:buttons.dataviews_inner.political');
-		uiMenuDataviews.addDataField({
+		dataViewList.addDataField({
 			type:'button',
 			onClick: function() {
 				R.setVisualization('precipitation');
@@ -95,7 +98,7 @@ function MainInterface(UI,R) {
 				});
 			}
 		}).label('ui:buttons.dataviews_inner.rain');
-		uiMenuDataviews.addDataField({
+		dataViewList.addDataField({
 			type:'button',
 			onClick: function() {
 				R.setVisualization('temperature');
@@ -106,16 +109,35 @@ function MainInterface(UI,R) {
 			}
 		}).label('ui:buttons.dataviews_inner.temperature');
 
-		uiMenu.addDataField({
+		mainControl.addDataField({
+			type: 'button',
+			onClick: function() {
+				if(!this.opens[0].visible)
+					this.opens[0].display();
+				else
+					this.opens[0].hide();
+			},
+			opens: [dataViewList]
+		}).label('ui:buttons.dataviews').element.position();
+
+		mainControl.addDataField({
 			type: 'button',
 			onClick: function() {
 				R.togglePopDisplay();
 			}
 		}).label('ui:buttons.population');
 
+		UI.addDataField('alert',{
+			type: 'div',
+			overlay: true,
+			onHide: function() {
+				this.element.empty();
+			}
+		});
+
 		var evolveMenuOuter = UI.addDataField('evolveMenu',{
 			type: 'div',
-			class: 'evolution draggable-parent',
+			class: 'draggable-parent',
 			title: 'Evolution',
 			overlay: true,
 			onHide: function() {
@@ -126,19 +148,6 @@ function MainInterface(UI,R) {
 			type: 'div',
 			class: 'draggable'
 		});
-		uiMenu.addDataField('evolveMenu_button',{
-			type: 'button',
-			class: 'primary',
-			onClick: function() {
-				if(!this.opens[0].visible) {
-					UI.evolutions.refresh();
-					this.opens[0].display();
-				}
-				else
-					this.opens[0].hide();
-			},
-			opens: [evolveMenuOuter]
-		}).label('ui:buttons.evolution');
 
 		UI.evolutions.mutationMenu = UI.addDataField('mutationMenu',{
 			type: 'div',
@@ -150,23 +159,12 @@ function MainInterface(UI,R) {
 			}
 		});
 		UI.evolutions.mutationMenu.element.append($(i18n.t('dom:interface.mutation.menu')));
-		uiMenu.addDataField('mutationMenu_button',{
-			type: 'button',
-			class: 'primary',
-			onClick: function() {
-				if(!this.opens[0].visible) {
-					UI.evolutions.refreshGenes();
-					this.opens[0].display();
-				}
-				else
-					this.opens[0].hide();
-			},
-			opens: [UI.evolutions.mutationMenu]
-		}).label('ui:buttons.mutation');
+
 		var mutationMenu_controls = UI.evolutions.mutationMenu.addDataField({
 			type: 'div',
 			class: 'menu'
 		});
+
 		mutationMenu_controls.addDataField('mutationMenu_clear',{
 			type: 'button',
 			class: 'icon',
@@ -177,6 +175,7 @@ function MainInterface(UI,R) {
 				UI.evolutions.clearGrid();
 			}
 		}).val('Clear');
+
 		mutationMenu_controls.addDataField('mutationMenu_submit',{
 			type: 'button',
 			class: 'primary',
@@ -204,44 +203,35 @@ function MainInterface(UI,R) {
 			}
 		}).val('Cancel');
 
-		var uiSidebar = UI.addDataField({
-			type: 'div',
-			class: 'sidebar',
-			mousePriority: true
-		});
-
-		var uiSidebarStatic = uiSidebar.addDataField('sidebarStatic',{
-			type: 'div'
-		});
-		uiSidebarStatic.addDataField('money',{
-			title: 'Evolution Points',
-			dynamic: 'money',
-			dynamicFormat: function(value) {
-				var money = parseInt(value);
-				for(var i = 0; i < UI.evolutions.selectedUpgrades.length; i++)
-					money -= UI.evolutions.all[UI.evolutions.selectedUpgrades[i]].cost;
-				return money;
-			}
-		});
-
-		var uiSidebarAccordion = uiSidebar.addDataField('sidebarAccordion',{
-			type: 'accordion'
-		});
-		uiSidebarAccordion.addDataField('newsTicker',{
-			type: 'accordion_child',
-			title: 'ui:buttons.news',
-			class: 'news'
-		});
-
-		UI.addDataField('alert',{
-			type: 'div',
-			overlay: true,
-			onHide: function() {
-				this.element.empty();
-			}
-		});
+		mainControl.addDataField('evolveMenu_button',{
+			type: 'button',
+			class: 'primary',
+			onClick: function() {
+				if(!this.opens[0].visible) {
+					UI.evolutions.refresh();
+					this.opens[0].display();
+				}
+				else
+					this.opens[0].hide();
+			},
+			opens: [evolveMenuOuter]
+		}).label('ui:buttons.evolution');
 		
-		uiMenuDataviews.element.css('bottom',uiMenu.element.height());
+		mainControl.addDataField('mutationMenu_button',{
+			type: 'button',
+			class: 'primary',
+			onClick: function() {
+				if(!this.opens[0].visible) {
+					UI.evolutions.refreshGenes();
+					this.opens[0].display();
+				}
+				else
+					this.opens[0].hide();
+			},
+			opens: [UI.evolutions.mutationMenu]
+		}).label('ui:buttons.mutation');
+		
+		dataViewList.element.css('bottom',mainControl.element.height());
 	},
 
 	// Commands to run when loading is finished and main game UI is displayed
@@ -472,7 +462,7 @@ function MainInterface(UI,R) {
 	};
 
 	var preload_html = '<div id="progress"><div class="progressbar pace"><div class="pace-progress"></div></div><p></p></div>';
-	$('#ui').css('display','block').append($(preload_html));
+	$('#ui').addClass('active').append($(preload_html));
 
 	return {
 		load: load,

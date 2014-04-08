@@ -1,23 +1,6 @@
 @import "third-party/pace";
 
 /*
- * Base structure
- */
-
-html,
-body {
-	height: 100%;
-	background-color: #222;
-}
-body,h1,h2,h3,h4,h5,h6 {
-	color: #fff;
-	font-family: Arial, sans-serif;
-}
-input,select {
-	color: black;
-}
-
-/*
  * Globals
  */
 
@@ -168,29 +151,42 @@ a:hover {
 /*
  * User Styles
  */
-
-#setup input[type='submit'] {
-	visibility: hidden;
-	width: 100%;
-}
-.pace-done #setup input[type='submit'] {
-	visibility: visible;
-}
-#setup input[type='checkbox'] {
-	margin: 0.25rem 0 1.5rem;
+#setup {
+	color: #fff;
+	font-family: Arial, sans-serif;
+	
+	h1 {
+		color: #fff;
+	}
+	
+	input,select {
+		color: black;
+	}
+	input[type='submit'] {
+		visibility: hidden;
+		width: 100%;
+		color: #fff;
+	}
+	input[type='checkbox'] {
+		margin: 0.25rem 0 1.5rem;
+	}
+	.pace-done  & input[type='submit'] {
+		visibility: visible;
+	}
 }
 
 #progress {
 	margin: 14em auto;
 	width: 200px;
-}
-#progress p {
-	text-align: center;
-	color: white;
-	font-size: x-small;
-	font-family: monospace;
-	margin-top: 1em;
-}
-#progress .pace {
-	top: 0;
+	
+	p {
+		text-align: center;
+		color: white;
+		font-size: x-small;
+		font-family: monospace;
+		margin-top: 1em;
+	}
+	.pace {
+		top: 0;
+	}
 }

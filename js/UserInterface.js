@@ -73,7 +73,7 @@ var UserInterface = function UserInterface(Renderer) {
 				newElement = $(i18n.t('dom:interface.dataField.progressBar'));
 			break;
 			case 'button':
-				newElement = fullElement = $(i18n.t('dom:interface.dataField.default',{ element:'a', className:className+' button tiny' }));
+				newElement = fullElement = $(i18n.t('dom:interface.dataField.default',{ element:'a', className:className }));
 			break;
 			case 'accordion':
 				newElement = fullElement = $(i18n.t('dom:interface.dataField.default',{ element:'dl', className:className+' accordion' })).attr('data-accordion','');
@@ -422,6 +422,7 @@ var UserInterface = function UserInterface(Renderer) {
 	Evolution.prototype.all = {};
 	Evolution.prototype.selectedUpgrades = [];
 	Evolution.prototype.mutation = [];
+	Evolution.prototype.grid = [];
 
 	// Prototype properties for drawing gene shapes
 	Evolution.prototype.SQUARE_SIZE = 20;
@@ -855,8 +856,7 @@ var UserInterface = function UserInterface(Renderer) {
 	},
 
 	addDataField = function(id,options) {
-		var newDataField = new DataField(id,options);
-		return newDataField;
+		return new DataField(id,options);
 	},
 
 	hideTooltip = function() {
@@ -880,12 +880,34 @@ var UserInterface = function UserInterface(Renderer) {
 			Renderer.stopCameraMovement();
 	});
 
+	// Build the containers for the UI elements
+	addDataField('top_bar',{
+		type: 'div',
+		mousePriority: true,
+		class: 'top_bar'
+	});
+	var mainSection = addDataField({
+		type: 'div',
+		class: 'main_ui'
+	});
+
+	mainSection.addDataField('main_info',{
+		type: 'div',
+		mousePriority: true
+	});
+	mainSection.addDataField('main_control',{
+		type: 'div',
+		mousePriority: true
+	});
+
 	return {
 		interfaceParts: interfaceParts,
 		upgrades: Evolution.prototype.all,
-		addDataField: addDataField,
 		status: status,
 		evolutions: Evolution.prototype,
+		addDataField: function(id, options) {
+			return mainSection.addDataField.call(mainSection, id, options);
+		},
 		toggleGlobeTooltip: function(activate,getPointInfo) {
 			if(activate)
 				activatePlanetTooltip(getPointInfo);
@@ -926,15 +948,12 @@ var UserInterface = function UserInterface(Renderer) {
 
 			changedStatus = {};
 
-			if(status.gridSize < data.gridSize) {
-				Evolution.prototype.gridSize = status.gridSize = data.gridSize;
-				if(!Evolution.prototype.grid)
-					Evolution.prototype.grid = [];
+			if(Evolution.prototype.grid.length < status.gridSize) {
 				// Create the grid storage object for keeping track of each gene location
-				while(Evolution.prototype.grid.length < data.gridSize) {
+				while(Evolution.prototype.grid.length < status.gridSize) {
 					Evolution.prototype.grid.push([]);
 				}
-				$('#tb_board .grid', Evolution.prototype.mutationMenu.element).css('width',data.gridSize*Evolution.prototype.SQUARE_SIZE).css('height',data.gridSize*Evolution.prototype.SQUARE_SIZE);
+				$('#tb_board .grid', Evolution.prototype.mutationMenu.element).css('width',status.gridSize*Evolution.prototype.SQUARE_SIZE).css('height',status.gridSize*Evolution.prototype.SQUARE_SIZE);
 			}
 
 			return status;

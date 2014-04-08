@@ -2,7 +2,7 @@
 	"interface": {
 		"dataField": {
 			"default": "<__element__ class=\"__className__\"></__element__>",
-			"title": "<h3>$t(__title__)</h3>",
+			"title": "<label>$t(__title__)</label>",
 			"accordionTitle": "<a href=\"#__link__\">$t(__title__)</h3>",
 			"text": "<span></span>",
 			"paragraph": "<p></p>",

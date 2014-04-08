@@ -61,12 +61,12 @@ exports.options = {
 		this.currPanicLevel = 1;
 		this.countryPanicThresholds = [0,400,80000,160000,320000];
 
-		this.worldPanic = this.S.UI.interfaceParts.stats.addDataField({
+		/*this.S.UI.interfaceParts.top_bar.addDataField({
 			type: 'progressBar',
 			title: 'ui:labels.world_panic',
 			dynamic: 'world_panic',
 			width: 186
-		});
+		});*/
 	},
 	alwaysActive: true,
 	children: ['panic.applyToPoint','panic.applyToGlobal']

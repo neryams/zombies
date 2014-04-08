@@ -1,0 +1,76 @@
+.dataField-evolveMenu > h3 {
+	margin-left: 16px;
+	z-index: 24;
+	position: absolute;
+	top: 0;
+	left: 0;
+}
+.dataField-evolveMenu > div {
+	div {
+		width: 30px;
+		height: 30px;
+		margin-left: -15px;
+		margin-top: -15px;
+		position: absolute;
+		
+		img {
+			max-width: none;
+			position: absolute;
+			opacity: .7;
+		}
+		img.geneIcon {
+			z-index: 24;
+		}
+		img.connector {
+			z-index: -2;
+		}
+		img.arrows {
+			z-index: -1;
+		}
+		img.connector,
+		img.arrows,
+		a.evoIcon {
+			@include grey-filter(90%);
+		}
+
+		a.evoIcon {
+			width: 30px;
+			height: 30px;
+			border-radius: 15px;
+			display: block;
+			z-index: 23;
+			overflow: hidden;
+			background-image: url(../js/modules/sprite.png);
+			
+			img {
+				margin-top: -200%;
+				pointer-events: none;
+			}
+		}
+	}
+
+	div.available {
+		a.evoIcon {
+			@include grey-filter(0%);
+			
+			img {
+				margin-top: -100%;
+			}
+	    }
+	}
+
+	div.active {
+		img {
+			@include grey-filter(0%);
+			opacity: 1;
+		}
+		a.evoIcon {
+			@include grey-filter(0%);
+			opacity: 1;
+			
+			img {
+				margin-top: 0;
+			}
+		}
+	}
+}

@@ -17,6 +17,7 @@
 		"shipping": "Shipping Schedule"
 	},
 	"labels": {
+		"date": "Date",
 		"world_panic": "World Panic",
 		"population_world": "World Population",
 		"population_zombies": "Zombie Population",
