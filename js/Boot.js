@@ -53,7 +53,7 @@ if(node) {
     var sass = require('node-sass');
 
     sass.render({
-        data: '@import "third-party/normalize","third-party/foundation","main","setup","ui";',
+        data: '@import "third-party/normalize","settings","third-party/foundation","main","setup","ui";',
         success: function(css){
             fs.writeFile('zombies/css/compiled.css', css, function (err) {
                 if (err) throw err;

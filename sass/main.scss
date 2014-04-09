@@ -1,19 +1,6 @@
-html,
-body {
-	height: 100%;
-	background-color: #222;
-}
-
 @mixin grey-filter($amount) {
 	filter: #{'grayscale('}$amount#{')'};
 	-webkit-filter: #{'grayscale('}$amount#{')'};	
-}
-
-.strong {
-	font-weight: bold;
-}
-.emphasis {
-	font-style: italic;
 }
 
 #container, body {

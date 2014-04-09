@@ -186,7 +186,7 @@ function MainInterface(UI,R) {
 						if(UI.evolutions.all[key].gene.active === undefined || !UI.evolutions.mutation[UI.evolutions.all[key].gene.active].placement.equals(UI.evolutions.all[key].gene.placement))
 							totalPrice += UI.evolutions.all[key].cost;
 
-				this.showToolTip( 'Mutate your infection for <span class="strong">'+totalPrice+'</span> evolution points' );
+				this.showToolTip( 'Mutate your infection for <strong>'+totalPrice+'</strong> evolution points' );
 			},
 			onClick: function() {
 				UI.evolutions.mutate();
