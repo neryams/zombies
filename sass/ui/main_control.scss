@@ -3,3 +3,11 @@
 		width: 100%;
 	}
 }
+.dataViewList {
+	.dataField-button {
+		@include button(rem-calc(6));
+		margin: 0;
+		font-size: rem-calc(12);
+		border-bottom: 1px solid #000;
+	}
+}

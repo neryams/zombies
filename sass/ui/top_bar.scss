@@ -7,11 +7,16 @@
 	z-index: 13;
 	background: #eee;
 	border-bottom: 1px solid white;
+	color: #000;
 
 	h1 {
 		font-size: 24px;
 		float: left;
 		margin-left: 1rem;
+		color: #666;
+	}
+	label {
+		color: #333;
 	}
 	div {
 		float: right;

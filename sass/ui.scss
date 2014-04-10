@@ -78,11 +78,22 @@ canvas.draggable {
 	background-image: url('../ui/hash.gif');
 }
 
-.strain_prompt a.button {
-	width: 250px;
-	margin: 0 8px;
-	font-size: 1rem;
-	font-family: helvetica;
+.strain_prompt {
+	label {
+		font-size: rem-calc(24);
+		color: white;
+		margin-bottom: rem-calc(16);
+	}
+	.dataField-button {
+		width: 250px;
+		margin: 0 8px;
+		font-size: 1rem;
+		font-family: helvetica;
+		div {
+			font-size: rem-calc(12);
+			margin-top: rem-calc(8);
+		}
+	}
 }
 
 /* Tooltips */
