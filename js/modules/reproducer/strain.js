@@ -44,7 +44,7 @@ exports.options = {
 		dataViews.addDataField({
 			type:'button',
 			onClick: function() {
-				this.R.setVisualization('tech');
+				this.S.R.setVisualization('tech');
 				this.parent.hide();
 				this.S.UI.toggleGlobeTooltip(true,function(point){
 					return Math.round((point.tech)*10)/10 + ' parts';
@@ -54,7 +54,7 @@ exports.options = {
 		dataViews.addDataField({
 			type:'button',
 			onClick: function() {
-				this.R.setVisualization('trees');
+				this.S.R.setVisualization('trees');
 				this.parent.hide();
 				this.S.UI.toggleGlobeTooltip(true,function(point){
 					return Math.round((point.trees)*10)/10 + ' vegetation';
