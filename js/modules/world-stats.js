@@ -20,6 +20,7 @@ exports.options = {
 		}
 
 		this.S.UI.interfaceParts.top_bar.addDataField({
+			type: 'field',
 			title: 'ui:labels.date',
 			dynamic: 'date',
 			dynamicFormat: function(value) {
@@ -28,17 +29,20 @@ exports.options = {
 		});
 
 		this.S.UI.interfaceParts.top_bar.addDataField({
+			type: 'field',
 			title: 'ui:labels.virus_name',
 			dynamic: 'virus_name'
 		}).val(this.S.status.virus_name);
 
 		this.S.UI.interfaceParts.top_bar.addDataField({
+			type: 'field',
 			title: 'ui:labels.population_world',
 			dynamic: 'world_pop',
 			value: this.world_pop
 		});
 
 		this.S.UI.interfaceParts.top_bar.addDataField({
+			type: 'field',
 			title: 'ui:labels.population_zombies',
 			dynamic: 'world_infected',
 			value: this.world_infected

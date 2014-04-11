@@ -28,6 +28,138 @@ var UserInterface = function UserInterface(Renderer) {
 
 		};
 
+	var DataFieldV2 = function (id,config,parent) {
+		var className = 'dataField';
+
+		if(typeof id == 'object') {
+			config = id;
+			id = undefined;
+		}
+		if(!id)
+			id = '_' + Object.keys(interfaceParts).length;
+
+		interfaceParts[id] = this;
+		this.id = id;
+		className += ' dataField-'+id;
+
+		if(config) {
+			if(!config.type)
+				config.type = 'div';
+
+			if(typeof this._typeOptions[config.type] === 'function') {
+				this._merge( this._typeOptions[config.type].call(this, config) );
+			}
+			else {
+				this._merge( $(i18n.t('dom:interface.dataField.default', { element: config.type })) );
+			}
+
+			for (var key in config)
+				if (config.hasOwnProperty(key))
+					this[key] = config[key];
+		}
+		className += ' dataField-'+this.type;
+		this.addClass(className);
+
+		parent.append(this);
+
+		return this;
+	};
+
+	DataFieldV2.prototype = Object.create($.extend({}, $.prototype, {
+		dynamic: false,
+		mousePriority:false,
+		val: function(value) {
+			if(value) {
+				if(this.find('input').length)
+					this.find('input').val(value);
+				else
+					this.filter('input').val(value);
+				this.value = value;
+			}
+			else
+				return this.value;
+		},
+		addDataField: function(id,options) {
+			if(typeof id == 'object') {
+				options = id;
+				id = undefined;
+			}
+
+			var newDataField = new DataFieldV2(id, options, this);
+			return newDataField;
+		},
+		addDataFieldOld: function(id,options) {
+			if(typeof id == 'object') {
+				options = id;
+				id = undefined;
+			}
+
+			var newDataField = new DataField(id, options, this);
+			return newDataField;
+		},
+		_typeOptions: {
+			div: function() {
+				return $(i18n.t('dom:interface.dataField.default', { element: 'div' }));
+			},
+			button: function(config) {
+				var label = config.label || 'Button';
+				return $(i18n.t('dom:interface.dataField.default',{ element:'a' })).html(i18n.t(label));
+			},
+			field: function(config) {
+				var field = $('<label/>'),
+					input = $('<input type="text"/>');
+
+				if(config.title)
+					field.html(config.title);
+				if(config.value)
+					input.val(config.value);
+
+				field.append(input);
+				return field;
+			},
+			progressBar: function(config) {
+				this.width = config.width || 100;
+				this.val = function(value) {
+					var bar = this.children();
+
+					if(isNaN(value)) {
+						this.element.addClass('date');
+						bar.html(value).css('width','');
+					} else {
+						this.element.removeClass('date countdown');
+						bar.html('').css('width', Math.round(this.width*value));
+					}
+				};
+
+				return $(i18n.t('dom:interface.dataField.progressBar'));
+			},
+			choiceToggle: function(config) {
+				var alignment = 'align:' + (config.alignment || 'left'),
+					label = config.label || 'Select',
+					button = $('<a href="#" data-options="' + alignment + '" data-dropdown="drop" class="dataField-button">' + i18n.t(label) + '</a>'),
+					list = $('<ul id="drop" class="f-dropdown" data-dropdown-content></ul>');
+
+				this.addOption = function(label, onpick) {
+					var link = $('<a href="#">' + i18n.t(label) + '</a>').on('click', onpick);
+					this.filter('ul').append($('<li></li>').append(link));
+				};
+
+				return [button,list];
+			}
+		},
+		_merge: function(toMerge) {
+			var _this = this;
+
+			if(toMerge instanceof jQuery)
+				toMerge.each(function() {
+					_this.push(this);
+				});
+			else
+				while(toMerge.length > 0)
+					_this._merge(toMerge.pop());
+		}
+	}));
+
 	function DataField(id,options,parent) {
 		var newElement, fullElement,
 			className = 'dataField';
@@ -43,12 +175,6 @@ var UserInterface = function UserInterface(Renderer) {
 		this.id = id;
 		className += ' dataField-'+id;
 
-		if(options && options.type) {
-			this.dataType = options.type;
-			delete options.type;
-		}
-		className += ' dataField-'+this.dataType;
-
 		if(options)
 			for (var key in options)
 				if (options.hasOwnProperty(key)) {
@@ -58,9 +184,11 @@ var UserInterface = function UserInterface(Renderer) {
 						this[key].bind(this);
 				}
 
+		className += ' dataField-'+this.type;
+
 		this.children = [];
 
-		switch(this.dataType) {
+		switch(this.type) {
 			case 'text':
 				newElement = $(i18n.t('dom:interface.dataField.text'));
 			break;
@@ -73,14 +201,16 @@ var UserInterface = function UserInterface(Renderer) {
 				newElement = $(i18n.t('dom:interface.dataField.progressBar'));
 			break;
 			case 'button':
-				newElement = fullElement = $(i18n.t('dom:interface.dataField.default',{ element:'a', className:className }));
+				newElement = fullElement = $(i18n.t('dom:interface.dataField.default',{ element:'a' }));
 			break;
 			case 'accordion':
-				newElement = fullElement = $(i18n.t('dom:interface.dataField.default',{ element:'dl', className:className+' accordion' })).attr('data-accordion','');
+				newElement = fullElement = $(i18n.t('dom:interface.dataField.default',{ element:'dl' })).attr('data-accordion','');
+				className += ' accordion';
 			break;
 			case 'accordion_child':
-				newElement = $(i18n.t('dom:interface.dataField.default',{ element:'div', className:className }));
-				fullElement = $(i18n.t('dom:interface.dataField.default',{ element:'dd', className:'' })).append(newElement);
+				newElement = $(i18n.t('dom:interface.dataField.default',{ element:'div' }));
+				fullElement = $(i18n.t('dom:interface.dataField.default',{ element:'dd' })).append(newElement);
+				className = '';
 			break;
 			case 'slider':
 				newElement = $(i18n.t('dom:interface.dataField.slider',{ options: this.dataOptions }));
@@ -95,16 +225,21 @@ var UserInterface = function UserInterface(Renderer) {
 					});
 			break;
 			default:
-				newElement = fullElement = $(i18n.t('dom:interface.dataField.default',{ element:this.dataType, className:className }));
+				newElement = fullElement = $(i18n.t('dom:interface.dataField.default',{ element:this.type }));
 		}
 
 		if(!fullElement)
-			fullElement = $(i18n.t('dom:interface.dataField.default',{ element:'div', className:className })).append(newElement);
+			fullElement = $(i18n.t('dom:interface.dataField.default',{ element:'div' })).append(newElement);
+
+		fullElement.addClass(className);
 
 		if(parent) {
-			this.parent = parent;
-			parent.children.push(this);
-			parent.element.append(fullElement);
+			if(parent.element) {
+				this.parent = parent;
+				parent.children.push(this);
+				parent.element.append(fullElement);
+			} else
+				parent.append(fullElement);
 		} else {
 			$('#ui').append(fullElement);
 		}
@@ -115,14 +250,14 @@ var UserInterface = function UserInterface(Renderer) {
 		if(this.dynamic)
 			newElement.data('dynamic', this.dynamic);
 
-		if(this.dataType == 'accordion_child') {
+		if(this.type == 'accordion_child') {
 			var uniqueId = 'accordion_' + Object.keys(interfaceParts).length;
 			fullElement.prepend($(i18n.t('dom:interface.dataField.accordionTitle',{ title:this.title, link: uniqueId})));
 			newElement.addClass('content');
 			newElement.attr('id',uniqueId);
 		} else {
 			if(this.title) {
-				if(this.parent && this.parent.dataType == 'accordion')
+				if(this.parent && this.parent.type == 'accordion')
 					fullElement.prepend($(i18n.t('dom:interface.dataField.accordionTitle',{ title:this.title })));
 				else
 					fullElement.prepend($(i18n.t('dom:interface.dataField.title',{ title:this.title })));
@@ -156,7 +291,7 @@ var UserInterface = function UserInterface(Renderer) {
 		}
 	}
 	DataField.prototype = {
-		dataType: 'text',
+		type: 'text',
 		title: null,
 		children: null,
 		class: null,
@@ -237,7 +372,7 @@ var UserInterface = function UserInterface(Renderer) {
 			return this;
 		},
 		val: function(value) {
-			if(this.dataType == 'progressBar') {
+			if(this.type == 'progressBar') {
 				if(!this.width)
 					this.width = 100;
 				var bar = this.element.children();
@@ -249,7 +384,7 @@ var UserInterface = function UserInterface(Renderer) {
 					bar.html('').css('width',Math.round(this.width*value));
 				}
 			}
-			else if(this.dataType == 'slider')
+			else if(this.type == 'slider')
 				this.element.foundation('slider', 'set_value', value);
 			else
 				this.element.html(value);
@@ -856,7 +991,7 @@ var UserInterface = function UserInterface(Renderer) {
 	},
 
 	addDataField = function(id,options) {
-		return new DataField(id,options);
+		return new DataFieldV2(id,options,$('#ui'));
 	},
 
 	hideTooltip = function() {
@@ -882,21 +1017,17 @@ var UserInterface = function UserInterface(Renderer) {
 
 	// Build the containers for the UI elements
 	addDataField('top_bar',{
-		type: 'div',
 		mousePriority: true,
 		class: 'top_bar'
 	});
 	var mainSection = addDataField({
-		type: 'div',
 		class: 'main_ui'
 	});
 
 	mainSection.addDataField('main_info',{
-		type: 'div',
 		mousePriority: true
 	});
 	mainSection.addDataField('main_control',{
-		type: 'div',
 		mousePriority: true
 	});
 

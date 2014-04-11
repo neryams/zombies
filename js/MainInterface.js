@@ -41,7 +41,7 @@ function MainInterface(UI,R) {
 
 		mainBar.addDataField({
 			type: 'h1'
-		}).label('setup:title');
+		}).html('setup:title');
 
 		mainBar.addDataField('money',{
 			title: 'Evolution Points',
@@ -53,79 +53,50 @@ function MainInterface(UI,R) {
 				return money;
 			}
 		});
-
+/*
 		mainInfo.addDataField('sidebarAccordion',{
 			type: 'accordion'
 		}).addDataField('newsTicker',{
 			type: 'accordion_child',
 			title: 'ui:buttons.news',
 			class: 'news'
+		});*/
+
+		var visualTooltip = function(visual, mathFunction) {
+			return function() {
+				R.setVisualization(visual);
+				UI.toggleGlobeTooltip(true, mathFunction);
+			};
+		};
+
+		var dataViewList = mainControl.addDataField('dataViewList',{
+			type: 'choiceToggle',
+			alignment: 'top',
+			label: 'ui:buttons.dataviews'
 		});
 
-		var dataViewList = UI.interfaceParts.main_control.addDataField('dataViewSelector',{
-			type: 'div',
-			visible: false,
-			class: 'dataViewList'
+		dataViewList.addOption('ui:buttons.dataviews_inner.disable', function() {
+			R.closeVisualization();
+			UI.toggleGlobeTooltip(false);
 		});
-
-		dataViewList.addDataField({
-			type:'button',
-			onClick: function() {
-				R.closeVisualization();
-				this.parent.hide();
-				UI.toggleGlobeTooltip(false);
+		dataViewList.addOption('ui:buttons.dataviews_inner.political', visualTooltip('country',function(point) {
+			if(point.country) {
+				return '<strong>' + point.country.name + '</strong>';
 			}
-		}).label('ui:buttons.dataviews_inner.disable');
-		dataViewList.addDataField({
-			type:'button',
-			onClick: function() {
-				R.setVisualization('country');
-				this.parent.hide();
-				UI.toggleGlobeTooltip(true,function(point){
-					if(point.country) {
-						return '<strong>' + point.country.name + '</strong>';
-					}
-				});
-			}
-		}).label('ui:buttons.dataviews_inner.political');
-		dataViewList.addDataField({
-			type:'button',
-			onClick: function() {
-				R.setVisualization('precipitation');
-				this.parent.hide();
-				UI.toggleGlobeTooltip(true,function(point){
-					return Math.round(point.precipitation*10)/10 + 'mm';
-				});
-			}
-		}).label('ui:buttons.dataviews_inner.rain');
-		dataViewList.addDataField({
-			type:'button',
-			onClick: function() {
-				R.setVisualization('temperature');
-				this.parent.hide();
-				UI.toggleGlobeTooltip(true,function(point){
-					return Math.round((point.temperature - 273)*10)/10 + 'C';
-				});
-			}
-		}).label('ui:buttons.dataviews_inner.temperature');
+		}));
+		dataViewList.addOption('ui:buttons.dataviews_inner.rain', visualTooltip('precipitation',function(point) {
+			return Math.round(point.precipitation*10)/10 + 'mm';
+		}));
+		dataViewList.addOption('ui:buttons.dataviews_inner.temperature', visualTooltip('temperature',function(point){
+			return Math.round((point.temperature - 273)*10)/10 + 'C';
+		}));
 
 		mainControl.addDataField({
 			type: 'button',
-			onClick: function() {
-				if(!this.opens[0].visible)
-					this.opens[0].display();
-				else
-					this.opens[0].hide();
-			},
-			opens: [dataViewList]
-		}).label('ui:buttons.dataviews').element.position();
-
-		mainControl.addDataField({
-			type: 'button',
-			onClick: function() {
-				R.togglePopDisplay();
-			}
-		}).label('ui:buttons.population');
+			label: 'ui:buttons.population'
+		}).click(function() {
+			R.togglePopDisplay();
+		});
 
 		UI.addDataField('alert',{
 			type: 'div',
@@ -158,6 +129,7 @@ function MainInterface(UI,R) {
 				UI.evolutions.clearGrid();
 			}
 		});
+		/*
 		UI.evolutions.mutationMenu.element.append($(i18n.t('dom:interface.mutation.menu')));
 
 		var mutationMenu_controls = UI.evolutions.mutationMenu.addDataField({
@@ -231,7 +203,7 @@ function MainInterface(UI,R) {
 			opens: [UI.evolutions.mutationMenu]
 		}).label('ui:buttons.mutation');
 		
-		dataViewList.element.css('bottom',mainControl.element.height());
+		dataViewList.element.css('bottom',mainControl.element.height());*/
 	},
 
 	// Commands to run when loading is finished and main game UI is displayed
@@ -455,10 +427,14 @@ function MainInterface(UI,R) {
 			strainPrompt.addDataField({
 				type:'button',
 				onClick: selectStrain(options[i].id)
-			}).val(options[i].name).addDataField().val(options[i].description);
+			}).addDataField({
+				type: 'field',
+				title: options[i].name,
+				value: options[i].description
+			});
 		}
 
-		strainPrompt.display();
+		strainPrompt.show();
 	};
 
 	var preload_html = '<div id="progress"><div class="progressbar pace"><div class="pace-progress"></div></div><p></p></div>';

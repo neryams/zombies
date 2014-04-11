@@ -1,11 +1,9 @@
 {
 	"interface": {
 		"dataField": {
-			"default": "<__element__ class=\"__className__\"></__element__>",
+			"default": "<__element__></__element__>",
 			"title": "<label>$t(__title__)</label>",
 			"accordionTitle": "<a href=\"#__link__\">$t(__title__)</h3>",
-			"text": "<span></span>",
-			"paragraph": "<p></p>",
 			"progressBar": "<div class=\"progress\"><div></div></div>",
 			"slider": "<div class=\"range-slider\" data-slider data-options=\"__options__\"><span class=\"range-slider-handle\"></span><span class=\"range-slider-active-segment\"></span><input type=\"hidden\"></div>"
 		},
