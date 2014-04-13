@@ -41,9 +41,10 @@ function MainInterface(UI,R) {
 
 		mainBar.addDataField({
 			type: 'h1'
-		}).html('setup:title');
+		}).html(i18n.t('setup:title'));
 
 		mainBar.addDataField('money',{
+			type: 'field',
 			title: 'Evolution Points',
 			dynamic: 'money',
 			dynamicFormat: function(value) {

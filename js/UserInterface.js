@@ -58,7 +58,7 @@ var UserInterface = function UserInterface(Renderer) {
 					this[key] = config[key];
 		}
 		className += ' dataField-'+this.type;
-		this.addClass(className);
+		this.addClass(className).addClass(this.class);
 
 		parent.append(this);
 
@@ -68,6 +68,7 @@ var UserInterface = function UserInterface(Renderer) {
 	DataFieldV2.prototype = Object.create($.extend({}, $.prototype, {
 		dynamic: false,
 		mousePriority:false,
+		class: '',
 		val: function(value) {
 			if(value) {
 				if(this.find('input').length)
@@ -110,7 +111,7 @@ var UserInterface = function UserInterface(Renderer) {
 					input = $('<input type="text"/>');
 
 				if(config.title)
-					field.html(config.title);
+					field.html(i18n.t(config.title));
 				if(config.value)
 					input.val(config.value);
 

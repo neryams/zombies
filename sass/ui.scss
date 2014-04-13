@@ -34,6 +34,14 @@ $body-font: 'Arial', sans-serif;
 .dataField-button {
 	@include button(rem-calc(8));
 }
+.dataField-field input {
+	border: 0;
+	background: transparent;
+	padding: 0;
+	height: 16px;
+	text-align: right;
+	box-shadow: none;
+}
 
 
 /* Overlay Styling */
