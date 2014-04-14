@@ -28,7 +28,7 @@ var UserInterface = function UserInterface(Renderer) {
 
 		};
 
-	var DataFieldV2 = function (id,config,parent) {
+	var DataField = function (id,config,parent) {
 		var className = 'dataField';
 
 		if(typeof id == 'object') {
@@ -65,7 +65,7 @@ var UserInterface = function UserInterface(Renderer) {
 		return this;
 	};
 
-	DataFieldV2.prototype = Object.create($.extend({}, $.prototype, {
+	DataField.prototype = Object.create($.extend({}, $.prototype, {
 		dynamic: false,
 		mousePriority:false,
 		class: '',
@@ -86,29 +86,64 @@ var UserInterface = function UserInterface(Renderer) {
 				id = undefined;
 			}
 
-			var newDataField = new DataFieldV2(id, options, this);
-			return newDataField;
-		},
-		addDataFieldOld: function(id,options) {
-			if(typeof id == 'object') {
-				options = id;
-				id = undefined;
-			}
-
 			var newDataField = new DataField(id, options, this);
 			return newDataField;
 		},
+		showToolTip: function(text,width) {
+			var position = this.offset();
+
+			var tooltip = $('#tooltip');
+
+			tooltip.empty();
+			if(width)
+				tooltip.css('width',width);
+			if(text instanceof jQuery)
+				tooltip.append(text);
+			else
+				tooltip.html(text);
+			tooltip.css('top',position.top - (tooltip.height() + 20)).css('left',position.left).addClass('');
+			tooltip.fadeIn(250);
+
+			this.on('mouseleave', function () {
+				tooltip.hide();
+			});
+		},
+		clone: function() {
+			var newDataField = Object.create(DataField.prototype, this);
+			newDataField.length = 0;
+			newDataField._merge(this.clone().insertAfter(this));
+		},
 		_typeOptions: {
-			div: function() {
-				return $(i18n.t('dom:interface.dataField.default', { element: 'div' }));
-			},
 			button: function(config) {
 				var label = config.label || 'Button';
 				return $(i18n.t('dom:interface.dataField.default',{ element:'a' })).html(i18n.t(label));
 			},
+			modal: function(config) {
+				var modal = $('<div id="modal-' + this.id + '" class="reveal-modal" data-reveal></div>');
+
+				this.attachOpener = function(opener) {
+					if(this.opener)
+						this.opener.attr('data-reveal',false).attr('data-reveal-id', false);
+
+					opener.attr('data-reveal',true).attr('data-reveal-id', 'modal-' + this.id);
+					this.opener = opener;
+				};
+				this.show = function() {
+					this.foundation('reveal', 'open');
+				};
+				this.hide = function() {
+					this.foundation('reveal', 'close');
+				};
+				if(config.opener)
+					this.attachOpener(config.opener);
+
+				this.mousePriority = true;
+
+				return modal;
+			},
 			field: function(config) {
 				var field = $('<label/>'),
-					input = $('<input type="text"/>');
+					input = $('<input type="text" readonly />');
 
 				if(config.title)
 					field.html(i18n.t(config.title));
@@ -124,10 +159,10 @@ var UserInterface = function UserInterface(Renderer) {
 					var bar = this.children();
 
 					if(isNaN(value)) {
-						this.element.addClass('date');
+						this.addClass('date');
 						bar.html(value).css('width','');
 					} else {
-						this.element.removeClass('date countdown');
+						this.removeClass('date countdown');
 						bar.html('').css('width', Math.round(this.width*value));
 					}
 				};
@@ -161,7 +196,7 @@ var UserInterface = function UserInterface(Renderer) {
 		}
 	}));
 
-	function DataField(id,options,parent) {
+	function DataFieldOld(id,options,parent) {
 		var newElement, fullElement,
 			className = 'dataField';
 
@@ -291,7 +326,7 @@ var UserInterface = function UserInterface(Renderer) {
 				});
 		}
 	}
-	DataField.prototype = {
+	DataFieldOld.prototype = {
 		type: 'text',
 		title: null,
 		children: null,
@@ -393,7 +428,7 @@ var UserInterface = function UserInterface(Renderer) {
 		}
 	};
 
-	DataField.prototype.showToolTip = function (text,element,width) {
+	DataFieldOld.prototype.showToolTip = function (text,element,width) {
 		if(!element)
 			element = this.element;
 		var position = element.offset();
@@ -417,31 +452,26 @@ var UserInterface = function UserInterface(Renderer) {
 	};
 
 	function Evolution(name,levels,options) {
-		var i,evol = this;
+		var i;
 
 		if(!options)
 			options = {};
 
 		options.type = 'div';
-		// Inherit the DataField class
-		DataField.call( this, '_evol'+name, options, this.evolveMenu );
-		// Save the process function to the Evolution object
-		this.name = name;
-
-		// Clear classes from the original element so it may be cloned for all the levels of the evolution object
-		this.element.attr('class','');
 
 		var evolutionTooltip = function(event) {
-			var data = event.data.all[$(this).data('id')];
-			var toolTipContent = $('<table/>');
-			toolTipContent.append($('<tr><th colspan="2">'+data.name+'</th></tr>'));
-			if(data.cost > 0)
-				toolTipContent.append($('<tr><td>Cost</td><td>'+data.cost+'</td></tr>'));
-			if(data.gene)
-				toolTipContent = toolTipContent.append($('<tr><td>Gene</td></tr>').append($('<td/>').append(data.gene.imageElement)));
+			var row, evol = event.data.all[$(this).data('id')];
+			var toolTipContent = $(i18n.t('dom:interface.evolution.tooltipBase', { name: evol.name }));
+			if(evol.cost > 0)
+				toolTipContent.append($(i18n.t('dom:interface.evolution.tooltipRow', { label: 'ui:evolution.cost', value: evol.cost })));
+			if(evol.gene) {
+				row = $(i18n.t('dom:interface.evolution.tooltipRow', { label: 'ui:evolution.gene', value: '' }));
+				row.find('.value').append(evol.gene.imageElement);
+				toolTipContent.append(row);
+			}
 
-			toolTipContent.append($('<tr><td colspan="2">'+data.description+'</td></tr>'));
-			evol.showToolTip(toolTipContent,$(this),200);
+			toolTipContent.append($(i18n.t('dom:interface.evolution.tooltipDesc')));
+			evol.element.showToolTip(toolTipContent,200);
 		};
 
 		var evolutionSelect = function(event) {
@@ -462,7 +492,7 @@ var UserInterface = function UserInterface(Renderer) {
 			} else {
 				for(i = 0; i < upgrade.children.length; i++)
 					if(upgrade.children[i].selected)
-						upgrade.children[i].element.triggerHandler('click');
+						upgrade.children[i].triggerHandler('click');
 				for(i = 0; i < selectedUpgrades.length; i++)
 					if(selectedUpgrades[i] == upgrade.id) {
 						selectedUpgrades.splice(i,1);
@@ -485,7 +515,7 @@ var UserInterface = function UserInterface(Renderer) {
 
 			// Create the evolution upgrade button in the menu
 				// Clone a div element for each level so it can be treated as a separate evolution
-			var currentElement = this.element.clone().addClass(/*'evolutionButton_' + this.name + ' */'evolutionButton_' + currentId).appendTo(this.evolveMenu.element);
+			var currentElement = this.evolveMenu.addDataField('_evol'+name, options).addClass('evolutionButton_' + currentId);
 			var icon = $('<a class="evoIcon" />')
 				.css('background-position', '-' + ((currentLevel.style.bg || this.defaultStyle.bg)*(currentLevel.style.size || this.defaultStyle.size)) + 'px 0')
 				.data('id',currentId).appendTo(currentElement);
@@ -544,404 +574,400 @@ var UserInterface = function UserInterface(Renderer) {
 			icon.on('click.evolutionSelect', { S: this.S, evolution: this }, evolutionSelect);
 
 		}
-		this.element.remove();
-		this.element = $('.evolutionButton_' + name, this.evolveMenu.element);
 	}
 	// Inherit the DataField class
-	Evolution.prototype = Object.create( DataField.prototype );
-	Evolution.prototype.defaultStyle = {
-		bg: 0,
-		offset: [0,0],
-		distance: 65,
-		size: 30
+	Evolution.prototype = {
+		defaultStyle: {
+			bg: 0,
+			offset: [0,0],
+			distance: 65,
+			size: 30
+		},
+		all: {},
+		selectedUpgrades: [],
+		mutation: [],
+		grid: [],
+		SQUARE_SIZE: 20
 	};
-	Evolution.prototype.all = {};
-	Evolution.prototype.selectedUpgrades = [];
-	Evolution.prototype.mutation = [];
-	Evolution.prototype.grid = [];
-
-	// Prototype properties for drawing gene shapes
-	Evolution.prototype.SQUARE_SIZE = 20;
-	// Canvas to draw the shape on
 	Evolution.prototype.imageCanvas = document.createElement( 'canvas' );
 	Evolution.prototype.imageCanvas.width = 100;
 	Evolution.prototype.imageCanvas.height = 100;
 	Evolution.prototype.connectorArrow = new Image();
 	Evolution.prototype.connectorArrow.src = './ui/evol_arrow.png';
+	$.extend(Evolution.prototype, {
+		drawGene: function(imageCanvas, squareSize, gene) {
+			// Get canvas for drawing the image
+			var imageCtx = imageCanvas.getContext('2d'),
+				currPoint,i;
+			// Clear the last gene graphic and set the canvas size to the final shape size
+			imageCanvas.height = squareSize * gene.height;
+			imageCanvas.width = squareSize * gene.width;
 
-	Evolution.prototype.drawGene = function(imageCanvas, squareSize, gene) {
-		// Get canvas for drawing the image
-		var imageCtx = imageCanvas.getContext('2d'),
-			currPoint,i;
-		// Clear the last gene graphic and set the canvas size to the final shape size
-		imageCanvas.height = squareSize * gene.height;
-		imageCanvas.width = squareSize * gene.width;
+			// Drawing styles
+			switch(gene.color) {
+				case 'red':
+					imageCtx.fillStyle = 'rgba(120, 0, 0, 255)';
+					imageCtx.strokeStyle = 'rgba(255, 0, 0, 255)';
+					break;
+				case 'green':
+					imageCtx.fillStyle = 'rgba(30, 150, 30, 255)';
+					imageCtx.strokeStyle = 'rgba(0, 220, 0, 255)';
+					break;
+				case 'blue':
+					imageCtx.fillStyle = 'rgba(0, 30, 220, 255)';
+					imageCtx.strokeStyle = 'rgba(20, 80, 255, 255)';
+					break;
+				case 'yellow':
+					imageCtx.fillStyle = 'rgba(220, 150, 0, 255)';
+					imageCtx.strokeStyle = 'rgba(255, 255, 0, 255)';
+					break;
+				case 'purple':
+					imageCtx.fillStyle = 'rgba(170, 0, 160, 255)';
+					imageCtx.strokeStyle = 'rgba(255, 0, 220, 255)';
+					break;
+				case 'grey':
+					imageCtx.fillStyle = 'rgba(160, 180, 180, 255)';
+					imageCtx.strokeStyle = 'rgba(230, 230, 230, 255)';
+					break;
+			}
+			imageCtx.lineWidth = 1;
 
-		// Drawing styles
-		switch(gene.color) {
-			case 'red':
-				imageCtx.fillStyle = 'rgba(120, 0, 0, 255)';
-				imageCtx.strokeStyle = 'rgba(255, 0, 0, 255)';
-				break;
-			case 'green':
-				imageCtx.fillStyle = 'rgba(30, 150, 30, 255)';
-				imageCtx.strokeStyle = 'rgba(0, 220, 0, 255)';
-				break;
-			case 'blue':
-				imageCtx.fillStyle = 'rgba(0, 30, 220, 255)';
-				imageCtx.strokeStyle = 'rgba(20, 80, 255, 255)';
-				break;
-			case 'yellow':
-				imageCtx.fillStyle = 'rgba(220, 150, 0, 255)';
-				imageCtx.strokeStyle = 'rgba(255, 255, 0, 255)';
-				break;
-			case 'purple':
-				imageCtx.fillStyle = 'rgba(170, 0, 160, 255)';
-				imageCtx.strokeStyle = 'rgba(255, 0, 220, 255)';
-				break;
-			case 'grey':
-				imageCtx.fillStyle = 'rgba(160, 180, 180, 255)';
-				imageCtx.strokeStyle = 'rgba(230, 230, 230, 255)';
-				break;
-		}
-		imageCtx.lineWidth = 1;
-
-		// array for removing points that are not on the outside
-		var borders = [];
-		// For each point, draw a square at the coordinates
-		for(i = 0; i < gene.shape.length; i++) {
-			currPoint = gene.shape[i];
-			imageCtx.beginPath();
-			imageCtx.rect(currPoint.x*squareSize, currPoint.y*squareSize, squareSize, squareSize);
-			imageCtx.fill();
-			borders[currPoint.y*gene.width + currPoint.x] = i;
-		}
-		for(i = 0; i < borders.length; i++) {
-			if(borders[i] !== undefined) {
-				currPoint = gene.shape[borders[i]];
-				if(borders[i - 1] === undefined || currPoint.x === 0) {
-					imageCtx.beginPath();
-					imageCtx.moveTo(currPoint.x*squareSize + 0.5,currPoint.y*squareSize );
-					imageCtx.lineTo(currPoint.x*squareSize + 0.5,(currPoint.y+1)*squareSize );
-					imageCtx.stroke();
+			// array for removing points that are not on the outside
+			var borders = [];
+			// For each point, draw a square at the coordinates
+			for(i = 0; i < gene.shape.length; i++) {
+				currPoint = gene.shape[i];
+				imageCtx.beginPath();
+				imageCtx.rect(currPoint.x*squareSize, currPoint.y*squareSize, squareSize, squareSize);
+				imageCtx.fill();
+				borders[currPoint.y*gene.width + currPoint.x] = i;
+			}
+			for(i = 0; i < borders.length; i++) {
+				if(borders[i] !== undefined) {
+					currPoint = gene.shape[borders[i]];
+					if(borders[i - 1] === undefined || currPoint.x === 0) {
+						imageCtx.beginPath();
+						imageCtx.moveTo(currPoint.x*squareSize + 0.5,currPoint.y*squareSize );
+						imageCtx.lineTo(currPoint.x*squareSize + 0.5,(currPoint.y+1)*squareSize );
+						imageCtx.stroke();
+					}
+					if(borders[i - gene.width] === undefined || currPoint.y === 0) {
+						imageCtx.beginPath();
+						imageCtx.moveTo(currPoint.x*squareSize ,currPoint.y*squareSize + 0.5);
+						imageCtx.lineTo((currPoint.x+1)*squareSize ,currPoint.y*squareSize + 0.5);
+						imageCtx.stroke();
+					}
+					if(borders[i + 1] === undefined || currPoint.x == gene.width - 1) {
+						imageCtx.beginPath();
+						imageCtx.moveTo((currPoint.x+1)*squareSize - 0.5,currPoint.y*squareSize);
+						imageCtx.lineTo((currPoint.x+1)*squareSize - 0.5,(currPoint.y+1)*squareSize);
+						imageCtx.stroke();
+					}
+					if(borders[i + gene.width] === undefined || currPoint.y == gene.height - 1) {
+						imageCtx.beginPath();
+						imageCtx.moveTo(currPoint.x*squareSize,(currPoint.y+1)*squareSize - 0.5);
+						imageCtx.lineTo((currPoint.x+1)*squareSize,(currPoint.y+1)*squareSize - 0.5);
+						imageCtx.stroke();
+					}
 				}
-				if(borders[i - gene.width] === undefined || currPoint.y === 0) {
-					imageCtx.beginPath();
-					imageCtx.moveTo(currPoint.x*squareSize ,currPoint.y*squareSize + 0.5);
-					imageCtx.lineTo((currPoint.x+1)*squareSize ,currPoint.y*squareSize + 0.5);
-					imageCtx.stroke();
-				}
-				if(borders[i + 1] === undefined || currPoint.x == gene.width - 1) {
-					imageCtx.beginPath();
-					imageCtx.moveTo((currPoint.x+1)*squareSize - 0.5,currPoint.y*squareSize);
-					imageCtx.lineTo((currPoint.x+1)*squareSize - 0.5,(currPoint.y+1)*squareSize);
-					imageCtx.stroke();
-				}
-				if(borders[i + gene.width] === undefined || currPoint.y == gene.height - 1) {
-					imageCtx.beginPath();
-					imageCtx.moveTo(currPoint.x*squareSize,(currPoint.y+1)*squareSize - 0.5);
-					imageCtx.lineTo((currPoint.x+1)*squareSize,(currPoint.y+1)*squareSize - 0.5);
-					imageCtx.stroke();
-				}
-			}
-		}
-
-		return imageCanvas.toDataURL();
-	};
-
-	Evolution.prototype.buildWeb = function(focusUpgrade) {
-		var arrowWidth = Evolution.prototype.connectorArrow.height,
-			arrowLength = Evolution.prototype.connectorArrow.width,
-			evolutionBg = this.imageCanvas;
-		evolutionBg.width = this.evolveMenu.element.width();
-		evolutionBg.height = this.evolveMenu.element.height();
-		$('.connector, .arrows',this.evolveMenu.element).remove();
-
-		var bgCtx = evolutionBg.getContext('2d');
-		bgCtx.clearRect(0, 0, evolutionBg.width, evolutionBg.height);
-
-		var i,key,
-			E = this;
-
-		var placeUpgrades = function(upgrade, position, theta, depth) {
-			if(!upgrade.position) {
-				var currentOffset = upgrade.style.offset || E.defaultStyle.offset,
-					upgradeDistance = upgrade.style.distance || E.defaultStyle.distance,
-					arcTangent = upgrade.style.arcTangent || 0;
-				var offsetX = currentOffset[0] + Math.round( upgradeDistance * Math.cos(theta) );
-				var offsetY = currentOffset[1] - Math.round( upgradeDistance * Math.sin(theta) );
-				upgrade.position = {
-					top: position.top + offsetY,
-					left: position.left + offsetX,
-					arcTangent: arcTangent * Math.PI
-				};
-
-				upgrade.element.css('top', upgrade.position.top).css('left', upgrade.position.left);
 			}
 
-			// Scroll to put the upgrade to focus on in the middle
-			if(upgrade.id == focusUpgrade) {
-				E.evolveMenu.element.css('margin-left', -upgrade.position.left).css('margin-top', -upgrade.position.top);
-			}
-			
-			depth++;
-			theta -= upgrade.position.arcTangent;
-			for(var i = 0, n = upgrade.children.length; i < n; i++) {
-				var currentChild = upgrade.children[i],
-					newTheta;
-				currentChild.style.distance = (currentChild.style.distance || E.defaultStyle.distance) + (upgrade.style.size || E.defaultStyle.size)/2;
-				if(currentChild.style.angle)
-					newTheta = theta + Math.PI * currentChild.style.angle;
-				else
-					newTheta = theta + 2 * Math.PI * ( Math.ceil( i / 2 ) / n ) / depth * (1 - i % 2 * 2 );
-				placeUpgrades(currentChild, upgrade.position, newTheta, depth);
-			}
-
-			return upgrade.position;
-		};
-
-		var drawUpgradeConnectors = function(upgrade) {
-			var i,n,x,y,
-				maxWidth = 4,
-				maxHeight = 4,
-				elementSize = upgrade.style.size || E.defaultStyle.size;
-			for(i = 0, n = upgrade.children.length; i < n; i++) {
-				x = upgrade.children[i].position.parentOffsetX = (upgrade.children[i].position.left - upgrade.position.left);
-				y = upgrade.children[i].position.parentOffsetY = (upgrade.children[i].position.top - upgrade.position.top);
-				x = Math.abs(x);
-				y = Math.abs(y);
-
-				maxWidth = x > maxWidth ? x : maxWidth;
-				maxHeight = y > maxHeight ? y : maxHeight;
-			}
+			return imageCanvas.toDataURL();
+		},
+		buildWeb: function(focusUpgrade) {
+			var arrowWidth = Evolution.prototype.connectorArrow.height,
+				arrowLength = Evolution.prototype.connectorArrow.width,
+				evolutionBg = this.imageCanvas;
+			evolutionBg.width = this.evolveMenu.width();
+			evolutionBg.height = this.evolveMenu.height();
+			$('.connector, .arrows',this.evolveMenu).remove();
 
 			var bgCtx = evolutionBg.getContext('2d');
+			bgCtx.clearRect(0, 0, evolutionBg.width, evolutionBg.height);
 
-			var makePath = function(ctx, x, y, tangentsAngle) {
-				ctx.beginPath();
-				if(tangentsAngle) {
-					var distance = Math.sqrt(x*x + y*y),
-						radius = distance / (2 * Math.sin(Math.abs(tangentsAngle))),
-						tangent, centerX, centerY;
+			var i,key,
+				E = this;
 
-					if(x > 0)
-						tangent = Math.asin(y / distance);
-					else
-						tangent = Math.PI - Math.asin(y / distance);
+			var placeUpgrades = function(upgrade, position, theta, depth) {
+				if(!upgrade.position) {
+					var currentOffset = upgrade.style.offset || E.defaultStyle.offset,
+						upgradeDistance = upgrade.style.distance || E.defaultStyle.distance,
+						arcTangent = upgrade.style.arcTangent || 0;
+					var offsetX = currentOffset[0] + Math.round( upgradeDistance * Math.cos(theta) );
+					var offsetY = currentOffset[1] - Math.round( upgradeDistance * Math.sin(theta) );
+					upgrade.position = {
+						top: position.top + offsetY,
+						left: position.left + offsetX,
+						arcTangent: arcTangent * Math.PI
+					};
 
-					if(tangentsAngle > 0) {
-						centerX = x/2 + Math.sqrt(radius * radius - Math.pow(distance / 2, 2)) * (-y) / distance;
-						centerY = y/2 + Math.sqrt(radius * radius - Math.pow(distance / 2, 2)) * (x) / distance;
-					} else {
-						centerX = x/2 - Math.sqrt(radius * radius - Math.pow(distance / 2, 2)) * (-y) / distance;
-						centerY = y/2 - Math.sqrt(radius * radius - Math.pow(distance / 2, 2)) * (x) / distance;
-					}
-
-					if(tangentsAngle > 0)
-						tangent -= Math.PI / 2;
-					else
-						tangent += Math.PI / 2;
-						
-					if(tangentsAngle > 0)
-						ctx.arc(centerX, centerY, radius, tangent - tangentsAngle, tangent + tangentsAngle);
-					else
-						ctx.arc(centerX, centerY, radius, tangent - tangentsAngle, tangent + tangentsAngle, true);
-				} else {
-					ctx.moveTo(0, 0);
-					ctx.lineTo(x, y);
+					upgrade.element.css('top', upgrade.position.top).css('left', upgrade.position.left);
 				}
-				ctx.stroke();
+
+				// Scroll to put the upgrade to focus on in the middle
+				if(upgrade.id == focusUpgrade) {
+					E.evolveMenu.css('margin-left', -upgrade.position.left).css('margin-top', -upgrade.position.top);
+				}
+				
+				depth++;
+				theta -= upgrade.position.arcTangent;
+				for(var i = 0, n = upgrade.children.length; i < n; i++) {
+					var currentChild = upgrade.children[i],
+						newTheta;
+					currentChild.style.distance = (currentChild.style.distance || E.defaultStyle.distance) + (upgrade.style.size || E.defaultStyle.size)/2;
+					if(currentChild.style.angle)
+						newTheta = theta + Math.PI * currentChild.style.angle;
+					else
+						newTheta = theta + 2 * Math.PI * ( Math.ceil( i / 2 ) / n ) / depth * (1 - i % 2 * 2 );
+					placeUpgrades(currentChild, upgrade.position, newTheta, depth);
+				}
+
+				return upgrade.position;
 			};
 
-			var drawConnector = function (startX, startY, moveVector) {
-				bgCtx.save();
-				bgCtx.translate(startX, startY);
+			var drawUpgradeConnectors = function(upgrade) {
+				var i,n,x,y,
+					maxWidth = 4,
+					maxHeight = 4,
+					elementSize = upgrade.style.size || E.defaultStyle.size;
+				for(i = 0, n = upgrade.children.length; i < n; i++) {
+					x = upgrade.children[i].position.parentOffsetX = (upgrade.children[i].position.left - upgrade.position.left);
+					y = upgrade.children[i].position.parentOffsetY = (upgrade.children[i].position.top - upgrade.position.top);
+					x = Math.abs(x);
+					y = Math.abs(y);
 
-				bgCtx.lineWidth = 4;
-				bgCtx.strokeStyle = 'rgba(95,66,16,255)';
-				makePath(bgCtx, moveVector.parentOffsetX, moveVector.parentOffsetY, moveVector.arcTangent);
+					maxWidth = x > maxWidth ? x : maxWidth;
+					maxHeight = y > maxHeight ? y : maxHeight;
+				}
 
-				bgCtx.lineWidth = 1;
-				bgCtx.strokeStyle = 'rgba(188,128,28,255)';
-				makePath(bgCtx, moveVector.parentOffsetX, moveVector.parentOffsetY, moveVector.arcTangent);
+				var bgCtx = evolutionBg.getContext('2d');
 
-				bgCtx.restore();
-			};
+				var makePath = function(ctx, x, y, tangentsAngle) {
+					ctx.beginPath();
+					if(tangentsAngle) {
+						var distance = Math.sqrt(x*x + y*y),
+							radius = distance / (2 * Math.sin(Math.abs(tangentsAngle))),
+							tangent, centerX, centerY;
 
-			var drawArrow = function (startX, startY, moveVector, buttonSize) {
-				var theta = Math.atan2(moveVector.parentOffsetY,moveVector.parentOffsetX) - moveVector.arcTangent * (1 - buttonSize / 2);
-				bgCtx.save();
+						if(x > 0)
+							tangent = Math.asin(y / distance);
+						else
+							tangent = Math.PI - Math.asin(y / distance);
 
-				bgCtx.translate(startX, startY);
-				bgCtx.rotate(theta);
-				bgCtx.drawImage(Evolution.prototype.connectorArrow, elementSize/2 - 2, -(arrowWidth/2));
-
-				bgCtx.restore();
-
-				delete moveVector.parentOffsetX;
-				delete moveVector.parentOffsetY;
-			};
-
-			evolutionBg.width = maxWidth*2;
-			evolutionBg.height = maxHeight*2;
-			for(i = 0, n = upgrade.children.length; i < n; i++) {
-				drawConnector(Math.floor(maxWidth) + 0.5, Math.floor(maxHeight), upgrade.children[i].position);
-			}
-			upgrade.element.append($('<img class="connector" />').attr('src', evolutionBg.toDataURL()).css('left', evolutionBg.width/-2).css('top', evolutionBg.height/-2));
-
-			evolutionBg.height = evolutionBg.width = elementSize + arrowLength * 2;
-			for(i = 0, n = upgrade.children.length; i < n; i++) {
-				drawArrow(Math.floor(evolutionBg.width/2) + 0.5, Math.floor(evolutionBg.height/2) + 0.5, upgrade.children[i].position, (elementSize - arrowLength) / upgrade.children[i].style.distance);
-			}
-			upgrade.element.append($('<img class="arrows" />').attr('src', evolutionBg.toDataURL()).css('left', evolutionBg.width/-2).css('top', evolutionBg.height/-2));
-
-			upgrade.element.children('img.connector, img.arrows').css('margin', elementSize/2);
-		};
-
-
-		// Figure out where to put the starting points.
-		var startingUpgrades = [];
-		for (key in this.all)
-			if (this.all.hasOwnProperty(key)) {
-				var current = this.all[key];
-				if(!current.paths.length)
-					startingUpgrades.push(current);
-				else {
-					for(i = 0; i < current.paths.length; i++) {
-						if(this.all[current.paths[i]] === undefined) {
-							if(typeof current.paths[i] !== 'object') {
-								console.warn('Cannot find upgrade with ID "' + current.paths[i] + '", path removed');
-								current.paths.splice(i,1);
-								i--;
-							}
+						if(tangentsAngle > 0) {
+							centerX = x/2 + Math.sqrt(radius * radius - Math.pow(distance / 2, 2)) * (-y) / distance;
+							centerY = y/2 + Math.sqrt(radius * radius - Math.pow(distance / 2, 2)) * (x) / distance;
 						} else {
-							current.paths[i] = this.all[current.paths[i]];
-							current.paths[i].children.push(current);
+							centerX = x/2 - Math.sqrt(radius * radius - Math.pow(distance / 2, 2)) * (-y) / distance;
+							centerY = y/2 - Math.sqrt(radius * radius - Math.pow(distance / 2, 2)) * (x) / distance;
 						}
-						if(!current.paths.length) {
-							current.element.hide();
+
+						if(tangentsAngle > 0)
+							tangent -= Math.PI / 2;
+						else
+							tangent += Math.PI / 2;
+							
+						if(tangentsAngle > 0)
+							ctx.arc(centerX, centerY, radius, tangent - tangentsAngle, tangent + tangentsAngle);
+						else
+							ctx.arc(centerX, centerY, radius, tangent - tangentsAngle, tangent + tangentsAngle, true);
+					} else {
+						ctx.moveTo(0, 0);
+						ctx.lineTo(x, y);
+					}
+					ctx.stroke();
+				};
+
+				var drawConnector = function (startX, startY, moveVector) {
+					bgCtx.save();
+					bgCtx.translate(startX, startY);
+
+					bgCtx.lineWidth = 4;
+					bgCtx.strokeStyle = 'rgba(95,66,16,255)';
+					makePath(bgCtx, moveVector.parentOffsetX, moveVector.parentOffsetY, moveVector.arcTangent);
+
+					bgCtx.lineWidth = 1;
+					bgCtx.strokeStyle = 'rgba(188,128,28,255)';
+					makePath(bgCtx, moveVector.parentOffsetX, moveVector.parentOffsetY, moveVector.arcTangent);
+
+					bgCtx.restore();
+				};
+
+				var drawArrow = function (startX, startY, moveVector, buttonSize) {
+					var theta = Math.atan2(moveVector.parentOffsetY,moveVector.parentOffsetX) - moveVector.arcTangent * (1 - buttonSize / 2);
+					bgCtx.save();
+
+					bgCtx.translate(startX, startY);
+					bgCtx.rotate(theta);
+					bgCtx.drawImage(Evolution.prototype.connectorArrow, elementSize/2 - 2, -(arrowWidth/2));
+
+					bgCtx.restore();
+
+					delete moveVector.parentOffsetX;
+					delete moveVector.parentOffsetY;
+				};
+
+				evolutionBg.width = maxWidth*2;
+				evolutionBg.height = maxHeight*2;
+				for(i = 0, n = upgrade.children.length; i < n; i++) {
+					drawConnector(Math.floor(maxWidth) + 0.5, Math.floor(maxHeight), upgrade.children[i].position);
+				}
+				upgrade.element.append($('<img class="connector" />').attr('src', evolutionBg.toDataURL()).css('left', evolutionBg.width/-2).css('top', evolutionBg.height/-2));
+
+				evolutionBg.height = evolutionBg.width = elementSize + arrowLength * 2;
+				for(i = 0, n = upgrade.children.length; i < n; i++) {
+					drawArrow(Math.floor(evolutionBg.width/2) + 0.5, Math.floor(evolutionBg.height/2) + 0.5, upgrade.children[i].position, (elementSize - arrowLength) / upgrade.children[i].style.distance);
+				}
+				upgrade.element.append($('<img class="arrows" />').attr('src', evolutionBg.toDataURL()).css('left', evolutionBg.width/-2).css('top', evolutionBg.height/-2));
+
+				upgrade.element.children('img.connector, img.arrows').css('margin', elementSize/2);
+			};
+
+
+			// Figure out where to put the starting points.
+			var startingUpgrades = [];
+			for (key in this.all)
+				if (this.all.hasOwnProperty(key)) {
+					var current = this.all[key];
+					if(!current.paths.length)
+						startingUpgrades.push(current);
+					else {
+						for(i = 0; i < current.paths.length; i++) {
+							if(this.all[current.paths[i]] === undefined) {
+								if(typeof current.paths[i] !== 'object') {
+									console.warn('Cannot find upgrade with ID "' + current.paths[i] + '", path removed');
+									current.paths.splice(i,1);
+									i--;
+								}
+							} else {
+								current.paths[i] = this.all[current.paths[i]];
+								current.paths[i].children.push(current);
+							}
+							if(!current.paths.length) {
+								current.element.hide();
+							}
 						}
 					}
 				}
+
+			var position = {
+				left:0,
+				top:0
+			};
+
+			for(i = 0; i < startingUpgrades.length; i++) {
+				placeUpgrades(startingUpgrades[i], position, 0, 0);
 			}
+			for (key in this.all)
+				if (this.all.hasOwnProperty(key))
+					drawUpgradeConnectors(this.all[key]);
 
-		var position = {
-			left:0,
-			top:0
-		};
+			this.refresh();
+		},
 
-		for(i = 0; i < startingUpgrades.length; i++) {
-			placeUpgrades(startingUpgrades[i], position, 0, 0);
-		}
-		for (key in this.all)
-			if (this.all.hasOwnProperty(key))
-				drawUpgradeConnectors(this.all[key]);
-	};
+		refresh: function() {
+			var available = this.S.availableUpgrades(this.selectedUpgrades);
+			this.evolveMenu.find('.available').removeClass('available');
+			for (var key in this.all)
+				if (this.all.hasOwnProperty(key)) {
+					this.all[key].available = false;
+					if(this.all[key].active || this.all[key].selected)
+						this.all[key].element.addClass('active');
+				}
 
-	Evolution.prototype.refresh = function() {
-		var available = this.S.availableUpgrades(this.selectedUpgrades);
-		this.evolveMenu.element.find('.available').removeClass('available');
-		for (var key in this.all)
-			if (this.all.hasOwnProperty(key)) {
-				this.all[key].available = false;
-				if(this.all[key].active || this.all[key].selected)
-					this.all[key].element.addClass('active');
+			for(var i = 0; i < available.length; i++) {
+				this.all[available[i]].element.addClass('available');
+				this.all[available[i]].available = true;
 			}
+		},
 
-		for(var i = 0; i < available.length; i++) {
-			this.all[available[i]].element.addClass('available');
-			this.all[available[i]].available = true;
-		}
-	};
-	/*
-	for (key in this.all)
-		if (this.all.hasOwnProperty(key) && this.all[key].cost < money && this.all[key].available) {
-			this.all[key].element.addClass('available');
-			this.all[key].available = true;
-		}*/
+		buyEvolutions: function() {
+			var upgrade,
+				success = this.S.purchaseUpgrades(this.selectedUpgrades.slice(0));
+			while(this.selectedUpgrades.length) {
+				upgrade = this.all[this.selectedUpgrades.pop()];
+				if(success) {
+					upgrade.active = true;
 
-	Evolution.prototype.buyEvolutions = function() {
-		var upgrade,
-			success = this.S.purchaseUpgrades(this.selectedUpgrades.slice(0));
-		while(this.selectedUpgrades.length) {
-			upgrade = this.all[this.selectedUpgrades.pop()];
-			if(success) {
-				upgrade.active = true;
+					// Draw gene shape image
+					if(upgrade.gene) {
+						// Copy a gene for the user interface and put the gene into it.
+						var current = $('#tb_gene',this.mutationMenu).clone().removeAttr('id').addClass('active geneBlock gene_'+upgrade.id).data('geneId',upgrade.id);
+						$('img',current).replaceWith(upgrade.gene.imageElement.clone());
+						$('.name',current).html(upgrade.name);
 
-				// Draw gene shape image
-				if(upgrade.gene) {
-					// Copy a gene for the user interface and put the gene into it.
-					var current = $('#tb_gene',this.mutationMenu.element).clone().removeAttr('id').addClass('active geneBlock gene_'+upgrade.id).data('geneId',upgrade.id);
-					$('img',current).replaceWith(upgrade.gene.imageElement.clone());
-					$('.name',current).html(upgrade.name);
-					upgrade.gene.element = current;
+						this.mutationMenu.append(current);
+					}
+				}
+				delete upgrade.selected;
+			}
+			this.evolveMenu.find('.available').removeClass('available');
 
-					this.mutationMenu.element.append(current);
+			this.refresh();
+		},
+
+		refreshGenes: function() {
+			var i,j,n;
+			for(i = 0, n = this.mutation.length; i < n; i++) {
+				var geneElement = $('.geneBlock.active.gene_'+this.mutation[i].upgrade.replace('.','\\.')),
+					geneImage = geneElement.find('img'),
+					currentUpgrade = this.all[this.mutation[i].upgrade],
+					//overlayPosition = geneImage.parents('.overlay').offset(),
+					gridElement = $('#tb_board .grid'),
+					//gridElementPosition = gridElement.offset(),
+					gridSquareSize = this.SQUARE_SIZE;
+
+				currentUpgrade.gene.placement = this.mutation[i].placement;
+				currentUpgrade.gene.used = true;
+
+				var element = geneElement.clone(true).removeClass('active').empty().append(geneImage.clone());
+				element.css('left',currentUpgrade.gene.placement.x*gridSquareSize)
+					.css('top',currentUpgrade.gene.placement.y*gridSquareSize).addClass('placed').appendTo(gridElement);
+				geneElement.addClass('used');
+
+				for(j = 0; j < currentUpgrade.gene.shape.length; j++) {
+					this.grid[currentUpgrade.gene.shape[j].x + currentUpgrade.gene.placement.x][currentUpgrade.gene.shape[j].y + currentUpgrade.gene.placement.y] = currentUpgrade;
 				}
 			}
-			delete upgrade.selected;
-		}
-		this.evolveMenu.element.find('.available').removeClass('available');
-	};
+		},
 
-	Evolution.prototype.refreshGenes = function() {
-		var i,j,n;
-		for(i = 0, n = this.mutation.length; i < n; i++) {
-			var geneElement = $('.geneBlock.active.gene_'+this.mutation[i].upgrade.replace('.','\\.')),
-				geneImage = geneElement.find('img'),
-				currentUpgrade = this.all[this.mutation[i].upgrade],
-				//overlayPosition = geneImage.parents('.overlay').offset(),
-				gridElement = $('#tb_board .grid'),
-				//gridElementPosition = gridElement.offset(),
-				gridSquareSize = this.SQUARE_SIZE;
-
-			currentUpgrade.gene.placement = this.mutation[i].placement;
-			currentUpgrade.gene.used = true;
-
-			var element = geneElement.clone(true).removeClass('active').empty().append(geneImage.clone());
-			element.css('left',currentUpgrade.gene.placement.x*gridSquareSize)
-				.css('top',currentUpgrade.gene.placement.y*gridSquareSize).addClass('placed').appendTo(gridElement);
-			geneElement.addClass('used');
-
-			for(j = 0; j < currentUpgrade.gene.shape.length; j++) {
-				this.grid[currentUpgrade.gene.shape[j].x + currentUpgrade.gene.placement.x][currentUpgrade.gene.shape[j].y + currentUpgrade.gene.placement.y] = currentUpgrade;
-			}
-		}
-	};
-	Evolution.prototype.mutate = function() {
-		this.mutation.length = 0;
-		for (var key in this.all)
-			if (this.all.hasOwnProperty(key) && this.all[key].gene) {
-				if(this.all[key].gene.used) {
-					this.all[key].gene.active = this.mutation.length;
-					this.mutation.push({ upgrade: key, placement: this.all[key].gene.placement });
-				} else {
-					if(this.all[key].gene.active !== undefined)
-						delete this.all[key].gene.active;
+		mutate: function() {
+			this.mutation.length = 0;
+			for (var key in this.all)
+				if (this.all.hasOwnProperty(key) && this.all[key].gene) {
+					if(this.all[key].gene.used) {
+						this.all[key].gene.active = this.mutation.length;
+						this.mutation.push({ upgrade: key, placement: this.all[key].gene.placement });
+					} else {
+						if(this.all[key].gene.active !== undefined)
+							delete this.all[key].gene.active;
+					}
 				}
-			}
 
-		if(this.mutation.length > 0)
-			if(!this.S.purchaseMutation(this.mutation.slice(0)))
-				console.error('mutation not valid!');
+			if(this.mutation.length > 0)
+				if(!this.S.purchaseMutation(this.mutation.slice(0)))
+					console.error('mutation not valid!');
 
-		this.mutationMenu.hide();
-	};
-	Evolution.prototype.cleanMutation = function() {
-		this.clearGrid();
-	};
-	Evolution.prototype.clearGrid = function() {
-		for (var key in this.all)
-			if (this.all.hasOwnProperty(key) && this.all[key].gene && this.all[key].gene.used) {
-				this.all[key].gene.used = false;
-				delete this.all[key].gene.placement;
+			this.mutationMenu.hide();
+		},
+
+		cleanMutation: function() {
+			this.clearGrid();
+		},
+
+		clearGrid: function() {
+			for (var key in this.all)
+				if (this.all.hasOwnProperty(key) && this.all[key].gene && this.all[key].gene.used) {
+					this.all[key].gene.used = false;
+					delete this.all[key].gene.placement;
+				}
+			for (var i = 0; i < this.grid.length; i++) {
+				this.grid[i].length = 0;
 			}
-		for (var i = 0; i < this.grid.length; i++) {
-			this.grid[i].length = 0;
+			$('.geneBlock.placed').remove();
+			$('.geneBlock.active').removeClass('used');
 		}
-		$('.geneBlock.placed').remove();
-		$('.geneBlock.active').removeClass('used');
-	};
+	});
 
 	/*
 		Parameter is a function that takes one paramater, a function that takes a dataPoint and returns a string.
@@ -992,7 +1018,7 @@ var UserInterface = function UserInterface(Renderer) {
 	},
 
 	addDataField = function(id,options) {
-		return new DataFieldV2(id,options,$('#ui'));
+		return new DataField(id,options,$('#ui'));
 	},
 
 	hideTooltip = function() {
@@ -1057,7 +1083,7 @@ var UserInterface = function UserInterface(Renderer) {
 			Evolution.prototype.buildWeb(focusUpgrade);
 		},
 		setSimulator: function(S) {
-			DataField.prototype.S = S;
+			DataField.prototype.S = Evolution.prototype.S = S;
 		},
 		updateUI: function(data) {
 			for (var key in data)
@@ -1085,7 +1111,7 @@ var UserInterface = function UserInterface(Renderer) {
 				while(Evolution.prototype.grid.length < status.gridSize) {
 					Evolution.prototype.grid.push([]);
 				}
-				$('#tb_board .grid', Evolution.prototype.mutationMenu.element).css('width',status.gridSize*Evolution.prototype.SQUARE_SIZE).css('height',status.gridSize*Evolution.prototype.SQUARE_SIZE);
+				$('#tb_board .grid', Evolution.prototype.mutationMenu).css('width',status.gridSize*Evolution.prototype.SQUARE_SIZE).css('height',status.gridSize*Evolution.prototype.SQUARE_SIZE);
 			}
 
 			return status;
@@ -1100,7 +1126,7 @@ var UserInterface = function UserInterface(Renderer) {
 				else
 					langStr = i18n.t('messages:'+item);
 
-				interfaceParts.newsTicker.element.prepend($('<p>'+langStr+'</p>'));
+				interfaceParts.newsTicker.prepend($('<p>'+langStr+'</p>'));
 			}
 		},
 		// Call with alert id followed by the data to fill the alert with, any number of parameters.
@@ -1114,7 +1140,7 @@ var UserInterface = function UserInterface(Renderer) {
 				else
 					dom = $(i18n.t('dom:alerts.'+item));
 
-				interfaceParts.alert.element.append(dom);
+				interfaceParts.alert.append(dom);
 				interfaceParts.alert.display();
 				return interfaceParts.alert;
 			}

@@ -33,7 +33,9 @@ function MainInterface(UI,R) {
 	},
 
 	buildUI = function() {
-		$('#ui').append($('<div id="render_tooltip" class="tooltip"></div><div id="tooltip" class="tooltip"></div>'));
+		UI.addDataField('tooltip', {
+			class: 'tooltip'
+		}).attr('id', 'tooltip').appendTo($('body'));
 
 		var mainControl = UI.interfaceParts.main_control,
 			mainInfo = UI.interfaceParts.main_info,
@@ -99,26 +101,18 @@ function MainInterface(UI,R) {
 			R.togglePopDisplay();
 		});
 
-		UI.addDataField('alert',{
-			type: 'div',
-			overlay: true,
-			onHide: function() {
-				this.element.empty();
-			}
-		});
-
 		var evolveMenuOuter = UI.addDataField('evolveMenu',{
-			type: 'div',
+			type: 'modal',
 			class: 'draggable-parent',
 			title: 'Evolution',
-			overlay: true,
-			onHide: function() {
-				UI.evolutions.buyEvolutions();
-			}
+			opener: mainControl.addDataField({
+				type: 'button',
+				label: 'ui:buttons.evolution'
+			})
 		});
 		UI.evolutions.evolveMenu = evolveMenuOuter.addDataField({
 			type: 'div',
-			class: 'draggable'
+			class: 'draggable evolveMenu'
 		});
 
 		UI.evolutions.mutationMenu = UI.addDataField('mutationMenu',{
@@ -205,6 +199,10 @@ function MainInterface(UI,R) {
 		}).label('ui:buttons.mutation');
 		
 		dataViewList.element.css('bottom',mainControl.element.height());*/
+
+		UI.addDataField('alert',{
+			type: 'modal'
+		});
 	},
 
 	// Commands to run when loading is finished and main game UI is displayed
@@ -404,17 +402,25 @@ function MainInterface(UI,R) {
 
         //UI.interfaceParts.evolveMenu_button.element.trigger('click');
         //UI.interfaceParts.mutateMenu_button.element.trigger('click');
+		
+		$('.reveal-modal').foundation('reveal', {
+			animation_speed: 250,
+			close_on_background_click: false,
+			bg_class: 'reveal-modal-bg',
+			bg : $('.reveal-modal-bg')
+		});
 
-        // This is where we open the strain select/start game prompt. Auto-start for now.
+		$('#ui').addClass('started');
 	},
 
 	strainPrompt = function(options, callback) { // jshint ignore:line
 		var strainPrompt = UI.addDataField('strainPrompt',{
-			type: 'div',
-			class: 'strain_prompt',
-			title: 'Pick a Specification',
-			overlay: true
+			type: 'modal',
+			class: 'strain_prompt'
 		});
+		strainPrompt.addDataField({
+			type: 'h1'
+		}).html('Pick a Specification');
 
 		var selectStrain = function(id) {
 			return function() {
@@ -427,13 +433,22 @@ function MainInterface(UI,R) {
 		for(var i = 0; i < options.length; i++) {
 			strainPrompt.addDataField({
 				type:'button',
-				onClick: selectStrain(options[i].id)
-			}).addDataField({
+				label:'Pick'
+			})
+			.click(selectStrain(options[i].id))
+			.addDataField({
 				type: 'field',
 				title: options[i].name,
 				value: options[i].description
 			});
 		}
+		
+		strainPrompt.foundation('reveal', {
+			animation_speed: 250,
+			close_on_background_click: false,
+			bg_class: 'reveal-modal-bg',
+			bg : $('.reveal-modal-bg')
+		});
 
 		strainPrompt.show();
 	};

@@ -23,6 +23,10 @@
 		"population_zombies": "Zombie Population",
 		"virus_name": "Virus Name"
 	},
+	"evolution": {
+		"cost": "Cost",
+		"gene": "Gene"
+	},
 	"mutation": {
 
 	},

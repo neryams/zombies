@@ -106,6 +106,7 @@ $(function () {
     $.getScript('js/third-party/foundation.js', function() {
         $.getScript('js/third-party/foundation.accordion.js');
         $.getScript('js/third-party/foundation.slider.js');
+        $.getScript('js/third-party/foundation.reveal.js');
         $.getScript('js/third-party/foundation.tooltip.js');
     });
     $.getScript('js/third-party/three.js', function() {
