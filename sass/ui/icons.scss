@@ -1,0 +1,26 @@
+$iconPath: "../ui/icons";
+
+.icon {
+	background-position: center center;
+	background-size: auto 40px;
+	background-repeat: no-repeat;
+	padding: 0;
+}
+.dataField-button.icon {
+	display: inline-block;
+	height: 32px;
+	width: 32px;
+	margin-right: 1px;
+}
+
+.icon {
+	&.delete, &.clear {
+		background-image: url(#{$iconPath}/appbar.delete.png);
+	}
+	&.cancel {
+		background-image: url(#{$iconPath}/appbar.cancel.png);
+	}
+	&.accept {
+		background-image: url(#{$iconPath}/appbar.check.png);
+	}
+}

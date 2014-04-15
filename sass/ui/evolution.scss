@@ -1,5 +1,17 @@
 .dataField-evolveMenu {
 	height: 600px;
+	
+	.menu {
+		.accept {
+			width: 100px;
+		}
+		.cancel {
+			background-color: $secondary-color;
+			&:hover {
+				background-color: darken( $secondary-color, 10% );
+			}
+		}
+	}
 }
 .dataField-evolveMenu > h3 {
 	margin-left: 16px;

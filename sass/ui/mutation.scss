@@ -1,8 +1,21 @@
 .dataField-mutationMenu {
-	width: 800px;
-	float: left;
 	height: 600px;
 	
+	.menu {
+		.accept {
+			width: 100px;
+		}
+		.cancel, .clear {
+			background-color: $secondary-color;
+			&:hover {
+				background-color: darken( $secondary-color, 10% );
+			}
+		}
+	}
+	.menu_board {
+		
+	}
+
 	#tb_board {
 		float: left;
 		background-color: #151515;
@@ -86,20 +99,5 @@
 	}
 	.dragging.valid {
 		opacity: 0.8;
-	}
-
-	.menu {
-		position: absolute;
-		bottom: 16px;
-		right: 16px;
-		width: 768px;
-		
-		button {
-			float: right;
-		}
-		button.dataField-mutationMenu_clear {
-			float: left;
-			background-image: url('../ui/refresh.png');
-		}
 	}
 }

@@ -5,6 +5,7 @@
 	Parameters:
 		Renderer -- Reference to the Renderer object so that the UI can send commands to it
 */
+/* globals S */
 /* exported UserInterface */
 
 Date.prototype.getMonthName = function() {
@@ -54,13 +55,18 @@ var UserInterface = function UserInterface(Renderer) {
 			}
 
 			for (var key in config)
-				if (config.hasOwnProperty(key))
+				if (config.hasOwnProperty(key)) {
 					this[key] = config[key];
+
+					if(this._options[key] !== undefined)
+						this._options[key].call(this, config[key]);
+				}
 		}
 		className += ' dataField-'+this.type;
 		this.addClass(className).addClass(this.class);
 
 		parent.append(this);
+		this.parent = parent;
 
 		return this;
 	};
@@ -115,17 +121,36 @@ var UserInterface = function UserInterface(Renderer) {
 		},
 		_typeOptions: {
 			button: function(config) {
-				var label = config.label || 'Button';
-				return $(i18n.t('dom:interface.dataField.default',{ element:'a' })).html(i18n.t(label));
+				var button = $(i18n.t('dom:interface.dataField.default',{ element:'a' })),
+					label = config.label || '';
+				if(label && i18n.exists(label))
+					button.html(i18n.t(label));
+				else
+					button.html(label);
+				return button;
 			},
 			modal: function(config) {
 				var modal = $('<div id="modal-' + this.id + '" class="reveal-modal" data-reveal></div>');
+				modal.on('open', this, function (event) {
+					var modal = event.data;
+					if(modal.onShow)
+						modal.onShow.call(modal);
+					status.pauseRenderer = true;
+					S.pause();
+				});
+				modal.on('close', this, function (event) {
+					var modal = event.data;
+					if(modal.onHide)
+						modal.onHide.call(modal);
+					status.pauseRenderer = false;
+					S.unPause();
+				});
 
 				this.attachOpener = function(opener) {
 					if(this.opener)
-						this.opener.attr('data-reveal',false).attr('data-reveal-id', false);
+						this.opener.removeAttr('data-reveal').removeAttr('data-reveal-id');
 
-					opener.attr('data-reveal',true).attr('data-reveal-id', 'modal-' + this.id);
+					opener.attr('data-reveal','').attr('data-reveal-id', 'modal-' + this.id);
 					this.opener = opener;
 				};
 				this.show = function() {
@@ -137,7 +162,6 @@ var UserInterface = function UserInterface(Renderer) {
 				if(config.opener)
 					this.attachOpener(config.opener);
 
-				this.mousePriority = true;
 
 				return modal;
 			},
@@ -193,6 +217,27 @@ var UserInterface = function UserInterface(Renderer) {
 			else
 				while(toMerge.length > 0)
 					_this._merge(toMerge.pop());
+		},
+		_options: {
+			mousePriority: function(val) {
+				if(val) {
+					this.mouseenter(function() {
+							status.mouse.bound = this;
+						})
+						.mouseleave(function() {
+							status.mouse.bound = null;
+						});
+				}
+			},
+			tooltip: function(val) {
+				this.attr('data-tooltip', '').addClass('has-tip').attr('title', val);
+			},
+			click: function(func) {
+				var _this = this;
+				_this.on('click', function() {
+					func.call(_this);
+				});
+			}
 		}
 	}));
 
@@ -906,6 +951,14 @@ var UserInterface = function UserInterface(Renderer) {
 			this.refresh();
 		},
 
+		deselectAll: function() {
+			while(this.selectedUpgrades.length) {
+				var upgrade = this.all[this.selectedUpgrades.pop()];
+				delete upgrade.selected;
+				upgrade.element.removeClass('active');
+			}
+		},
+
 		refreshGenes: function() {
 			var i,j,n;
 			for(i = 0, n = this.mutation.length; i < n; i++) {
@@ -947,8 +1000,6 @@ var UserInterface = function UserInterface(Renderer) {
 			if(this.mutation.length > 0)
 				if(!this.S.purchaseMutation(this.mutation.slice(0)))
 					console.error('mutation not valid!');
-
-			this.mutationMenu.hide();
 		},
 
 		cleanMutation: function() {

@@ -34,6 +34,11 @@ $body-font: 'Arial', sans-serif;
 .dataField-button {
 	@include button(rem-calc(8));
 }
+.dataField-modal .menu {
+	position: absolute;
+	bottom: 0;
+	left: 24px;
+}
 %readonly_input {
 	border: 0;
 	background: transparent;
@@ -116,16 +121,7 @@ canvas.draggable {
 
 /* Tooltips */
 
-.tooltip {
-	z-index: 150;
-	position: absolute;
-	font-size: small;
-	padding: 8px;
-	overflow: hidden;
-	color: black;
-	background-color: #555;
-	border-radius: 4px;
-	
+.tooltip {	
 	h3 {
 		color: black;
 		font-size: rem-calc(20);
@@ -139,4 +135,4 @@ canvas.draggable {
 	}
 }
 
-@import "ui/main_info","ui/main_control","ui/top_bar","ui/evolution","ui/mutation";
+@import "ui/main_info","ui/main_control","ui/top_bar","ui/evolution","ui/mutation","ui/icons";

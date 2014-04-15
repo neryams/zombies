@@ -105,6 +105,9 @@ function MainInterface(UI,R) {
 			type: 'modal',
 			class: 'draggable-parent',
 			title: 'Evolution',
+			onShow: function() {
+				UI.evolutions.refresh();
+			},
 			opener: mainControl.addDataField({
 				type: 'button',
 				label: 'ui:buttons.evolution'
@@ -115,90 +118,90 @@ function MainInterface(UI,R) {
 			class: 'draggable evolveMenu'
 		});
 
-		UI.evolutions.mutationMenu = UI.addDataField('mutationMenu',{
+		var evolveMenu_controls = evolveMenuOuter.addDataField({
 			type: 'div',
-			class: 'toolbox',
-			title: 'Mutation',
-			overlay: true,
-			onHide: function() {
-				UI.evolutions.clearGrid();
+			class: 'menu'
+		});
+		evolveMenu_controls.addDataField({
+			type: 'button',
+			class: 'icon cancel',
+			tooltip: i18n.t('ui:evolution.cancel'),
+			click: function() {
+				UI.evolutions.deselectAll();
+				evolveMenuOuter.hide();
 			}
 		});
-		/*
-		UI.evolutions.mutationMenu.element.append($(i18n.t('dom:interface.mutation.menu')));
+		evolveMenu_controls.addDataField({
+			type: 'button',
+			class: 'icon accept',
+			tooltip: i18n.t('ui:evolution.accept'),
+			click: function() {
+				UI.evolutions.buyEvolutions();
+				evolveMenuOuter.hide();
+			}
+		});
+		evolveMenu_controls.find('.has-tip').addClass('tip-top');
+
+		UI.evolutions.mutationMenu = UI.addDataField('mutationMenu',{
+			type: 'modal',
+			class: 'toolbox',
+			title: 'Mutation',
+			onShow: function() {
+				UI.evolutions.refreshGenes();
+			},
+			onHide: function() {
+				UI.evolutions.clearGrid();
+			},
+			opener: mainControl.addDataField({
+				type: 'button',
+				label: 'ui:buttons.mutation'
+			})
+		});
+		
+		UI.evolutions.mutationMenu.append($(i18n.t('dom:interface.mutation.menu')));
 
 		var mutationMenu_controls = UI.evolutions.mutationMenu.addDataField({
 			type: 'div',
 			class: 'menu'
 		});
-
 		mutationMenu_controls.addDataField('mutationMenu_clear',{
 			type: 'button',
-			class: 'icon',
-			onHover: function() {
-				this.showToolTip( 'Clear the mutation grid.' );
-			},
-			onClick: function() {
+			class: 'icon clear',
+			tooltip: i18n.t('ui:mutation.clear'),
+			click: function() {
 				UI.evolutions.clearGrid();
 			}
-		}).val('Clear');
-
-		mutationMenu_controls.addDataField('mutationMenu_submit',{
-			type: 'button',
-			class: 'primary',
-			onHover: function() {
-				var totalPrice = 0;
-				for (var key in UI.evolutions.all)
-					if (UI.evolutions.all.hasOwnProperty(key) && UI.evolutions.all[key].gene && UI.evolutions.all[key].gene.used)
-						if(UI.evolutions.all[key].gene.active === undefined || !UI.evolutions.mutation[UI.evolutions.all[key].gene.active].placement.equals(UI.evolutions.all[key].gene.placement))
-							totalPrice += UI.evolutions.all[key].cost;
-
-				this.showToolTip( 'Mutate your infection for <strong>'+totalPrice+'</strong> evolution points' );
-			},
-			onClick: function() {
-				UI.evolutions.mutate();
-			}
-		}).val('Mutate');
+		});
 		mutationMenu_controls.addDataField('mutationMenu_cancel',{
 			type: 'button',
-			class: 'secondary',
-			onHover: function() {
-				this.showToolTip( 'Revert all changes.' );
-			},
-			onClick: function() {
+			class: 'icon cancel',
+			tooltip: i18n.t('ui:mutation.cancel'),
+			click: function() {
 				UI.evolutions.mutationMenu.hide();
 			}
-		}).val('Cancel');
+		});
+		mutationMenu_controls.addDataField('mutationMenu_submit',{
+			type: 'button',
+			class: 'icon accept',
+			tooltip: i18n.t('ui:mutation.mutate'),
+			click: function() {
+				UI.evolutions.mutate();
+				UI.evolutions.mutationMenu.hide();
+			}
+		});
+		mutationMenu_controls.find('.has-tip').addClass('tip-top');
+		/*
+		mutationMenu_controls.addDataField('mutationMenu_submit',{
+			type: 'field',
+			dynamic: 'selectedMutations'
+		});
+		var totalPrice = 0;
+		for (var key in UI.evolutions.all)
+			if (UI.evolutions.all.hasOwnProperty(key) && UI.evolutions.all[key].gene && UI.evolutions.all[key].gene.used)
+				if(UI.evolutions.all[key].gene.active === undefined || !UI.evolutions.mutation[UI.evolutions.all[key].gene.active].placement.equals(UI.evolutions.all[key].gene.placement))
+					totalPrice += UI.evolutions.all[key].cost;
+		*/
 
-		mainControl.addDataField('evolveMenu_button',{
-			type: 'button',
-			class: 'primary',
-			onClick: function() {
-				if(!this.opens[0].visible) {
-					UI.evolutions.refresh();
-					this.opens[0].display();
-				}
-				else
-					this.opens[0].hide();
-			},
-			opens: [evolveMenuOuter]
-		}).label('ui:buttons.evolution');
-		
-		mainControl.addDataField('mutationMenu_button',{
-			type: 'button',
-			class: 'primary',
-			onClick: function() {
-				if(!this.opens[0].visible) {
-					UI.evolutions.refreshGenes();
-					this.opens[0].display();
-				}
-				else
-					this.opens[0].hide();
-			},
-			opens: [UI.evolutions.mutationMenu]
-		}).label('ui:buttons.mutation');
-		
-		dataViewList.element.css('bottom',mainControl.element.height());*/
 
 		UI.addDataField('alert',{
 			type: 'modal'
@@ -300,7 +303,7 @@ function MainInterface(UI,R) {
 				gene = $(this),
 				geneImage = gene.find('img'),
 				currentUpgrade = UI.evolutions.all[gene.data('geneId')],
-				overlayPosition = geneImage.parents('.overlay').offset(),
+				overlayPosition = geneImage.parents('.dataField-modal').offset(),
 				mousePosition = { left:event.clientX , top:event.clientY },
 				grid = UI.evolutions.grid,
 				gridElement = $('#tb_board .grid'),

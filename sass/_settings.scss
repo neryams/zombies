@@ -5,6 +5,13 @@ $body-font-color: #fff;
 $body-font-family: "Helvetica Neue", "Helvetica", Helvetica, Arial, sans-serif;
 $header-font-color: #fff;
 
+$primary-color: #008CBA;
+$secondary-color: #666;
+$alert-color: #f04124;
+$success-color: #43AC6A;
+$warning-color: #f08a24;
+$info-color: #a0d3e8;
+
 $reveal-modal-bg: #222;
 $reveal-border-width: 0px;
 
@@ -14,3 +21,5 @@ $range-slider-handle-position-top: rem-calc(-4);
 $range-slider-bar-height: rem-calc(8);
 $range-slider-bar-border-color: #444;
 $range-slider-bar-bg-color: #333;
+
+$has-tip-border-bottom-hover: 0;
