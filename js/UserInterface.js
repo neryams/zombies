@@ -937,11 +937,11 @@ var UserInterface = function UserInterface(Renderer) {
 					// Draw gene shape image
 					if(upgrade.gene) {
 						// Copy a gene for the user interface and put the gene into it.
-						var current = $('#tb_gene',this.mutationMenu).clone().removeAttr('id').addClass('active geneBlock gene_'+upgrade.id).data('geneId',upgrade.id);
+						var current = $(i18n.t('dom:interface.mutation.piece')).addClass('active gene_'+upgrade.id).data('geneId',upgrade.id);
 						$('img',current).replaceWith(upgrade.gene.imageElement.clone());
 						$('.name',current).html(upgrade.name);
 
-						this.mutationMenu.append(current);
+						this.mutationMenu.piece_container.append(current);
 					}
 				}
 				delete upgrade.selected;
@@ -965,9 +965,6 @@ var UserInterface = function UserInterface(Renderer) {
 				var geneElement = $('.geneBlock.active.gene_'+this.mutation[i].upgrade.replace('.','\\.')),
 					geneImage = geneElement.find('img'),
 					currentUpgrade = this.all[this.mutation[i].upgrade],
-					//overlayPosition = geneImage.parents('.overlay').offset(),
-					gridElement = $('#tb_board .grid'),
-					//gridElementPosition = gridElement.offset(),
 					gridSquareSize = this.SQUARE_SIZE;
 
 				currentUpgrade.gene.placement = this.mutation[i].placement;
@@ -975,7 +972,7 @@ var UserInterface = function UserInterface(Renderer) {
 
 				var element = geneElement.clone(true).removeClass('active').empty().append(geneImage.clone());
 				element.css('left',currentUpgrade.gene.placement.x*gridSquareSize)
-					.css('top',currentUpgrade.gene.placement.y*gridSquareSize).addClass('placed').appendTo(gridElement);
+					.css('top',currentUpgrade.gene.placement.y*gridSquareSize).addClass('placed').appendTo(this.mutationMenu.grid.find('.grid'));
 				geneElement.addClass('used');
 
 				for(j = 0; j < currentUpgrade.gene.shape.length; j++) {

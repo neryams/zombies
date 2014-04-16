@@ -19,7 +19,21 @@
 			"tooltipDesc": "<p></p>"
 		},
 		"mutation":{
-			"menu": "<div id=\"tb_board\"><div><div class=\"grid\"></div></div></div><div id=\"tb_gene\"><p class=\"image\"><img src=\"\" draggable=\"false\" /></p><p class=\"name\"></p></div>"
+			"grid":[
+				"<div id=\"tb_board\">",
+					"<div><ul class=\"grid\"></ul></div>",
+				"</div>"
+			],
+			"piece_container":[
+				"<ul id=\"tb_toolbox\">",
+				"</ul>"
+			],
+			"piece":[
+				"<li class=\"geneBlock\">",
+					"<p class=\"image\"><img src=\"\" draggable=\"false\" /></p>",
+					"<p class=\"name\"></p>",
+				"</li>"
+			]
 		}
 	},
 	"alerts": {

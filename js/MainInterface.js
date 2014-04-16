@@ -158,7 +158,9 @@ function MainInterface(UI,R) {
 			})
 		});
 		
-		UI.evolutions.mutationMenu.append($(i18n.t('dom:interface.mutation.menu')));
+		UI.evolutions.mutationMenu.grid = $(i18n.t('dom:interface.mutation.grid'));
+		UI.evolutions.mutationMenu.piece_container = $(i18n.t('dom:interface.mutation.piece_container'));
+		UI.evolutions.mutationMenu.append(UI.evolutions.mutationMenu.grid).append(UI.evolutions.mutationMenu.piece_container);
 
 		var mutationMenu_controls = UI.evolutions.mutationMenu.addDataField({
 			type: 'div',
