@@ -178,9 +178,11 @@ var UserInterface = function UserInterface(Renderer) {
 				return field;
 			},
 			progressBar: function(config) {
+				var field = $('<label/>'),
+					bar = i18n.t('dom:interface.dataField.progressBar');
 				this.width = config.width || 100;
 				this.val = function(value) {
-					var bar = this.children();
+					var bar = this.find('.progress div');
 
 					if(isNaN(value)) {
 						this.addClass('date');
@@ -190,8 +192,58 @@ var UserInterface = function UserInterface(Renderer) {
 						bar.html('').css('width', Math.round(this.width*value));
 					}
 				};
+				if(config.title)
+					field.html(i18n.t(config.title));
+				field.append(bar);
 
-				return $(i18n.t('dom:interface.dataField.progressBar'));
+				return field;
+			},
+			slider: function(config) {
+				var field = $('<label/>'),
+					slider = $(i18n.t('dom:interface.dataField.slider',{ options: config.dataOptions || '' }));
+
+				if(config.dynamic)
+					slider.on('change', this, function(event) {
+						var df = event.data,
+							value = parseFloat($(this).attr('data-slider'));
+						if(value != status[df.data('dynamic')]) {
+							status[df.data('dynamic')] = value;
+							changedStatus[df.data('dynamic')] = true;
+						}
+					});
+
+				this.val = function(value) {
+					this.foundation('slider', 'set_value', value);
+				};
+
+				if(config.title)
+					field.html(i18n.t(config.title));
+				field.append(slider);
+
+				return field;
+			},
+			accordion: function() {
+				var accordion = $(i18n.t('dom:interface.dataField.default',{ element:'dl' })).attr('data-accordion','').addClass('accordion');
+
+				this._addDataField = this.addDataField;
+				this.addDataField = function(id, options) {
+					var accordionChild = $(i18n.t('dom:interface.dataField.default',{ element:'dd' })),
+						uniqueId = 'accordion_' + Object.keys(interfaceParts).length;
+					accordionChild.append($(i18n.t('dom:interface.dataField.accordionTitle',{ title: options.title, link: uniqueId })));
+
+					options.type = 'div';
+
+					var content = this._addDataField(id, options);
+					content.addClass('content');
+					content.attr('id',uniqueId);
+					accordionChild.append(content);
+
+					this.append(accordionChild);
+
+					return content;
+				};
+
+				return accordion;
 			},
 			choiceToggle: function(config) {
 				var alignment = 'align:' + (config.alignment || 'left'),
@@ -237,264 +289,12 @@ var UserInterface = function UserInterface(Renderer) {
 				_this.on('click', function() {
 					func.call(_this);
 				});
+			},
+			dynamic: function(dynamic) {
+				this.data('dynamic', dynamic);
 			}
 		}
 	}));
-
-	function DataFieldOld(id,options,parent) {
-		var newElement, fullElement,
-			className = 'dataField';
-
-		if(typeof id == 'object') {
-			options = id;
-			id = undefined;
-		}
-
-		if(!id)
-			id = '_' + Object.keys(interfaceParts).length;
-		interfaceParts[id] = this;
-		this.id = id;
-		className += ' dataField-'+id;
-
-		if(options)
-			for (var key in options)
-				if (options.hasOwnProperty(key)) {
-					this[key] = options[key];
-
-					if(typeof(options[key]) === 'function')
-						this[key].bind(this);
-				}
-
-		className += ' dataField-'+this.type;
-
-		this.children = [];
-
-		switch(this.type) {
-			case 'text':
-				newElement = $(i18n.t('dom:interface.dataField.text'));
-			break;
-
-			case 'p':
-				newElement = $(i18n.t('dom:interface.dataField.paragraph'));
-			break;
-
-			case 'progressBar':
-				newElement = $(i18n.t('dom:interface.dataField.progressBar'));
-			break;
-			case 'button':
-				newElement = fullElement = $(i18n.t('dom:interface.dataField.default',{ element:'a' }));
-			break;
-			case 'accordion':
-				newElement = fullElement = $(i18n.t('dom:interface.dataField.default',{ element:'dl' })).attr('data-accordion','');
-				className += ' accordion';
-			break;
-			case 'accordion_child':
-				newElement = $(i18n.t('dom:interface.dataField.default',{ element:'div' }));
-				fullElement = $(i18n.t('dom:interface.dataField.default',{ element:'dd' })).append(newElement);
-				className = '';
-			break;
-			case 'slider':
-				newElement = $(i18n.t('dom:interface.dataField.slider',{ options: this.dataOptions }));
-				if(this.dynamic)
-					newElement.on('change', function() {
-						var element = $(this),
-							value = parseFloat(element.attr('data-slider'));
-						if(value != status[element.data('dynamic')]) {
-							status[element.data('dynamic')] = value;
-							changedStatus[element.data('dynamic')] = true;
-						}
-					});
-			break;
-			default:
-				newElement = fullElement = $(i18n.t('dom:interface.dataField.default',{ element:this.type }));
-		}
-
-		if(!fullElement)
-			fullElement = $(i18n.t('dom:interface.dataField.default',{ element:'div' })).append(newElement);
-
-		fullElement.addClass(className);
-
-		if(parent) {
-			if(parent.element) {
-				this.parent = parent;
-				parent.children.push(this);
-				parent.element.append(fullElement);
-			} else
-				parent.append(fullElement);
-		} else {
-			$('#ui').append(fullElement);
-		}
-		
-		this.element = newElement;
-		this.fullElement = fullElement;
-		newElement.data('source', this);
-		if(this.dynamic)
-			newElement.data('dynamic', this.dynamic);
-
-		if(this.type == 'accordion_child') {
-			var uniqueId = 'accordion_' + Object.keys(interfaceParts).length;
-			fullElement.prepend($(i18n.t('dom:interface.dataField.accordionTitle',{ title:this.title, link: uniqueId})));
-			newElement.addClass('content');
-			newElement.attr('id',uniqueId);
-		} else {
-			if(this.title) {
-				if(this.parent && this.parent.type == 'accordion')
-					fullElement.prepend($(i18n.t('dom:interface.dataField.accordionTitle',{ title:this.title })));
-				else
-					fullElement.prepend($(i18n.t('dom:interface.dataField.title',{ title:this.title })));
-			}
-		}
-		if(this.class)
-			newElement.addClass(this.class);
-		if(this.outerClass)
-			fullElement.addClass(this.outerClass);
-		if(this.onClick)
-			fullElement.on('click',this.onClick.bind(this));
-		if(this.onHover)
-			fullElement.on('mouseover',this.onHover.bind(this));
-		if(this.overlay) {
-			fullElement.addClass('overlay');
-			this.visible = false;
-		}
-		if(this.opens)
-			for(var i = 0; i < this.opens.length; i++)
-				this.opens[i].opener = this;
-		if(!this.visible)
-			newElement.css('display','none');
-		if(this.mousePriority) {
-			newElement
-				.mouseenter(function() {
-					status.mouse.bound = newElement;
-				})
-				.mouseleave(function() {
-					status.mouse.bound = null;
-				});
-		}
-	}
-	DataFieldOld.prototype = {
-		type: 'text',
-		title: null,
-		children: null,
-		class: null,
-		onClick: null,
-		onHover: null,
-		singleChild: false,
-		dynamic: false,
-		visible: true,
-		overlay: false,
-		mousePriority:false,
-		interfaceParts: null,
-		dataOptions: '',
-		remove: function() {
-			this.fullElement.remove();
-			delete interfaceParts[this.id];
-		},
-		addDataField: function(id,options) {
-			if(typeof id == 'object') {
-				options = id;
-				id = undefined;
-			}
-
-			var newDataField = new DataField(id,options,this);
-			return newDataField;
-		},
-		display: function(recursive) {
-			var i;
-
-			if(this.onDisplay)
-				this.onDisplay();
-			if(this.parent && this.parent.singleChild)
-				for(i = 0; i < this.parent.children.length; i++)
-					this.parent.children[i].hide();
-			if(this.opener)
-				this.opener.element.addClass('selected');
-			if(this.overlay) {
-				// Hide any other visible overlays
-				for (var key in interfaceParts)
-					if (interfaceParts.hasOwnProperty(key) && interfaceParts[key].overlay && interfaceParts[key].visible) {
-						interfaceParts[key].hide();
-					}
-				var that = this;
-				$('#ui_mask').css('visibility','visible').on('click.closeOverlay', function () {
-					that.hide();
-				});
-				status.pauseRenderer = true;
-				if(this.S)
-					this.S.pause();
-			}
-
-			this.element.css('display','');
-			this.visible = true;
-			if(recursive)
-				for(i = 0; i < this.children.length; i++)
-					this.children[i].display(true);
-			return this;
-		},
-		hide: function() {
-			if(this.onHide)
-				this.onHide();
-			this.element.css('display','none');
-			this.visible = false;
-			if(this.opener)
-				this.opener.element.removeClass('selected');
-			if(this.overlay) {
-				$('#ui_mask').css('visibility','hidden').off('click.closeOverlay');
-				status.pauseRenderer = false;
-				if(this.S)
-					this.S.unPause();
-			}
-			hideTooltip();
-
-			return this;
-		},
-		label: function(value) {
-			this.element.attr('data-i18n',value);
-			this.element.i18n();
-			return this;
-		},
-		val: function(value) {
-			if(this.type == 'progressBar') {
-				if(!this.width)
-					this.width = 100;
-				var bar = this.element.children();
-				if(isNaN(value)) {
-					this.element.addClass('date');
-					bar.html(value).css('width','');
-				} else {
-					this.element.removeClass('date countdown');
-					bar.html('').css('width',Math.round(this.width*value));
-				}
-			}
-			else if(this.type == 'slider')
-				this.element.foundation('slider', 'set_value', value);
-			else
-				this.element.html(value);
-			return this;
-		}
-	};
-
-	DataFieldOld.prototype.showToolTip = function (text,element,width) {
-		if(!element)
-			element = this.element;
-		var position = element.offset();
-
-		var tooltip = $('#tooltip');
-		if(tooltip.css('visibility') == 'hidden' && text) {
-			tooltip.empty();
-			if(width)
-				tooltip.css('width',width);
-			if(text.appendTo)
-				tooltip.append(text);
-			else
-				tooltip.html(text);
-			tooltip.css('top',position.top - (tooltip.height() + 20)).css('left',position.left).addClass('');
-			tooltip.css('display','none').css('visibility','visible').fadeIn('fast');
-		}
-
-		element.on('mouseleave', function () {
-			hideTooltip();
-		});
-	};
 
 	function Evolution(name,levels,options) {
 		var i;

@@ -19,7 +19,9 @@ exports.options = {
 			this.world_pop += this.S.populatedPoints[i].total_pop;
 		}
 
-		this.S.UI.interfaceParts.top_bar.addDataField({
+		var mainBar = this.S.UI.interfaceParts.top_bar;
+
+		mainBar.addDataField({
 			type: 'field',
 			title: 'ui:labels.date',
 			dynamic: 'date',
@@ -28,20 +30,20 @@ exports.options = {
 			}
 		});
 
-		this.S.UI.interfaceParts.top_bar.addDataField({
+		mainBar.addDataField({
 			type: 'field',
 			title: 'ui:labels.virus_name',
 			dynamic: 'virus_name'
 		}).val(this.S.status.virus_name);
 
-		this.S.UI.interfaceParts.top_bar.addDataField({
+		mainBar.addDataField({
 			type: 'field',
 			title: 'ui:labels.population_world',
 			dynamic: 'world_pop',
 			value: this.world_pop
 		});
 
-		this.S.UI.interfaceParts.top_bar.addDataField({
+		mainBar.addDataField({
 			type: 'field',
 			title: 'ui:labels.population_zombies',
 			dynamic: 'world_infected',

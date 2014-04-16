@@ -56,41 +56,40 @@ function MainInterface(UI,R) {
 				return money;
 			}
 		});
-/*
-		mainInfo.addDataField('sidebarAccordion',{
+
+		var sidebarAccordion = mainInfo.addDataField('sidebarAccordion',{
 			type: 'accordion'
-		}).addDataField('newsTicker',{
-			type: 'accordion_child',
+		});
+		sidebarAccordion.addDataField('newsTicker',{
 			title: 'ui:buttons.news',
 			class: 'news'
-		});*/
-
-		var visualTooltip = function(visual, mathFunction) {
-			return function() {
-				R.setVisualization(visual);
-				UI.toggleGlobeTooltip(true, mathFunction);
-			};
-		};
+		});
 
 		var dataViewList = mainControl.addDataField('dataViewList',{
 			type: 'choiceToggle',
 			alignment: 'top',
 			label: 'ui:buttons.dataviews'
 		});
+		dataViewList.visualTooltip = function(visual, mathFunction) {
+			return function() {
+				R.setVisualization(visual);
+				UI.toggleGlobeTooltip(true, mathFunction);
+			};
+		};
 
 		dataViewList.addOption('ui:buttons.dataviews_inner.disable', function() {
 			R.closeVisualization();
 			UI.toggleGlobeTooltip(false);
 		});
-		dataViewList.addOption('ui:buttons.dataviews_inner.political', visualTooltip('country',function(point) {
+		dataViewList.addOption('ui:buttons.dataviews_inner.political', dataViewList.visualTooltip('country',function(point) {
 			if(point.country) {
 				return '<strong>' + point.country.name + '</strong>';
 			}
 		}));
-		dataViewList.addOption('ui:buttons.dataviews_inner.rain', visualTooltip('precipitation',function(point) {
+		dataViewList.addOption('ui:buttons.dataviews_inner.rain', dataViewList.visualTooltip('precipitation',function(point) {
 			return Math.round(point.precipitation*10)/10 + 'mm';
 		}));
-		dataViewList.addOption('ui:buttons.dataviews_inner.temperature', visualTooltip('temperature',function(point){
+		dataViewList.addOption('ui:buttons.dataviews_inner.temperature', dataViewList.visualTooltip('temperature',function(point){
 			return Math.round((point.temperature - 273)*10)/10 + 'C';
 		}));
 

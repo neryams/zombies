@@ -41,37 +41,21 @@ exports.options = {
 
 		// Add data view options for the resources
 		var dataViewList = this.S.UI.interfaceParts.dataViewList;
-		/*
-		dataViewList.addDataField({
-			type:'button',
-			onClick: function() {
-				this.S.R.setVisualization('tech');
-				this.parent.hide();
-				this.S.UI.toggleGlobeTooltip(true,function(point){
-					return Math.round((point.tech)*10)/10 + ' parts';
-				});
-			}
-		}).label('ui:buttons.dataviews_inner.tech');
-		dataViewList.addDataField({
-			type:'button',
-			onClick: function() {
-				this.S.R.setVisualization('trees');
-				this.parent.hide();
-				this.S.UI.toggleGlobeTooltip(true,function(point){
-					return Math.round((point.trees)*10)/10 + ' vegetation';
-				});
-			}
-		}).label('ui:buttons.dataviews_inner.trees');
-
+		
+		dataViewList.addOption('ui:buttons.dataviews_inner.tech', dataViewList.visualTooltip('tech',function(point) {
+			return Math.round((point.tech)*10)/10 + ' parts';
+		}));
+		dataViewList.addOption('ui:buttons.dataviews_inner.trees', dataViewList.visualTooltip('trees',function(point) {
+			return Math.round((point.trees)*10)/10 + ' vegetation';
+		}));
 
 		// Add slider for zombie behavior: how much 
 		this.S.UI.interfaceParts.main_control.addDataField('control_collect',{
-			title: 'Resource to put towards reproduction',
 			type:'slider',
+			title: 'Resource to put towards reproduction',
 			dynamic: 'control_moneyRatio',
 			dataOptions: 'start: 0; end: 12; initial: 2; step: 0.1;'
 		});
-		*/
 	},
 	onStart: function(callback) {
 		// Code to start the simulation

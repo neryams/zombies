@@ -39,6 +39,17 @@ $body-font: 'Arial', sans-serif;
 	bottom: 0;
 	left: 24px;
 }
+.dataField-progressBar .progress {
+	background-color: #444;
+	div {
+		background-color: $primary-color;
+		height: 100%;
+	}
+}
+.dataField-accordion p {
+	color: #000;
+	font-size: rem-calc(12);
+}
 %readonly_input {
 	border: 0;
 	background: transparent;
