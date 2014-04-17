@@ -39,11 +39,19 @@ $body-font: 'Arial', sans-serif;
 	bottom: 0;
 	left: 24px;
 }
+.dataField-slider .range-slider {
+	margin-top: rem-calc(12);
+}
 .dataField-progressBar .progress {
 	background-color: #444;
+	margin-top: rem-calc(12);
+
 	div {
 		background-color: $primary-color;
 		height: 100%;
+	}
+	div.text {
+		background: none;
 	}
 }
 .dataField-accordion p {

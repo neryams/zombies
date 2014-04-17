@@ -180,16 +180,15 @@ var UserInterface = function UserInterface(Renderer) {
 			progressBar: function(config) {
 				var field = $('<label/>'),
 					bar = i18n.t('dom:interface.dataField.progressBar');
-				this.width = config.width || 100;
 				this.val = function(value) {
 					var bar = this.find('.progress div');
 
 					if(isNaN(value)) {
-						this.addClass('date');
+						this.addClass('text');
 						bar.html(value).css('width','');
 					} else {
-						this.removeClass('date countdown');
-						bar.html('').css('width', Math.round(this.width*value));
+						this.removeClass('text countdown');
+						bar.html('').css('width', Math.floor(100*value) + '%');
 					}
 				};
 				if(config.title)

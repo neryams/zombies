@@ -66,8 +66,7 @@ exports.options = {
 		mainInfo.addDataField({
 			type: 'progressBar',
 			title: 'ui:labels.world_panic',
-			dynamic: 'world_panic',
-			width: 186
+			dynamic: 'world_panic'
 		}).prependTo(mainInfo);
 	},
 	alwaysActive: true,
