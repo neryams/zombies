@@ -168,7 +168,7 @@ $(function () {
                     var loadEnd = false,
                         startGame = function(strain) {
                             S.start(strain);
-                            UI.processUpgrades(strain);
+                            UI.evolutions.buildUI(strain);
                             MI.load.end();
                             R.animate();
                         };

@@ -117,7 +117,7 @@ Upgrade.prototype.generateGene = function(pieceSize, shape) {
 
 Upgrade.prototype.set = function(property,value) {
 	this[property] = value;
-	this.S.UI.updateEvolution(this.id,property,value);
+	this.S.UI.evolutions.set(this.id,property,value)
 };
 
 Upgrade.prototype.purchase = function() {
@@ -575,6 +575,7 @@ Simulator.prototype.pause = function() {
 };
 Simulator.prototype.unPause = function() {
 	this.paused = false;
+	this.tick();
 };
 
 Simulator.prototype.addUpgrades = function(module) {
@@ -616,7 +617,7 @@ Simulator.prototype.addUpgrades = function(module) {
 		delete currentLevel.onUpgrade;
     }
     // send all the levels to the UI
-    this.UI.addEvolution(module.id,levels);
+    this.UI.evolutions.addNew(module.id,levels);
 
     return this.upgrades;
 };
@@ -868,8 +869,6 @@ Simulator.prototype.tick = function() {
 		R = this.R;
 
 	S.status.date.setTime(1577880000000 + 86400000*S.iteration);
-	if(S.paused)
-		return false;
 
 	var i,
 		options = {
@@ -956,7 +955,7 @@ Simulator.prototype.tick = function() {
 
 		S.hordes.addAllNew();
 
-		if(debugMenu.active && debugMenu.console.options.manualTicks) {
+		if(S.paused || (debugMenu.active && debugMenu.console.options.manualTicks)) {
 			if(S.interval) {
 				clearInterval(S.interval);
 				S.interval = false;
