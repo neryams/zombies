@@ -34,6 +34,48 @@ $body-font: 'Arial', sans-serif;
 .dataField-button {
 	@include button(rem-calc(8));
 }
+.dataField-modal .menu {
+	position: absolute;
+	bottom: 0;
+	left: 24px;
+}
+.dataField-slider .range-slider {
+	margin-top: rem-calc(12);
+}
+.dataField-progressBar .progress {
+	background-color: #444;
+	margin-top: rem-calc(12);
+
+	div {
+		background-color: $primary-color;
+		height: 100%;
+	}
+	div.text {
+		background: none;
+	}
+}
+.dataField-accordion p {
+	color: #000;
+	font-size: rem-calc(12);
+}
+%readonly_input {
+	border: 0;
+	background: transparent;
+	padding: 0;
+	height: 16px;
+	text-align: right;
+	box-shadow: none;	
+}
+.dataField-field input {
+	@extend %readonly_input;
+	&:focus {
+		@extend %readonly_input;
+	}
+}
+
+input[readonly] {
+	@extend %readonly_input;
+}
 
 
 /* Overlay Styling */
@@ -98,47 +140,18 @@ canvas.draggable {
 
 /* Tooltips */
 
-.tooltip {
-	z-index: 25;
-	position: absolute;
-	font-size: small;
-	padding: 8px;
-	overflow: hidden;
-	visibility: hidden;
-}
-#render_tooltip {
-	color: white;
-	background-color: black;
-	opacity: 0.8;
-	border-radius: 4px;
-	display: block;
-}
-#tooltip {
-	color: black;
-	background-color: #ffcc00;
-	
-	table {
-		border-spacing: 6px;
-		border-collapse: separate;
-		width: 100%;
+.tooltip {	
+	h3 {
+		color: black;
+		font-size: rem-calc(20);
+		margin-top: 0;
 	}
-	td, #tooltip th {
-		padding: 0;
-		vertical-align: middle;
+	.label {
+		@include grid-column(4);
 	}
-	tr th {
-		padding-bottom: 10px;
-		font-size: 130%;
-		vertical-align: top;
-		font-weight: bold;
-		text-align: left;
-	}
-	td p {
-		margin-top: 0.5em;
-	}
-	table td:first-child {
-		width: 4em;
+	.value {
+		@include grid-column(8);
 	}
 }
 
-@import "ui/main_info","ui/main_control","ui/top_bar","ui/evolution","ui/mutation";
+@import "ui/main_info","ui/main_control","ui/top_bar","ui/evolution","ui/mutation","ui/icons";

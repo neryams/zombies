@@ -11,7 +11,7 @@
 	display: none;
 }
 
-#ui, #ui_mask {
+#ui {
 	position: absolute;
 	z-index: 10;
 	width: 100%;
@@ -20,9 +20,7 @@
 	top: 0px;
 	/*background: black; /*remove*/
 }
-#ui_mask {
-	z-index: 12;
-	background: black;
-	opacity: 0.6;
-	visibility: hidden;
+
+ul {
+	list-style: none;
 }

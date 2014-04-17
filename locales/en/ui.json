@@ -23,8 +23,16 @@
 		"population_zombies": "Zombie Population",
 		"virus_name": "Virus Name"
 	},
+	"evolution": {
+		"cost": "Cost",
+		"gene": "Gene",
+		"accept": "Buy these evolutions",
+		"cancel": "Undo all purchases"
+	},
 	"mutation": {
-
+		"clear": "Clear the mutation grid.",
+		"mutate": "Mutate your infection for <strong>__price__</strong> evolution points",
+		"cancel": "Revert all changes."
 	},
 	"dates": {
 	   "month_names": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],

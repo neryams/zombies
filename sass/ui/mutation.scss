@@ -1,14 +1,25 @@
 .dataField-mutationMenu {
-	width: 800px;
-	float: left;
 	height: 600px;
 	
+	.menu {
+		.accept {
+			width: 100px;
+		}
+		.cancel, .clear {
+			background-color: $secondary-color;
+			&:hover {
+				background-color: darken( $secondary-color, 10% );
+			}
+		}
+	}
+	.menu_board {
+		
+	}
+
 	#tb_board {
 		float: left;
 		background-color: #151515;
-		margin-left: 5px;
-		margin-top: 5px;
-		width: 335px;
+		width: 30%;
 		height: 334px;
 		display: table;
 		
@@ -24,48 +35,44 @@
 			overflow: hidden;
 		}
 	}
-
-	#tb_gene {
-		display: none;
-	}
-
-	.geneBlock.active {
-		padding: 10px;
-		margin-left: 5px;
-		margin-top: 5px;
-		background-color: #151515;
+	#tb_toolbox {
+		@include block-grid(4);
+		width: 70%;
 		float: left;
-		width: 88px;
-		height: 88px;
-		display: table;
-		position: static;
-		p.image {
-			display: table-row;
-			text-align: center;
-			vertical-align: middle;
-			img {
-				margin: 10px;
+		margin: 0;
+
+		.geneBlock.active {
+			padding: 10px;
+			background-color: #151515;
+			border: 1px solid #222;
+			border-width: 0 0 1px 1px;
+			display: table;
+			position: static;
+			p.image {
+				display: table-row;
+				text-align: center;
+				vertical-align: middle;
+				img {
+					margin: 10px;
+				}
+			}
+
+			p.name{
+				color: white;
+				margin: 0;
+				font-size: small;
+				text-align: center;
+				display: table-row;
+				height: 1px;
 			}
 		}
-
-		p.name{
-			color: white;
-			margin: 0;
-			font-size: small;
-			text-align: center;
-			display: table-row;
-			height: 1px;
+		.geneBlock > img {
+			float: left;
 		}
-	}
-	.geneBlock.active:nth-child(2n) {
-		width: 89px;
-	}
-	.geneBlock > img {
-		float: left;
-	}
 
-	.geneBlock.used {
-		opacity: 0.3;
+		.geneBlock.used {
+			opacity: 0.3;
+		}
 	}
 
 	.grid .placed {
@@ -83,23 +90,9 @@
 		position: absolute;
 		z-index: 30;
 		opacity: 0.3;
+		list-style-type: none;
 	}
 	.dragging.valid {
 		opacity: 0.8;
-	}
-
-	.menu {
-		position: absolute;
-		bottom: 16px;
-		right: 16px;
-		width: 768px;
-		
-		button {
-			float: right;
-		}
-		button.dataField-mutationMenu_clear {
-			float: left;
-			background-image: url('../ui/refresh.png');
-		}
 	}
 }

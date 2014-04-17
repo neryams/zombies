@@ -33,7 +33,9 @@ function MainInterface(UI,R) {
 	},
 
 	buildUI = function() {
-		$('#ui').append($('<div id="render_tooltip" class="tooltip"></div><div id="tooltip" class="tooltip"></div>'));
+		UI.addDataField('tooltip', {
+			class: 'tooltip'
+		}).attr('id', 'tooltip').appendTo($('body'));
 
 		var mainControl = UI.interfaceParts.main_control,
 			mainInfo = UI.interfaceParts.main_info,
@@ -41,9 +43,10 @@ function MainInterface(UI,R) {
 
 		mainBar.addDataField({
 			type: 'h1'
-		}).label('setup:title');
+		}).html(i18n.t('setup:title'));
 
 		mainBar.addDataField('money',{
+			type: 'field',
 			title: 'Evolution Points',
 			dynamic: 'money',
 			dynamicFormat: function(value) {
@@ -54,184 +57,156 @@ function MainInterface(UI,R) {
 			}
 		});
 
-		mainInfo.addDataField('sidebarAccordion',{
+		var sidebarAccordion = mainInfo.addDataField('sidebarAccordion',{
 			type: 'accordion'
-		}).addDataField('newsTicker',{
-			type: 'accordion_child',
+		});
+		sidebarAccordion.addDataField('newsTicker',{
 			title: 'ui:buttons.news',
 			class: 'news'
 		});
 
-		var dataViewList = UI.interfaceParts.main_control.addDataField('dataViewSelector',{
-			type: 'div',
-			visible: false,
-			class: 'dataViewList'
+		var dataViewList = mainControl.addDataField('dataViewList',{
+			type: 'choiceToggle',
+			alignment: 'top',
+			label: 'ui:buttons.dataviews'
 		});
+		dataViewList.visualTooltip = function(visual, mathFunction) {
+			return function() {
+				R.setVisualization(visual);
+				UI.toggleGlobeTooltip(true, mathFunction);
+			};
+		};
 
-		dataViewList.addDataField({
-			type:'button',
-			onClick: function() {
-				R.closeVisualization();
-				this.parent.hide();
-				UI.toggleGlobeTooltip(false);
+		dataViewList.addOption('ui:buttons.dataviews_inner.disable', function() {
+			R.closeVisualization();
+			UI.toggleGlobeTooltip(false);
+		});
+		dataViewList.addOption('ui:buttons.dataviews_inner.political', dataViewList.visualTooltip('country',function(point) {
+			if(point.country) {
+				return '<strong>' + point.country.name + '</strong>';
 			}
-		}).label('ui:buttons.dataviews_inner.disable');
-		dataViewList.addDataField({
-			type:'button',
-			onClick: function() {
-				R.setVisualization('country');
-				this.parent.hide();
-				UI.toggleGlobeTooltip(true,function(point){
-					if(point.country) {
-						return '<strong>' + point.country.name + '</strong>';
-					}
-				});
-			}
-		}).label('ui:buttons.dataviews_inner.political');
-		dataViewList.addDataField({
-			type:'button',
-			onClick: function() {
-				R.setVisualization('precipitation');
-				this.parent.hide();
-				UI.toggleGlobeTooltip(true,function(point){
-					return Math.round(point.precipitation*10)/10 + 'mm';
-				});
-			}
-		}).label('ui:buttons.dataviews_inner.rain');
-		dataViewList.addDataField({
-			type:'button',
-			onClick: function() {
-				R.setVisualization('temperature');
-				this.parent.hide();
-				UI.toggleGlobeTooltip(true,function(point){
-					return Math.round((point.temperature - 273)*10)/10 + 'C';
-				});
-			}
-		}).label('ui:buttons.dataviews_inner.temperature');
+		}));
+		dataViewList.addOption('ui:buttons.dataviews_inner.rain', dataViewList.visualTooltip('precipitation',function(point) {
+			return Math.round(point.precipitation*10)/10 + 'mm';
+		}));
+		dataViewList.addOption('ui:buttons.dataviews_inner.temperature', dataViewList.visualTooltip('temperature',function(point){
+			return Math.round((point.temperature - 273)*10)/10 + 'C';
+		}));
 
 		mainControl.addDataField({
 			type: 'button',
-			onClick: function() {
-				if(!this.opens[0].visible)
-					this.opens[0].display();
-				else
-					this.opens[0].hide();
-			},
-			opens: [dataViewList]
-		}).label('ui:buttons.dataviews').element.position();
-
-		mainControl.addDataField({
-			type: 'button',
-			onClick: function() {
-				R.togglePopDisplay();
-			}
-		}).label('ui:buttons.population');
-
-		UI.addDataField('alert',{
-			type: 'div',
-			overlay: true,
-			onHide: function() {
-				this.element.empty();
-			}
+			label: 'ui:buttons.population'
+		}).click(function() {
+			R.togglePopDisplay();
 		});
 
 		var evolveMenuOuter = UI.addDataField('evolveMenu',{
-			type: 'div',
+			type: 'modal',
 			class: 'draggable-parent',
 			title: 'Evolution',
-			overlay: true,
-			onHide: function() {
-				UI.evolutions.buyEvolutions();
-			}
+			onShow: function() {
+				UI.evolutions.refresh();
+			},
+			opener: mainControl.addDataField({
+				type: 'button',
+				label: 'ui:buttons.evolution'
+			})
 		});
 		UI.evolutions.evolveMenu = evolveMenuOuter.addDataField({
 			type: 'div',
-			class: 'draggable'
+			class: 'draggable evolveMenu'
 		});
 
-		UI.evolutions.mutationMenu = UI.addDataField('mutationMenu',{
+		var evolveMenu_controls = evolveMenuOuter.addDataField({
 			type: 'div',
-			class: 'toolbox',
-			title: 'Mutation',
-			overlay: true,
-			onHide: function() {
-				UI.evolutions.clearGrid();
+			class: 'menu'
+		});
+		evolveMenu_controls.addDataField({
+			type: 'button',
+			class: 'icon cancel',
+			tooltip: i18n.t('ui:evolution.cancel'),
+			click: function() {
+				UI.evolutions.deselectAll();
+				evolveMenuOuter.hide();
 			}
 		});
-		UI.evolutions.mutationMenu.element.append($(i18n.t('dom:interface.mutation.menu')));
+		evolveMenu_controls.addDataField({
+			type: 'button',
+			class: 'icon accept',
+			tooltip: i18n.t('ui:evolution.accept'),
+			click: function() {
+				UI.evolutions.buyEvolutions();
+				evolveMenuOuter.hide();
+			}
+		});
+		evolveMenu_controls.find('.has-tip').addClass('tip-top');
+
+		UI.evolutions.mutationMenu = UI.addDataField('mutationMenu',{
+			type: 'modal',
+			class: 'toolbox',
+			title: 'Mutation',
+			onShow: function() {
+				UI.evolutions.refreshGenes();
+			},
+			onHide: function() {
+				UI.evolutions.clearGrid();
+			},
+			opener: mainControl.addDataField({
+				type: 'button',
+				label: 'ui:buttons.mutation'
+			})
+		});
+		
+		UI.evolutions.mutationMenu.grid = $(i18n.t('dom:interface.mutation.grid'));
+		UI.evolutions.mutationMenu.piece_container = $(i18n.t('dom:interface.mutation.piece_container'));
+		UI.evolutions.mutationMenu.append(UI.evolutions.mutationMenu.grid).append(UI.evolutions.mutationMenu.piece_container);
 
 		var mutationMenu_controls = UI.evolutions.mutationMenu.addDataField({
 			type: 'div',
 			class: 'menu'
 		});
-
 		mutationMenu_controls.addDataField('mutationMenu_clear',{
 			type: 'button',
-			class: 'icon',
-			onHover: function() {
-				this.showToolTip( 'Clear the mutation grid.' );
-			},
-			onClick: function() {
+			class: 'icon clear',
+			tooltip: i18n.t('ui:mutation.clear'),
+			click: function() {
 				UI.evolutions.clearGrid();
 			}
-		}).val('Clear');
-
-		mutationMenu_controls.addDataField('mutationMenu_submit',{
-			type: 'button',
-			class: 'primary',
-			onHover: function() {
-				var totalPrice = 0;
-				for (var key in UI.evolutions.all)
-					if (UI.evolutions.all.hasOwnProperty(key) && UI.evolutions.all[key].gene && UI.evolutions.all[key].gene.used)
-						if(UI.evolutions.all[key].gene.active === undefined || !UI.evolutions.mutation[UI.evolutions.all[key].gene.active].placement.equals(UI.evolutions.all[key].gene.placement))
-							totalPrice += UI.evolutions.all[key].cost;
-
-				this.showToolTip( 'Mutate your infection for <strong>'+totalPrice+'</strong> evolution points' );
-			},
-			onClick: function() {
-				UI.evolutions.mutate();
-			}
-		}).val('Mutate');
+		});
 		mutationMenu_controls.addDataField('mutationMenu_cancel',{
 			type: 'button',
-			class: 'secondary',
-			onHover: function() {
-				this.showToolTip( 'Revert all changes.' );
-			},
-			onClick: function() {
+			class: 'icon cancel',
+			tooltip: i18n.t('ui:mutation.cancel'),
+			click: function() {
 				UI.evolutions.mutationMenu.hide();
 			}
-		}).val('Cancel');
+		});
+		mutationMenu_controls.addDataField('mutationMenu_submit',{
+			type: 'button',
+			class: 'icon accept',
+			tooltip: i18n.t('ui:mutation.mutate'),
+			click: function() {
+				UI.evolutions.mutate();
+				UI.evolutions.mutationMenu.hide();
+			}
+		});
+		mutationMenu_controls.find('.has-tip').addClass('tip-top');
+		/*
+		mutationMenu_controls.addDataField('mutationMenu_submit',{
+			type: 'field',
+			dynamic: 'selectedMutations'
+		});
+		var totalPrice = 0;
+		for (var key in UI.evolutions.all)
+			if (UI.evolutions.all.hasOwnProperty(key) && UI.evolutions.all[key].gene && UI.evolutions.all[key].gene.used)
+				if(UI.evolutions.all[key].gene.active === undefined || !UI.evolutions.mutation[UI.evolutions.all[key].gene.active].placement.equals(UI.evolutions.all[key].gene.placement))
+					totalPrice += UI.evolutions.all[key].cost;
+		*/
 
-		mainControl.addDataField('evolveMenu_button',{
-			type: 'button',
-			class: 'primary',
-			onClick: function() {
-				if(!this.opens[0].visible) {
-					UI.evolutions.refresh();
-					this.opens[0].display();
-				}
-				else
-					this.opens[0].hide();
-			},
-			opens: [evolveMenuOuter]
-		}).label('ui:buttons.evolution');
-		
-		mainControl.addDataField('mutationMenu_button',{
-			type: 'button',
-			class: 'primary',
-			onClick: function() {
-				if(!this.opens[0].visible) {
-					UI.evolutions.refreshGenes();
-					this.opens[0].display();
-				}
-				else
-					this.opens[0].hide();
-			},
-			opens: [UI.evolutions.mutationMenu]
-		}).label('ui:buttons.mutation');
-		
-		dataViewList.element.css('bottom',mainControl.element.height());
+
+		UI.addDataField('alert',{
+			type: 'modal'
+		});
 	},
 
 	// Commands to run when loading is finished and main game UI is displayed
@@ -329,7 +304,7 @@ function MainInterface(UI,R) {
 				gene = $(this),
 				geneImage = gene.find('img'),
 				currentUpgrade = UI.evolutions.all[gene.data('geneId')],
-				overlayPosition = geneImage.parents('.overlay').offset(),
+				overlayPosition = geneImage.parents('.dataField-modal').offset(),
 				mousePosition = { left:event.clientX , top:event.clientY },
 				grid = UI.evolutions.grid,
 				gridElement = $('#tb_board .grid'),
@@ -431,17 +406,25 @@ function MainInterface(UI,R) {
 
         //UI.interfaceParts.evolveMenu_button.element.trigger('click');
         //UI.interfaceParts.mutateMenu_button.element.trigger('click');
+		
+		$('.reveal-modal').foundation('reveal', {
+			animation_speed: 250,
+			close_on_background_click: false,
+			bg_class: 'reveal-modal-bg',
+			bg : $('.reveal-modal-bg')
+		});
 
-        // This is where we open the strain select/start game prompt. Auto-start for now.
+		$('#ui').addClass('started');
 	},
 
 	strainPrompt = function(options, callback) { // jshint ignore:line
 		var strainPrompt = UI.addDataField('strainPrompt',{
-			type: 'div',
-			class: 'strain_prompt',
-			title: 'Pick a Specification',
-			overlay: true
+			type: 'modal',
+			class: 'strain_prompt'
 		});
+		strainPrompt.addDataField({
+			type: 'h1'
+		}).html('Pick a Specification');
 
 		var selectStrain = function(id) {
 			return function() {
@@ -454,11 +437,24 @@ function MainInterface(UI,R) {
 		for(var i = 0; i < options.length; i++) {
 			strainPrompt.addDataField({
 				type:'button',
-				onClick: selectStrain(options[i].id)
-			}).val(options[i].name).addDataField().val(options[i].description);
+				label:'Pick'
+			})
+			.click(selectStrain(options[i].id))
+			.addDataField({
+				type: 'field',
+				title: options[i].name,
+				value: options[i].description
+			});
 		}
+		
+		strainPrompt.foundation('reveal', {
+			animation_speed: 250,
+			close_on_background_click: false,
+			bg_class: 'reveal-modal-bg',
+			bg : $('.reveal-modal-bg')
+		});
 
-		strainPrompt.display();
+		strainPrompt.show();
 	};
 
 	var preload_html = '<div id="progress"><div class="progressbar pace"><div class="pace-progress"></div></div><p></p></div>';
