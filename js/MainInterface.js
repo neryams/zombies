@@ -13,13 +13,18 @@ function MainInterface(UI,R) {
 			done: 0, curProg: 0, curShare: 0, curStep: 0
 		},
 		start: function() {
-			$('#setup').remove();
+			$('#setup').empty();
+
+			var preload_html = '<div id="progress"><div class="progressbar pace"><div class="pace-progress"></div></div><p></p></div>';
+			$('#setup').append($(preload_html));
+
 			$('#progress').addClass('display','block');
 			$('#progress p').html(i18n.t('setup:loading.default'));
 		},
 		endGenerator: function() {
 			buildUI();
-			$('#progress').remove();
+			$('#setup').remove();
+			$('#ui').addClass('active');
 			$('#container').addClass('active');
 		},
 		end: function() {
@@ -250,9 +255,6 @@ function MainInterface(UI,R) {
 
 		strainPrompt.show();
 	};
-
-	var preload_html = '<div id="progress"><div class="progressbar pace"><div class="pace-progress"></div></div><p></p></div>';
-	$('#ui').addClass('active').append($(preload_html));
 
 	return {
 		load: load,
