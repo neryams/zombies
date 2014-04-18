@@ -142,7 +142,7 @@ var UserInterface = function UserInterface(Renderer) {
 				});
 				modal.on('closed', this, function (event) {
 					var modal = event.data;
-					
+
 					status.pauseRenderer = false;
 					S.unPause();
 
@@ -945,7 +945,7 @@ var UserInterface = function UserInterface(Renderer) {
 				// Making the gene pieces interactive, gradding them onto the grid. etc
 				$('.toolbox').on('mousedown','.geneBlock',function (event) {
 					event.preventDefault();
-					var i,valid,element,position,
+					var i,valid,element,position,elementOffset,
 						gene = $(this),
 						geneImage = gene.find('img'),
 						currentUpgrade = evolutions[gene.data('geneId')],
@@ -976,7 +976,7 @@ var UserInterface = function UserInterface(Renderer) {
 							currentUpgrade.gene.used = false;
 						}
 						currentUpgrade.gene.validPlacement = false;
-						var elementOffset = element.offset();
+						elementOffset = element.offset();
 						position = { left: elementOffset.left - overlayPosition.left, top: elementOffset.top - overlayPosition.top};
 					}
 					// If gene is in the 'toolshed', pick up a copy
@@ -985,7 +985,8 @@ var UserInterface = function UserInterface(Renderer) {
 							return false;
 						else
 							element = gene.clone(true).removeClass('active').empty().append(geneImage.clone());
-						position = { left: mousePosition.left - overlayPosition.left - geneImage.width(), top: mousePosition.top - overlayPosition.top - geneImage.height()};
+						elementOffset = gene.find('img').offset();
+						position = { left: elementOffset.left - overlayPosition.left, top: elementOffset.top - overlayPosition.top};
 					}
 
 					geneImage.parents('.toolbox').append(element);
@@ -995,17 +996,27 @@ var UserInterface = function UserInterface(Renderer) {
 					gridElementPosition.top -= overlayPosition.top;
 					gridElementPosition.left -= overlayPosition.left;
 
-					$('.toolbox').on('mousemove.toolbox',null,{position:position,gridElement:gridElement,gridElementPosition:gridElementPosition,element:element,mousePosition:mousePosition,currentGene:currentUpgrade.gene}, function (event) {
+					$('.toolbox').on('mousemove.toolbox',null,{
+						position: position,
+						gridElement: gridElement,
+						gridElementPosition: gridElementPosition,
+						element: element,
+						mousePosition: mousePosition,
+						currentGene: currentUpgrade.gene
+					}, function (event) {
 						event.data.position.left += event.clientX - event.data.mousePosition.left;
 						event.data.position.top += event.clientY - event.data.mousePosition.top;
 						event.data.mousePosition.left = event.clientX;
 						event.data.mousePosition.top = event.clientY;
-						if(event.data.gridElementPosition.left - SQUARE_SIZE/2 < event.data.position.left && event.data.gridElementPosition.top - SQUARE_SIZE/2 < event.data.position.top &&
-							event.data.gridElementPosition.left + event.data.gridElement.width() + SQUARE_SIZE/2 > event.data.position.left + event.data.currentGene.width*SQUARE_SIZE && event.data.gridElementPosition.top + event.data.gridElement.height() + SQUARE_SIZE/2 > event.data.position.top + event.data.currentGene.height*SQUARE_SIZE) {
+						if(
+							event.data.gridElementPosition.left - SQUARE_SIZE/2 < event.data.position.left && event.data.gridElementPosition.top - SQUARE_SIZE/2 < event.data.position.top &&
+							event.data.gridElementPosition.left + event.data.gridElement.width() + SQUARE_SIZE/2 > event.data.position.left + event.data.currentGene.width * SQUARE_SIZE &&
+							event.data.gridElementPosition.top + event.data.gridElement.height() + SQUARE_SIZE/2 > event.data.position.top + event.data.currentGene.height * SQUARE_SIZE
+						) {
 							event.data.currentGene.placement.x = Math.round((event.data.position.left - event.data.gridElementPosition.left) / SQUARE_SIZE);
 							event.data.currentGene.placement.y = Math.round((event.data.position.top - event.data.gridElementPosition.top) / SQUARE_SIZE);
-							event.data.element.css('left',event.data.gridElementPosition.left + event.data.currentGene.placement.x*SQUARE_SIZE - 1)
-								.css('top',event.data.gridElementPosition.top + event.data.currentGene.placement.y*SQUARE_SIZE - 1);
+							event.data.element.css('left',event.data.gridElementPosition.left + event.data.currentGene.placement.x*SQUARE_SIZE)
+								.css('top',event.data.gridElementPosition.top + event.data.currentGene.placement.y*SQUARE_SIZE);
 							valid = true;
 							for(i = 0; i < event.data.currentGene.shape.length; i++)
 								if(grid[event.data.currentGene.shape[i].x + event.data.currentGene.placement.x][event.data.currentGene.shape[i].y + event.data.currentGene.placement.y])
