@@ -326,6 +326,9 @@ var UserInterface = function UserInterface(Renderer) {
 			onShow: function() {
 				refresh();
 			},
+			onHide: function() {
+				deselectAll();
+			},
 			opener: interfaceParts.main_control.addDataField({
 				type: 'button',
 				label: 'ui:buttons.evolution'
@@ -345,7 +348,6 @@ var UserInterface = function UserInterface(Renderer) {
 			class: 'icon cancel',
 			tooltip: i18n.t('ui:evolution.cancel'),
 			click: function() {
-				deselectAll();
 				evolveMenuOuter.hide();
 			}
 		});
@@ -671,7 +673,7 @@ var UserInterface = function UserInterface(Renderer) {
 
 			deselectAll = function() {
 				while(selectedUpgrades.length) {
-					var upgrade = evolutions[this.selectedUpgrades.pop()];
+					var upgrade = evolutions[selectedUpgrades.pop()];
 					delete upgrade.selected;
 					upgrade.element.removeClass('active');
 				}

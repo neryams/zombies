@@ -196,7 +196,7 @@ function MainInterface(UI,R) {
 		
 		$('.reveal-modal').foundation('reveal', {
 			animation_speed: 250,
-			close_on_background_click: false,
+			close_on_background_click: true,
 			bg_class: 'reveal-modal-bg',
 			bg : $('.reveal-modal-bg')
 		});
@@ -238,7 +238,7 @@ function MainInterface(UI,R) {
 		}
 		
 		strainPrompt.foundation('reveal', {
-			animation_speed: 250,
+			animation_speed: 100,
 			close_on_background_click: false,
 			bg_class: 'reveal-modal-bg',
 			bg : $('.reveal-modal-bg')
