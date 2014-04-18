@@ -23,4 +23,10 @@ $iconPath: "../ui/icons";
 	&.accept {
 		background-image: url(#{$iconPath}/appbar.check.png);
 	}
+	&.layers {
+		background-image: url(#{$iconPath}/appbar.layer.png);
+	}
+	&.visual {
+		background-image: url(#{$iconPath}/appbar.eye.png);
+	}
 }

@@ -15,19 +15,18 @@ Date.prototype.getMonthNameShort = function() {
 };
 
 var UserInterface = function UserInterface(Renderer) {
-	var sphere_coords,
+	var S,
+		sphere_coords,
 		interfaceParts = {},
 		status = {
-			mouse: { x:0, y:0, lastx:0, lasty:0, down:false, click: false, scroll: 0, bound: null },
-			pauseRenderer: false,
-			showToolTip: false,
-			toolTipMode: '',
 			gridSize: 0
 		},
-		changedStatus = {
-
+		UIstatus = {
+			mouse: { x:0, y:0, lastx:0, lasty:0, down:false, click: false, scroll: 0, bound: null },
+			pauseRenderer: false
 		},
-		S;
+		changedStatus = {
+		};
 
 	var DataField = function (id,config,parent) {
 		var className = 'dataField';
@@ -43,25 +42,26 @@ var UserInterface = function UserInterface(Renderer) {
 		this.id = id;
 		className += ' dataField-'+id;
 
-		if(config) {
-			if(!config.type)
-				config.type = 'div';
+		if(!config) 
+			config = {}
 
-			if(typeof this._typeOptions[config.type] === 'function') {
-				this._merge( this._typeOptions[config.type].call(this, config) );
-			}
-			else {
-				this._merge( $(i18n.t('dom:interface.dataField.default', { element: config.type })) );
-			}
+		if(!config.type)
+			config.type = 'div';
 
-			for (var key in config)
-				if (config.hasOwnProperty(key)) {
-					this[key] = config[key];
-
-					if(this._options[key] !== undefined)
-						this._options[key].call(this, config[key]);
-				}
+		if(typeof this._typeOptions[config.type] === 'function') {
+			this._merge( this._typeOptions[config.type].call(this, config) );
+		} else {
+			this._merge( $(i18n.t('dom:interface.dataField.default', { element: config.type })) );
 		}
+
+		for (var key in config)
+			if (config.hasOwnProperty(key)) {
+				this[key] = config[key];
+
+				if(this._options[key] !== undefined)
+					this._options[key].call(this, config[key]);
+			}
+
 		className += ' dataField-'+this.type;
 		this.addClass(className).addClass(this.class);
 
@@ -137,13 +137,13 @@ var UserInterface = function UserInterface(Renderer) {
 					if(modal.onShow)
 						modal.onShow.call(modal);
 
-					status.pauseRenderer = true;
+					UIstatus.pauseRenderer = true;
 					S.pause();
 				});
 				modal.on('closed', this, function (event) {
 					var modal = event.data;
 
-					status.pauseRenderer = false;
+					UIstatus.pauseRenderer = false;
 					S.unPause();
 
 					if(modal.onHide)
@@ -250,12 +250,18 @@ var UserInterface = function UserInterface(Renderer) {
 			},
 			choiceToggle: function(config) {
 				var alignment = 'align:' + (config.alignment || 'left'),
-					label = config.label || 'Select',
-					button = $('<a href="#" data-options="' + alignment + '" data-dropdown="drop" class="dataField-button">' + i18n.t(label) + '</a>'),
+					label = config.label || '';
+
+				if(label && i18n.exists(label))
+					label = i18n.t(label);
+				var button = $('<a href="#" data-options="' + alignment + '" data-dropdown="drop" class="dataField-button">' + label + '</a>'),
 					list = $('<ul id="drop" class="f-dropdown" data-dropdown-content></ul>');
 
 				this.addOption = function(label, onpick) {
-					var link = $('<a href="#">' + i18n.t(label) + '</a>').on('click', onpick);
+					if(label && i18n.exists(label))
+						label = i18n.t(label);
+
+					var link = $('<a href="#">' + label + '</a>').on('click', onpick);
 					this.filter('ul').append($('<li></li>').append(link));
 				};
 
@@ -277,10 +283,10 @@ var UserInterface = function UserInterface(Renderer) {
 			mousePriority: function(val) {
 				if(val) {
 					this.mouseenter(function() {
-							status.mouse.bound = this;
+							UIstatus.mouse.bound = this;
 						})
 						.mouseleave(function() {
-							status.mouse.bound = null;
+							UIstatus.mouse.bound = null;
 						});
 				}
 			},
@@ -1070,11 +1076,11 @@ var UserInterface = function UserInterface(Renderer) {
 	var activatePlanetTooltip = function(getPointInfo) {
 		$('#ui').off('mousemove.render_tooltip');
 		$('#ui').on('mousemove.render_tooltip', null, getPointInfo, function(event) {
-			status.mouse.x = event.clientX;
-			status.mouse.y = event.clientY;
-			sphere_coords = Renderer.getSphereCoords(status.mouse.x,status.mouse.y,200);
-			if(sphere_coords && !isNaN(sphere_coords[0]) && !isNaN(sphere_coords[1]) && !status.pauseRenderer) {
-				$('#render_tooltip').css('top',status.mouse.y+10).css('left',status.mouse.x+30);
+			UIstatus.mouse.x = event.clientX;
+			UIstatus.mouse.y = event.clientY;
+			sphere_coords = Renderer.getSphereCoords(UIstatus.mouse.x,UIstatus.mouse.y,200);
+			if(sphere_coords && !isNaN(sphere_coords[0]) && !isNaN(sphere_coords[1]) && !UIstatus.pauseRenderer) {
+				$('#render_tooltip').css('top',UIstatus.mouse.y+10).css('left',UIstatus.mouse.x+30);
 				//$('#tooltip').css('display','block').html('asf');
 				var point = Renderer.coordsToPoint(sphere_coords[0],sphere_coords[1]);
 
@@ -1121,15 +1127,15 @@ var UserInterface = function UserInterface(Renderer) {
 
 	// Function that runs on every frame, sending mouse movement from UI as coordinates to the renderer to move 3-d elements around
 	Renderer.onRender(function() {
-		if(!status.pauseRenderer) {
-			if(status.mouse.down) {
-				Renderer.moveCamera(status.mouse.lastx - status.mouse.x, status.mouse.lasty - status.mouse.y);
-				status.mouse.lastx = status.mouse.x;
-				status.mouse.lasty = status.mouse.y;
+		if(!UIstatus.pauseRenderer) {
+			if(UIstatus.mouse.down) {
+				Renderer.moveCamera(UIstatus.mouse.lastx - UIstatus.mouse.x, UIstatus.mouse.lasty - UIstatus.mouse.y);
+				UIstatus.mouse.lastx = UIstatus.mouse.x;
+				UIstatus.mouse.lasty = UIstatus.mouse.y;
 			}
-			if(status.mouse.scroll) {
-				Renderer.zoomCamera(-status.mouse.scroll);
-				status.mouse.scroll = 0;
+			if(UIstatus.mouse.scroll) {
+				Renderer.zoomCamera(-UIstatus.mouse.scroll);
+				UIstatus.mouse.scroll = 0;
 			}
 		}
 		else
@@ -1156,7 +1162,7 @@ var UserInterface = function UserInterface(Renderer) {
 
 	return {
 		interfaceParts: interfaceParts,
-		status: status,
+		status: UIstatus,
 		evolutions: E,
 		addDataField: function(id, options) {
 			return mainSection.addDataField.call(mainSection, id, options);

@@ -1,5 +1,5 @@
 $titlebar-height: 2.5rem;
-$sidebar-width: 12.5em;
+$sidebar-width: 12.5rem;
 $body-font: 'Arial', sans-serif;
 
 #container.active {
@@ -27,6 +27,17 @@ $body-font: 'Arial', sans-serif;
 	> .dataField-main_control {
 		width: $sidebar-width;
 		right: 0;
+	}
+}
+
+.view_options {
+	position: absolute;
+	right: $sidebar-width;
+	bottom: 0;
+	min-width: 200px;
+
+	.dataField {
+		float: right;
 	}
 }
 

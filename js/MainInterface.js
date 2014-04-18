@@ -62,10 +62,14 @@ function MainInterface(UI,R) {
 			class: 'news'
 		});
 
-		var dataViewList = mainControl.addDataField('dataViewList',{
+		var viewOptionsMenu = mainControl.addDataField('viewOptionsMenu',{
+			class: 'view_options'
+		});
+
+		var dataViewList = viewOptionsMenu.addDataField('dataViewList',{
 			type: 'choiceToggle',
 			alignment: 'top',
-			label: 'ui:buttons.dataviews'
+			class: 'icon layers'
 		});
 		dataViewList.visualTooltip = function(visual, mathFunction) {
 			return function() {
