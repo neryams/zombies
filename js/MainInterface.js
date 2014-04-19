@@ -76,13 +76,13 @@ function MainInterface(UI,R) {
 			alignment: 'top',
 			class: 'icon layers'
 		});
+
 		dataViewList.visualTooltip = function(visual, mathFunction) {
 			return function() {
 				R.setVisualization(visual);
 				UI.toggleGlobeTooltip(true, mathFunction);
 			};
 		};
-
 		dataViewList.addOption('ui:buttons.dataviews_inner.disable', function() {
 			R.closeVisualization();
 			UI.toggleGlobeTooltip(false);
@@ -99,13 +99,15 @@ function MainInterface(UI,R) {
 			return Math.round((point.temperature - 273)*10)/10 + 'C';
 		}));
 
-		mainControl.addDataField({
-			type: 'button',
-			label: 'ui:buttons.population'
-		}).click(function() {
-			R.togglePopDisplay();
+		var viewList = viewOptionsMenu.addDataField('viewList',{
+			type: 'choiceToggle',
+			alignment: 'top',
+			class: 'icon visual'
 		});
 
+		viewList.addOption('ui:buttons.toggle_visual', function() {
+			R.togglePopDisplay();
+		})
 
 		UI.addDataField('alert',{
 			type: 'modal'

@@ -10,7 +10,7 @@
 			"trees": "Vegetation",
 			"disable": "Disable Overlay"
 		},
-		"population": "Toggle Population",
+		"toggle_visual": "Toggle Data Bars",
 		"evolution": "Evolution",
 		"mutation": "Mutation",
 		"news": "News Ticker",

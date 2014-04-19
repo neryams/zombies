@@ -250,19 +250,20 @@ var UserInterface = function UserInterface(Renderer) {
 			},
 			choiceToggle: function(config) {
 				var alignment = 'align:' + (config.alignment || 'left'),
-					label = config.label || '';
+					label = config.label || '',
+					uniqueId = 'drop_' + Object.keys(interfaceParts).length;
 
 				if(label && i18n.exists(label))
 					label = i18n.t(label);
-				var button = $('<a href="#" data-options="' + alignment + '" data-dropdown="drop" class="dataField-button">' + label + '</a>'),
-					list = $('<ul id="drop" class="f-dropdown" data-dropdown-content></ul>');
+				var button = $(i18n.t('dom:interface.dataField.choiceToggle.link',{ label: label, link: uniqueId, alignment: alignment })),
+					list = $(i18n.t('dom:interface.dataField.choiceToggle.listContainer',{ link: uniqueId }));
 
 				this.addOption = function(label, onpick) {
 					if(label && i18n.exists(label))
 						label = i18n.t(label);
 
 					var link = $('<a href="#">' + label + '</a>').on('click', onpick);
-					this.filter('ul').append($('<li></li>').append(link));
+					this.filter('ul').append($(i18n.t('dom:interface.dataField.choiceToggle.listItem')).append(link));
 				};
 
 				return [button,list];

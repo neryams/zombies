@@ -40,12 +40,13 @@ exports.options = {
 		}
 
 		// Add data view options for the resources
+		var viewList = this.S.UI.interfaceParts.viewList;
 		var dataViewList = this.S.UI.interfaceParts.dataViewList;
 		
-		dataViewList.addOption('ui:buttons.dataviews_inner.tech', dataViewList.visualTooltip('tech',function(point) {
-			return Math.round((point.tech)*10)/10 + ' parts';
+		viewList.addOption('ui:buttons.dataviews_inner.tech', dataViewList.visualTooltip('tech',function(point) {
+			return Math.round((point.tech)*10)/2 + ' parts';
 		}));
-		dataViewList.addOption('ui:buttons.dataviews_inner.trees', dataViewList.visualTooltip('trees',function(point) {
+		viewList.addOption('ui:buttons.dataviews_inner.trees', dataViewList.visualTooltip('trees',function(point) {
 			return Math.round((point.trees)*10)/10 + ' vegetation';
 		}));
 

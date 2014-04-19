@@ -35,6 +35,7 @@ $body-font: 'Arial', sans-serif;
 	right: $sidebar-width;
 	bottom: 0;
 	min-width: 200px;
+	margin-right: rem-calc(16);
 
 	.dataField {
 		float: right;
