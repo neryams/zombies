@@ -1081,18 +1081,17 @@ var UserInterface = function UserInterface(Renderer) {
 			UIstatus.mouse.y = event.clientY;
 			sphere_coords = Renderer.getSphereCoords(UIstatus.mouse.x,UIstatus.mouse.y,200);
 			if(sphere_coords && !isNaN(sphere_coords[0]) && !isNaN(sphere_coords[1]) && !UIstatus.pauseRenderer) {
-				$('#render_tooltip').css('top',UIstatus.mouse.y+10).css('left',UIstatus.mouse.x+30);
+				$('#tooltip').css('top',UIstatus.mouse.y+10).css('left',UIstatus.mouse.x+30);
 				//$('#tooltip').css('display','block').html('asf');
 				var point = Renderer.coordsToPoint(sphere_coords[0],sphere_coords[1]);
 
 				if(point !== undefined && (!point.water || point.total_pop > 0)) {
-					if($('#render_tooltip').css('visibility') != 'visible')
-						$('#render_tooltip').css('visibility','visible');
-					$('#render_tooltip').html(event.data(point));
+					$('#tooltip').show();
+					$('#tooltip').html(event.data(point));
 
 					// Debug information to mouse over points
 					if(debugMenu.console.options.mouseOverDebugData) {
-						$('#render_tooltip').html(JSON.stringify(point,
+						$('#tooltip').html(JSON.stringify(point,
 							function(key,value) {
 								if(key == 'adjacent' || key == 'renderer')
 									return undefined;
@@ -1104,12 +1103,10 @@ var UserInterface = function UserInterface(Renderer) {
 					}
 				}
 				else
-					if($('#render_tooltip').css('visibility') != 'hidden')
-						$('#render_tooltip').css('visibility','hidden');
+					$('#tooltip').hide();
 			}
 			else
-				if($('#render_tooltip').css('visibility') != 'hidden')
-					$('#render_tooltip').css('visibility','hidden');
+				$('#tooltip').hide();
 		});
 	},
 
@@ -1123,7 +1120,7 @@ var UserInterface = function UserInterface(Renderer) {
 	},
 
 	hideTooltip = function() {
-		$('#tooltip').css('visibility','hidden');
+		$('#tooltip').hide();
 	};
 
 	// Function that runs on every frame, sending mouse movement from UI as coordinates to the renderer to move 3-d elements around

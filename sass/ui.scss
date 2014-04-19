@@ -152,6 +152,10 @@ canvas.draggable {
 
 /* Tooltips */
 
+#tooltip {
+	display: inline-block;
+	width: auto;
+}
 .tooltip {	
 	h3 {
 		color: black;
