@@ -70,6 +70,9 @@ $body-font: 'Arial', sans-serif;
 	color: #000;
 	font-size: rem-calc(12);
 }
+.dataField-choiceToggle li.active {
+	background-color: #ddeecf;
+}
 %readonly_input {
 	border: 0;
 	background: transparent;

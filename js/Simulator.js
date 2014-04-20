@@ -942,14 +942,16 @@ Simulator.prototype.tick = function() {
 		// Update all the points in the renderer that may have been affected 
 		// Iterate over the sparse array
 		var changedPoints = [];
-		if(S.status.updateAllPoints) {
-			S.pointsToWatch = S.points.slice(0);
-			delete S.status.updateAllPoints;
+		if(S.status.displayData !== '') {
+			if(S.status.updateAllPoints) {
+				S.pointsToWatch = S.points.slice(0);
+				delete S.status.updateAllPoints;
+			}
+			S.tick_activePoints(function(point) {
+				changedPoints.push([point.id, point[S.status.displayData] / S.config.maximums[S.status.displayData]]);
+			});
+			S.UI.updateVisual(changedPoints);
 		}
-		S.tick_activePoints(function(point) {
-			changedPoints.push([point.id, point[S.status.displayData] / S.config.maximums[S.status.displayData]]);
-		});
-		S.UI.updateVisual(changedPoints);
 		
 		S.pointsToWatch.length = 0;
 

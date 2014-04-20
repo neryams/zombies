@@ -1,4 +1,5 @@
 /* exported MainInterface */
+/* global S */
 function MainInterface(UI,R) {
 	var status = UI.status;
 	/*
@@ -107,8 +108,13 @@ function MainInterface(UI,R) {
 		});
 
 		viewList.addOption('ui:buttons.dataviews_inner.disable_visual', function() {
-			R.togglePopDisplay();
+			S.status.displayData = '';
+			S.status.updateAllPoints = true;
 		});
+		viewList.addOption('ui:buttons.dataviews_inner.population', function() {
+			S.status.displayData = 'total_pop';
+			S.status.updateAllPoints = true;
+		}, true);
 
 		UI.addDataField('alert',{
 			type: 'modal'

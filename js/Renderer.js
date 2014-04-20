@@ -625,19 +625,21 @@ var Renderer = function (scaling,onLoad) {
     },
     setData = function(dataPointId, value) {
         var vertices = dataPoints[dataPointId];
-        var popLength = 198;
+
         if(vertices !== undefined) {
+            var currentLength = vertices[0].length(),
+                newLength = 198;
             if(value > 0) {
-                popLength = 60 * value + 200;
-                vertices[0].setLength(popLength);
-                vertices[2].setLength(popLength);
-                vertices[5].setLength(popLength);
-                vertices[7].setLength(popLength);
-            } else if(vertices[0].length() >= 200) {
-                vertices[0].setLength(popLength);
-                vertices[2].setLength(popLength);
-                vertices[5].setLength(popLength);
-                vertices[7].setLength(popLength);
+                newLength = 60 * value + 200;
+                vertices[0].setLength(newLength);
+                vertices[2].setLength(newLength);
+                vertices[5].setLength(newLength);
+                vertices[7].setLength(newLength);
+            } else if(currentLength >= 200) {
+                vertices[0].setLength(newLength);
+                vertices[2].setLength(newLength);
+                vertices[5].setLength(newLength);
+                vertices[7].setLength(newLength);
             }
         }
     };
@@ -757,21 +759,23 @@ var Renderer = function (scaling,onLoad) {
             else
                 return false;
         },
-        togglePopDisplay: function () {
+        togglePopDisplay: function (force) {
             var tween;
-            if(DataBarsMesh.visible) {
-                tween = new TWEEN.Tween(DataBarsMesh.scale).to({x:0, y: 0, z: 0}, 1000);
-                tween.onComplete(function(){
-                    DataBarsMesh.visible = false;
-                });
-                tween.easing(TWEEN.Easing.Circular.In);
+            if(force === undefined || DataBarsMesh.visible !== force) {
+                if(DataBarsMesh.visible) {
+                    tween = new TWEEN.Tween(DataBarsMesh.scale).to({x:0, y: 0, z: 0}, 1000);
+                    tween.onComplete(function(){
+                        DataBarsMesh.visible = false;
+                    });
+                    tween.easing(TWEEN.Easing.Circular.In);
+                }
+                else {
+                    DataBarsMesh.visible = true;
+                    tween = new TWEEN.Tween(DataBarsMesh.scale).to({x: 1, y: 1, z: 1}, 1000);
+                    tween.easing(TWEEN.Easing.Circular.Out);
+                }
+                tween.start();
             }
-            else {
-                DataBarsMesh.visible = true;
-                tween = new TWEEN.Tween(DataBarsMesh.scale).to({x: 1, y: 1, z: 1}, 1000);
-                tween.easing(TWEEN.Easing.Circular.Out);
-            }
-            tween.start();
         },
         displayArc: function (point1, point2) {
             var i,position,index,

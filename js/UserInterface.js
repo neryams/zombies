@@ -259,12 +259,24 @@ var UserInterface = function UserInterface(Renderer) {
 				var button = $(i18n.t('dom:interface.dataField.choiceToggle.link',{ label: label, link: uniqueId, alignment: alignment })),
 					list = $(i18n.t('dom:interface.dataField.choiceToggle.listContainer',{ link: uniqueId }));
 
-				this.addOption = function(label, onpick) {
+				this.addOption = function(label, onpick, isDefault) {
+					var _this = this;
+
 					if(label && i18n.exists(label))
 						label = i18n.t(label);
 
-					var link = $('<a href="#">' + label + '</a>').on('click', onpick);
-					this.filter('ul').append($(i18n.t('dom:interface.dataField.choiceToggle.listItem')).append(link));
+					var link = $('<a href="#">' + label + '</a>').on('click', function() {
+							onpick.call(_this, this);
+							_this.filter('ul').find('.active').removeClass('active');
+							$(this).parent('li').addClass('active');
+						}),
+						listItem = $(i18n.t('dom:interface.dataField.choiceToggle.listItem'));
+					this.filter('ul').append(listItem.append(link));
+
+					if(isDefault) {
+						this.filter('ul').find('.active').removeClass('active');
+						listItem.addClass('active');
+					}
 				};
 
 				return [button,list];
@@ -1177,7 +1189,7 @@ var UserInterface = function UserInterface(Renderer) {
 		},
 		updateVisual: function(targets) {
 			for(var i = 0; i < targets.length; i++) {
-				Renderer.setData(targets[i][0], targets[i][1], false);
+				Renderer.setData(targets[i][0], targets[i][1]);
 			}
 			Renderer.updateMatrix();
 		},
@@ -1204,6 +1216,12 @@ var UserInterface = function UserInterface(Renderer) {
 
 			if(E.gridSize() < status.gridSize)
 				E.gridSize(status.gridSize);
+
+			if(S.status.displayData === '') {
+				Renderer.togglePopDisplay(false);
+			} else {
+				Renderer.togglePopDisplay(true);
+			}
 
 			return status;
 		},
