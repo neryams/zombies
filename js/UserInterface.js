@@ -6,6 +6,7 @@
 		Renderer -- Reference to the Renderer object so that the UI can send commands to it
 */
 /* exported UserInterface */
+/* globals gridPoint */
 
 Date.prototype.getMonthName = function() {
 	return i18n.t('ui:dates.month_names.'+this.getMonth());
@@ -43,7 +44,7 @@ var UserInterface = function UserInterface(Renderer) {
 		className += ' dataField-'+id;
 
 		if(!config) 
-			config = {}
+			config = {};
 
 		if(!config.type)
 			config.type = 'div';
@@ -1173,6 +1174,12 @@ var UserInterface = function UserInterface(Renderer) {
 		},
 		setSimulator: function(Simulator) {
 			S = Simulator;
+		},
+		updateVisual: function(targets) {
+			for(var i = 0; i < targets.length; i++) {
+				Renderer.setData(targets[i][0], targets[i][1], false);
+			}
+			Renderer.updateMatrix();
 		},
 		updateUI: function(data) {
 			for (var key in data)

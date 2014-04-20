@@ -117,7 +117,7 @@ Upgrade.prototype.generateGene = function(pieceSize, shape) {
 
 Upgrade.prototype.set = function(property,value) {
 	this[property] = value;
-	this.S.UI.evolutions.set(this.id,property,value)
+	this.S.UI.evolutions.set(this.id,property,value);
 };
 
 Upgrade.prototype.purchase = function() {
@@ -231,7 +231,8 @@ function Simulator(R, UI, generatorConfig, generatorData) {
 		money: 500000,
 		panic: 0,
 		gridSize: 5,
-		date: new Date()
+		date: new Date(),
+		displayData: 'total_pop'
 	};
 	this.status.date.setTime(1577880000000); // Jan 1st, 2030
 	this.modules = {};
@@ -940,13 +941,17 @@ Simulator.prototype.tick = function() {
 
 		// Update all the points in the renderer that may have been affected 
 		// Iterate over the sparse array
+		var changedPoints = [];
+		if(S.status.updateAllPoints) {
+			S.pointsToWatch = S.points.slice(0);
+			delete S.status.updateAllPoints;
+		}
 		S.tick_activePoints(function(point) {
-			S.updateSquare.call(S, point);
+			changedPoints.push([point.id, point[S.status.displayData] / S.config.maximums[S.status.displayData]]);
 		});
+		S.UI.updateVisual(changedPoints);
 		
 		S.pointsToWatch.length = 0;
-
-		S.R.updateMatrix();
 
 		var updatedStatus = S.UI.updateUI(S.status);
 		for (var key in updatedStatus)
@@ -968,16 +973,6 @@ Simulator.prototype.tick = function() {
 			debugMenu.console.newTick();
 
 		S.iteration++;
-	}
-};
-Simulator.prototype.updateSquare = function(target, force) {
-	if(!target.cache) {
-		this.R.setData(target, this.config.max_pop);
-		target.cache = { infected: target.infected, total_pop: target.total_pop };
-	} else if(force || (target.cache.infected != target.infected || target.cache.total_pop != target.total_pop)) {
-		this.R.setData(target, this.config.max_pop);
-		target.cache.infected = target.infected;
-		target.cache.total_pop = target.total_pop;
 	}
 };
 Simulator.prototype.rendererDecal = function(id, lat, lng, size, texture) {

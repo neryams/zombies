@@ -33,7 +33,8 @@ var Renderer = function (scaling,onLoad) {
         },
         onRender = function () {},
         ready = false,
-        generatorConfig = null;
+        generatorConfig = null,
+        dataPoints = [];
 
     // Define constants
     var PI_HALF = Math.PI / 2;
@@ -252,6 +253,8 @@ var Renderer = function (scaling,onLoad) {
             morphTargets: false,
             side: THREE.BackSide
         }));
+        DataBarsMesh.scale.set(0, 0, 0);
+        DataBarsMesh.visible = false;
         Sphere.add( DataBarsMesh );
     },
 
@@ -259,7 +262,7 @@ var Renderer = function (scaling,onLoad) {
         var phi = (90 - lat) * Math.PI / 180,
             theta = (180 - lng) * Math.PI / 180,
             color = new THREE.Color(),
-            element = datapoint.total_pop / generatorConfig.max_pop;
+            element = datapoint.total_pop / generatorConfig.maximums.total_pop;
             //element = (Simulator.points[i].temperature - 220) / 100;
 
         color.setHSL( ( 0.6 - ( element * 0.3 ) ), 1.0, 0.5 );
@@ -281,7 +284,7 @@ var Renderer = function (scaling,onLoad) {
 
         THREE.GeometryUtils.merge(DataBarsGeometry, DataBarMesh);
         // Last 8 points in merged geometry should be the vertices of the moving bar
-        datapoint.renderer.vertices_pop = DataBarsGeometry.vertices.slice(-8);
+        dataPoints[datapoint.id] = DataBarsGeometry.vertices.slice(-8);
     },
 
     addHordeParticles = function() {
@@ -619,6 +622,24 @@ var Renderer = function (scaling,onLoad) {
             /*if(WindowConfig.scaling != 1)
                 SceneRenderer.setViewport( 0, 0, WindowConfig.windowX, WindowConfig.windowY );*/
         }
+    },
+    setData = function(dataPointId, value) {
+        var vertices = dataPoints[dataPointId];
+        var popLength = 198;
+        if(vertices !== undefined) {
+            if(value > 0) {
+                popLength = 60 * value + 200;
+                vertices[0].setLength(popLength);
+                vertices[2].setLength(popLength);
+                vertices[5].setLength(popLength);
+                vertices[7].setLength(popLength);
+            } else if(vertices[0].length() >= 200) {
+                vertices[0].setLength(popLength);
+                vertices[2].setLength(popLength);
+                vertices[5].setLength(popLength);
+                vertices[7].setLength(popLength);
+            }
+        }
     };
 
     $(window).resize(function() {
@@ -640,6 +661,7 @@ var Renderer = function (scaling,onLoad) {
         getSphereCoords: getSphereCoords,
         resize: resize,
         updateHorde: updateHorde,
+        setData: setData,
         coordsToPoint: function(lat,lng) {
             return Simulator.points[(Math.floor(90-lat)*generatorConfig.w + Math.floor(lng))];
         },
@@ -716,23 +738,6 @@ var Renderer = function (scaling,onLoad) {
             var tween = new TWEEN.Tween(WindowConfig.rotation).to({x: -(90 - square.lng) * Math.PI / 180, y: square.lat * Math.PI / 180, z: 0}, 2000);
             tween.easing(TWEEN.Easing.Cubic.Out);
             tween.start();
-        },
-        setData: function(dataPoint, ratio) {
-            var popLength = 198;
-            if(dataPoint.renderer.vertices_pop !== undefined) {
-                if(dataPoint.total_pop > 0) {
-                    popLength = 60 * dataPoint.total_pop / ratio + 200;
-                    dataPoint.renderer.vertices_pop[0].setLength(popLength);
-                    dataPoint.renderer.vertices_pop[2].setLength(popLength);
-                    dataPoint.renderer.vertices_pop[5].setLength(popLength);
-                    dataPoint.renderer.vertices_pop[7].setLength(popLength);
-                } else if(dataPoint.renderer.vertices_pop[0].length() >= 200) {
-                    dataPoint.renderer.vertices_pop[0].setLength(popLength);
-                    dataPoint.renderer.vertices_pop[2].setLength(popLength);
-                    dataPoint.renderer.vertices_pop[5].setLength(popLength);
-                    dataPoint.renderer.vertices_pop[7].setLength(popLength);
-                }
-            }
         },
         setVisualization: function( layer ) {
             if(ready) {

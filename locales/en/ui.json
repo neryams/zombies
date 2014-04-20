@@ -8,9 +8,9 @@
 			"political": "Political",
 			"tech": "Robot Parts",
 			"trees": "Vegetation",
-			"disable": "Disable Overlay"
+			"disable": "Disable Overlay",
+			"disable_visual": "Toggle Data Bars"
 		},
-		"toggle_visual": "Toggle Data Bars",
 		"evolution": "Evolution",
 		"mutation": "Mutation",
 		"news": "News Ticker",

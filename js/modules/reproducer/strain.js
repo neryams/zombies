@@ -29,27 +29,35 @@ exports.options = {
 			} // Do not set an ID for the strain upgrade. The simulator needs to use the default name to give you the upgrade when you start the game.
 		);
 
+		this.S.config.maximums.tech = 0;
+		this.S.config.maximums.trees = 0;
 		for(var i = 0, n = this.S.points.length; i < n; i++) {
 			if(this.S.points[i].water) {
 				this.S.points[i].tech = 0;
 				this.S.points[i].trees = 0;
 			} else {
 				this.S.points[i].tech = Math.pow(Math.log(this.S.points[i].total_pop+1),4);
-				this.S.points[i].trees = Math.log(this.S.config.max_pop/(this.S.points[i].total_pop+10) + 1)*this.S.points[i].precipitation*this.S.points[i].temperature;
+				this.S.points[i].trees = Math.log(this.S.config.maximums.total_pop/(this.S.points[i].total_pop+10) + 1)*this.S.points[i].precipitation*this.S.points[i].temperature;
+			
+				if(this.S.config.maximums.tech < this.S.points[i].tech)
+					this.S.config.maximums.tech = this.S.points[i].tech;
+				if(this.S.config.maximums.trees < this.S.points[i].trees)
+					this.S.config.maximums.trees = this.S.points[i].trees;
 			}
 		}
 
 		// Add data view options for the resources
 		var viewList = this.S.UI.interfaceParts.viewList;
-		var dataViewList = this.S.UI.interfaceParts.dataViewList;
+		var status = this.S.status;
 		
-		viewList.addOption('ui:buttons.dataviews_inner.tech', dataViewList.visualTooltip('tech',function(point) {
-			return Math.round((point.tech)*10)/2 + ' parts';
-		}));
-		viewList.addOption('ui:buttons.dataviews_inner.trees', dataViewList.visualTooltip('trees',function(point) {
-			return Math.round((point.trees)*10)/10 + ' vegetation';
-		}));
-
+		viewList.addOption('ui:buttons.dataviews_inner.tech', function() {
+			status.displayData = 'tech';
+			status.updateAllPoints = true;
+		});
+		viewList.addOption('ui:buttons.dataviews_inner.trees', function() {
+			status.displayData = 'trees';
+			status.updateAllPoints = true;
+		});
 		// Add slider for zombie behavior: how much 
 		this.S.UI.interfaceParts.main_control.addDataField('control_collect',{
 			type:'slider',

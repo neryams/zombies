@@ -139,7 +139,9 @@ self.addEventListener('message', function(event) {
 			pop_ratio: 26991953,
 			height_ratio: 8000,
 			world_pop: 11000000,
-			max_pop: 0,
+			maximums:{
+				total_pop: 0
+			},
 			landmass_size: 0.62,
 			seed: false
 		};
@@ -444,7 +446,7 @@ Planet.prototype.generatePop = function(heightmap, borderNoise) {
 		if(!current.water) {
 			// Work out population of each given square based on Perlin density function and conditions
 			concentration = 3;
-			livability = 1 + 0.15*Math.pow(current.coast_distance + 1,-0.75); // Closer to the coast is better
+			livability = 1 + 0.15*Math.pow(current.coast_distance,-0.75); // Closer to the coast is better
 			
 			livability *= 1.08 - Math.abs(300 - current.temperature) / 130; // temperate temperature is better
 			if(current.temperature < this.config.temperature) // colder areas have less people living in the outskirts
@@ -468,7 +470,7 @@ Planet.prototype.generatePop = function(heightmap, borderNoise) {
 			if(!current.polar && Math.random() < livability*livability/200) {
 				current.country = this.countries.length;
 				this.countries[current.country] = new Country(current.country,current);
-				centroids[centroids.length] = current;
+				centroids[centroids.length] = current.id;
 			}
 		}
 	}
@@ -493,13 +495,13 @@ Planet.prototype.generatePop = function(heightmap, borderNoise) {
 					current.total_pop = 0;
 				else {
 					current.total_pop = Math.floor(current.total_pop*this.config.pop_ratio);
-					if(current.total_pop > this.config.max_pop)
-						this.config.max_pop = current.total_pop;
+					if(current.total_pop > this.config.maximums.total_pop)
+						this.config.maximums.total_pop = current.total_pop;
 				}
 			}
-			if(!current.water) {
-				centroids.sort(centroidSort(current));
-				current.country = centroids[0].country;
+			if((!current.water && !current.polar) || current.total_pop > 0) {
+				centroids.sort(centroidSort(i));
+				current.country = this.data[centroids[0]].country;
 			}
 			current.perlinTest = borderNoise[i];
 		}

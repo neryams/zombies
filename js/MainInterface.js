@@ -30,6 +30,7 @@ function MainInterface(UI,R) {
 		end: function() {
 			attachEvents();
 			$(document).foundation();
+			R.togglePopDisplay();
 		},
 		progress: function(message, totalProgress) {
 			$('#progress p').html(i18n.t('setup:loading.'+message));
@@ -105,9 +106,9 @@ function MainInterface(UI,R) {
 			class: 'icon visual'
 		});
 
-		viewList.addOption('ui:buttons.toggle_visual', function() {
+		viewList.addOption('ui:buttons.dataviews_inner.disable_visual', function() {
 			R.togglePopDisplay();
-		})
+		});
 
 		UI.addDataField('alert',{
 			type: 'modal'
