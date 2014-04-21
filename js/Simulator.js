@@ -232,7 +232,7 @@ function Simulator(R, UI, generatorConfig, generatorData) {
 		panic: 0,
 		gridSize: 5,
 		date: new Date(),
-		displayData: 'total_pop'
+		displayData: ''
 	};
 	this.status.date.setTime(1577880000000); // Jan 1st, 2030
 	this.modules = {};
@@ -443,6 +443,9 @@ Simulator.prototype.start = function(strainId) {
 		if(debugMenu.active) {
 			debugMenu.setSimulator(that).newTick();
 		}
+
+		that.status.displayData = 'total_pop';
+		that.status.updateAllPoints = true;
 
 		that.tick();
 	});

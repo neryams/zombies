@@ -260,12 +260,7 @@ var Renderer = function (scaling,onLoad) {
 
     addPoint = function( lat, lng, datapoint ) {
         var phi = (90 - lat) * Math.PI / 180,
-            theta = (180 - lng) * Math.PI / 180,
-            color = new THREE.Color(),
-            element = datapoint.total_pop / generatorConfig.maximums.total_pop;
-            //element = (Simulator.points[i].temperature - 220) / 100;
-
-        color.setHSL( ( 0.6 - ( element * 0.3 ) ), 1.0, 0.5 );
+            theta = (180 - lng) * Math.PI / 180;
 
         DataBarMesh.position.x = 198 * Math.sin(phi) * Math.cos(theta);
         DataBarMesh.position.y = 198 * Math.cos(phi);
@@ -273,18 +268,17 @@ var Renderer = function (scaling,onLoad) {
 
         DataBarMesh.lookAt(Sphere.position);
 
-        if(element > 0)
-            DataBarMesh.scale.z = element * -60 - 2;
-        else
-            DataBarMesh.scale.z = -1;
+        DataBarMesh.scale.z = -62;
 
-        var i;
-        for (i = 0; i < DataBarMesh.geometry.faces.length; i++)
-            DataBarMesh.geometry.faces[i].color = color;
+        for (var i = 0; i < DataBarMesh.geometry.faces.length; i++)
+            DataBarMesh.geometry.faces[i].color = new THREE.Color();
 
         THREE.GeometryUtils.merge(DataBarsGeometry, DataBarMesh);
         // Last 8 points in merged geometry should be the vertices of the moving bar
-        dataPoints[datapoint.id] = DataBarsGeometry.vertices.slice(-8);
+        dataPoints[datapoint.id] = {
+            faces: DataBarsGeometry.faces.slice(-DataBarMesh.geometry.faces.length),
+            vertices: DataBarsGeometry.vertices.slice(-DataBarMesh.geometry.vertices.length)
+        };
     },
 
     addHordeParticles = function() {
@@ -624,22 +618,25 @@ var Renderer = function (scaling,onLoad) {
         }
     },
     setData = function(dataPointId, value) {
-        var vertices = dataPoints[dataPointId];
+        var point = dataPoints[dataPointId];
 
-        if(vertices !== undefined) {
-            var currentLength = vertices[0].length(),
+        if(point !== undefined) {
+            var currentLength = point.vertices[0].length(),
                 newLength = 198;
             if(value > 0) {
                 newLength = 60 * value + 200;
-                vertices[0].setLength(newLength);
-                vertices[2].setLength(newLength);
-                vertices[5].setLength(newLength);
-                vertices[7].setLength(newLength);
+                point.vertices[0].setLength(newLength);
+                point.vertices[2].setLength(newLength);
+                point.vertices[5].setLength(newLength);
+                point.vertices[7].setLength(newLength);
+
+                for (var i = 0; i < point.faces.length; i++)
+                    point.faces[i].color.setHSL( ( 0.6 - ( value * 0.3 ) ), 1.0, 0.5 );
             } else if(currentLength >= 200) {
-                vertices[0].setLength(newLength);
-                vertices[2].setLength(newLength);
-                vertices[5].setLength(newLength);
-                vertices[7].setLength(newLength);
+                point.vertices[0].setLength(newLength);
+                point.vertices[2].setLength(newLength);
+                point.vertices[5].setLength(newLength);
+                point.vertices[7].setLength(newLength);
             }
         }
     };
@@ -672,6 +669,7 @@ var Renderer = function (scaling,onLoad) {
         },
         updateMatrix: function() {
             DataBarsGeometry.verticesNeedUpdate = true;
+            DataBarsGeometry.colorsNeedUpdate = true;      
         },
         moveCamera: function(x,y) {
             WindowConfig.mouseVector.multiplyScalar(0.5).addScalars(x,y,0);
