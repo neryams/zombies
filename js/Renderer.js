@@ -81,12 +81,13 @@ var Renderer = function (scaling,onLoad) {
 
         // lights
 
-        var ambientLight = new THREE.AmbientLight( 0x404040 );
+        var ambientLight = new THREE.AmbientLight( 0x808080 );
         Scene.add( ambientLight );
 
         var directionalLight = new THREE.DirectionalLight( 0xcccccc, 2 );
-        directionalLight.position.set( -500, 0, 500 );
+        directionalLight.position.set( -600, 0, 400 );
         directionalLight.target = Sphere;
+        directionalLight.castShadow = true;
         Scene.add( directionalLight );
 
         // Visualization layer floating above the earth
@@ -116,6 +117,7 @@ var Renderer = function (scaling,onLoad) {
         /*SceneRenderer = new THREE.CanvasRenderer();
         SceneRenderer.setSize( window.innerWidth, window.innerHeight );*/
         SceneRenderer = new THREE.WebGLRenderer( { antialias: true, clearColor: 0x060708, clearAlpha: 1 } );
+        SceneRenderer.shadowMapEnabled = true;
         resize();
 
         document.getElementById('container').appendChild( SceneRenderer.domElement );
@@ -238,10 +240,22 @@ var Renderer = function (scaling,onLoad) {
 
         var geometry = new THREE.SphereGeometry( 200, 40, 30 );
         //var material = new THREE.MeshBasicMaterial( { map: earthTexture, overdraw: true } );
-        var material = new THREE.MeshPhongMaterial( { ambient: 0x222222, color: 0x888888, specular: 0x333333, shininess: 2, perPixel: true, map: earthTexture, bumpMap: earthHeight, bumpScale: 20, metal: false } );
+        var material = new THREE.MeshPhongMaterial({
+            ambient: 0x404040,
+            color: 0x888888,
+            specular: 0x333333,
+            shininess: 2,
+            perPixel: true,
+            map: earthTexture,
+            bumpMap: earthHeight,
+            bumpScale: 20,
+            metal: false
+        });
 
         var earthMesh = new THREE.Mesh( geometry, material );
         Sphere.add( earthMesh );
+        earthMesh.castShadow = true;
+        earthMesh.receiveShadow = false;
 
         addData();
         ready = true;
@@ -259,14 +273,16 @@ var Renderer = function (scaling,onLoad) {
 
         console.timeEnd('rendererSetup');
 
-        DataBarsMesh = new THREE.Mesh(DataBarsGeometry, new THREE.MeshBasicMaterial({
+        DataBarsMesh = new THREE.Mesh(DataBarsGeometry, new THREE.MeshLambertMaterial({
             color: 0xffffff,
+            ambient: 0xffffff,
             vertexColors: THREE.FaceColors,
-            morphTargets: false,
-            side: THREE.BackSide
+            morphTargets: false
         }));
         DataBarsMesh.scale.set(0, 0, 0);
         DataBarsMesh.visible = false;
+        DataBarsMesh.castShadow = false;
+        DataBarsMesh.receiveShadow = true;
         Sphere.add( DataBarsMesh );
     },
 
@@ -280,7 +296,7 @@ var Renderer = function (scaling,onLoad) {
 
         DataBarMesh.lookAt(Sphere.position);
 
-        DataBarMesh.scale.z = -62;
+        DataBarMesh.scale.z = 62;
 
         for (var i = 0; i < DataBarMesh.geometry.faces.length; i++)
             DataBarMesh.geometry.faces[i].color = new THREE.Color();
@@ -633,7 +649,7 @@ var Renderer = function (scaling,onLoad) {
         var point = dataPoints[dataPointId];
 
         if(point !== undefined) {
-            var currentLength = point.vertices[0].length(),
+            var currentLength = point.vertices[1].length(),
                 newLength = 198;
 
             if(value === undefined)
@@ -641,10 +657,10 @@ var Renderer = function (scaling,onLoad) {
 
             if(value > 0) {
                 newLength = 60 * value + 200;
-                point.vertices[0].setLength(newLength);
-                point.vertices[2].setLength(newLength);
-                point.vertices[5].setLength(newLength);
-                point.vertices[7].setLength(newLength);
+                point.vertices[1].setLength(newLength);
+                point.vertices[3].setLength(newLength);
+                point.vertices[4].setLength(newLength);
+                point.vertices[6].setLength(newLength);
 
                 for (var i = 0; i < point.faces.length; i++)
                     point.faces[i].color.setHSL(
@@ -653,10 +669,10 @@ var Renderer = function (scaling,onLoad) {
                         dataBarColors.min[2] - value * (dataBarColors.min[2] - dataBarColors.max[2])
                     );
             } else if(currentLength >= 200) {
-                point.vertices[0].setLength(newLength);
-                point.vertices[2].setLength(newLength);
-                point.vertices[5].setLength(newLength);
-                point.vertices[7].setLength(newLength);
+                point.vertices[1].setLength(newLength);
+                point.vertices[3].setLength(newLength);
+                point.vertices[4].setLength(newLength);
+                point.vertices[6].setLength(newLength);
             }
         }
     };
