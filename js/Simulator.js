@@ -504,6 +504,9 @@ Simulator.prototype.addModule = function(id,moduleArray) {
 			if(newModule.init)
 				newModule.init();
 
+			if(newModule.ui) 
+				newModule.ui.call(this.UI);
+
 			// Add children recursively
 			for(i = 0, n = newModule.children.length; i < n; i++)
 				this.addModule(newModule.children[i],moduleArray);
@@ -880,6 +883,11 @@ Simulator.prototype.tick = function() {
 			reportPassData: false
 		};
 	if(S.strain !== null) {
+		var updatedStatus = S.UI.updateUI();
+		for (var key in updatedStatus)
+			if (updatedStatus.hasOwnProperty(key))
+				S.status[key] = updatedStatus[key];
+
 		if(debugMenu.active) {
 			debugMenu.console.initTick();
 			
@@ -955,14 +963,9 @@ Simulator.prototype.tick = function() {
 			});
 			S.UI.updateVisual(changedPoints);
 		}
-		
 		S.pointsToWatch.length = 0;
 
-		var updatedStatus = S.UI.updateUI(S.status);
-		for (var key in updatedStatus)
-			if (updatedStatus.hasOwnProperty(key) && key != 'money')
-				S.status[key] = updatedStatus[key];
-
+		S.UI.updateUI(S.status);
 		S.hordes.addAllNew();
 
 		if(S.paused || (debugMenu.active && debugMenu.console.options.manualTicks)) {

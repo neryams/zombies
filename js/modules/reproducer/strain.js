@@ -45,26 +45,41 @@ exports.options = {
 					this.S.config.maximums.trees = this.S.points[i].trees;
 			}
 		}
-
+	},
+	ui: function() {
 		// Add data view options for the resources
-		var viewList = this.S.UI.interfaceParts.viewList;
-		var status = this.S.status;
+		var viewList = this.interfaceParts.viewList;
+		var UI = this;
 		
 		viewList.addOption('ui:buttons.dataviews_inner.tech', function() {
-			status.displayData = 'tech';
-			status.updateAllPoints = true;
+			UI.switchVisual('tech', [
+				0.3,
+				1.0,
+				0.5
+			],[
+				0,
+				1.0,
+				0.3
+			]);
 		});
 		viewList.addOption('ui:buttons.dataviews_inner.trees', function() {
-			status.displayData = 'trees';
-			status.updateAllPoints = true;
+			UI.switchVisual('trees', [
+				0.15,
+				0.75,
+				0.65
+			],[
+				0.4,
+				1.0,
+				0.40
+			]);
 		});
 		// Add slider for zombie behavior: how much 
-		this.S.UI.interfaceParts.main_control.addDataField('control_collect',{
+		this.interfaceParts.main_control.addDataField('control_collect',{
 			type:'slider',
 			title: 'Resource to put towards reproduction',
 			dynamic: 'control_moneyRatio',
 			dataOptions: 'start: 0; end: 12; initial: 2; step: 0.1;'
-		});
+		});		
 	},
 	onStart: function(callback) {
 		// Code to start the simulation

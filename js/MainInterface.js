@@ -108,12 +108,18 @@ function MainInterface(UI,R) {
 		});
 
 		viewList.addOption('ui:buttons.dataviews_inner.disable_visual', function() {
-			S.status.displayData = '';
-			S.status.updateAllPoints = true;
+			UI.switchVisual('');
 		});
 		viewList.addOption('ui:buttons.dataviews_inner.population', function() {
-			S.status.displayData = 'total_pop';
-			S.status.updateAllPoints = true;
+			UI.switchVisual('total_pop', [
+				0.6,// h
+				1.0,// s
+				0.5 // l
+			],[
+				0.2,// h
+				1.0,// s
+				0.5 // l
+			]);
 		}, true);
 
 		UI.addDataField('alert',{

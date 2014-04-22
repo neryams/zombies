@@ -282,6 +282,7 @@ var UserInterface = function UserInterface(Renderer) {
 				return [button,list];
 			}
 		},
+		_status: status,
 		_merge: function(toMerge) {
 			var _this = this;
 
@@ -1193,34 +1194,55 @@ var UserInterface = function UserInterface(Renderer) {
 			}
 			Renderer.updateMatrix();
 		},
-		updateUI: function(data) {
-			for (var key in data)
-				if (data.hasOwnProperty(key) && !changedStatus[key]) {
-					status[key] = data[key];
-				}
+		switchVisual: function(data, colorStart, colorEnd) {
+			if(colorStart !== undefined && colorEnd !== undefined)
+				Renderer.setDataBarColor(colorStart, colorEnd);
 
-			for (var id in interfaceParts)
-				if (interfaceParts.hasOwnProperty(id) && interfaceParts[id].dynamic) {
-					key = interfaceParts[id].dynamic;
-					if(status[key] !== undefined && !changedStatus[key]) {
-						var val = status[key];
-						if(interfaceParts[id].dynamicFormat) {
-							interfaceParts[id].val(interfaceParts[id].dynamicFormat(val));
-						} else {
-							interfaceParts[id].val(val);
+			status.displayData = data;
+			status.updateAllPoints = true;
+			changedStatus.displayData = true;
+			changedStatus.updateAllPoints = true;
+		},
+		updateUI: function(data) {
+			var key;
+			if(data) {
+				for (key in data)
+					if (data.hasOwnProperty(key) && !changedStatus[key])
+						status[key] = data[key];
+
+				for (key in status)
+					if (status.hasOwnProperty(key) && !changedStatus[key] && data[key] === undefined)
+						delete status[key];
+
+				for (var id in interfaceParts)
+					if (interfaceParts.hasOwnProperty(id) && interfaceParts[id].dynamic) {
+						key = interfaceParts[id].dynamic;
+						if(status[key] !== undefined && !changedStatus[key]) {
+							var val = status[key];
+							if(interfaceParts[id].dynamicFormat) {
+								interfaceParts[id].val(interfaceParts[id].dynamicFormat(val));
+							} else {
+								interfaceParts[id].val(val);
+							}
 						}
 					}
+
+				changedStatus = {};
+
+				if(E.gridSize() < status.gridSize)
+					E.gridSize(status.gridSize);
+
+				if(data.displayData === '') {
+					Renderer.togglePopDisplay(false);
+				} else {
+					Renderer.togglePopDisplay(true);
 				}
-
-			changedStatus = {};
-
-			if(E.gridSize() < status.gridSize)
-				E.gridSize(status.gridSize);
-
-			if(S.status.displayData === '') {
-				Renderer.togglePopDisplay(false);
 			} else {
-				Renderer.togglePopDisplay(true);
+				for (key in changedStatus)
+					if (changedStatus.hasOwnProperty(key))
+						changedStatus[key] = status[key];
+
+				return changedStatus;
 			}
 
 			return status;

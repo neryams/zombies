@@ -31,6 +31,18 @@ var Renderer = function (scaling,onLoad) {
             decals: {},
             arc: null
         },
+        dataBarColors = {
+            min: [
+                0.6,// h
+                1.0,// s
+                0.5 // l
+            ],
+            max: [
+                0.2,// h
+                1.0,// s
+                0.5 // l
+            ]
+        },
         onRender = function () {},
         ready = false,
         generatorConfig = null,
@@ -92,8 +104,8 @@ var Renderer = function (scaling,onLoad) {
         visualization.arc.visible = false;
         Sphere.add( visualization.arc );
 
-        // Bars to show zombies and humans
-        var geometry = new THREE.BoxGeometry(1, 1, 1);
+        // Bars to show various point properties
+        var geometry = new THREE.BoxGeometry(0.75, 0.75, 1);
         // Move the 'position point' of the cube to the bottom so it sits on the surface of the globe.
         geometry.applyMatrix( new THREE.Matrix4().makeTranslation(0, 0, 0.5) );
         DataBarMesh = new THREE.Mesh(geometry); // humans
@@ -623,6 +635,10 @@ var Renderer = function (scaling,onLoad) {
         if(point !== undefined) {
             var currentLength = point.vertices[0].length(),
                 newLength = 198;
+
+            if(value === undefined)
+                value = (currentLength - 200) / 60;
+
             if(value > 0) {
                 newLength = 60 * value + 200;
                 point.vertices[0].setLength(newLength);
@@ -631,7 +647,11 @@ var Renderer = function (scaling,onLoad) {
                 point.vertices[7].setLength(newLength);
 
                 for (var i = 0; i < point.faces.length; i++)
-                    point.faces[i].color.setHSL( ( 0.6 - ( value * 0.3 ) ), 1.0, 0.5 );
+                    point.faces[i].color.setHSL(
+                        dataBarColors.min[0] - value * (dataBarColors.min[0] - dataBarColors.max[0]), 
+                        dataBarColors.min[1] - value * (dataBarColors.min[1] - dataBarColors.max[1]),
+                        dataBarColors.min[2] - value * (dataBarColors.min[2] - dataBarColors.max[2])
+                    );
             } else if(currentLength >= 200) {
                 point.vertices[0].setLength(newLength);
                 point.vertices[2].setLength(newLength);
@@ -661,6 +681,15 @@ var Renderer = function (scaling,onLoad) {
         resize: resize,
         updateHorde: updateHorde,
         setData: setData,
+        setDataBarColor: function(colorStart, colorEnd, updateBarsNow) {
+            dataBarColors.min = colorStart;
+            dataBarColors.max = colorEnd;
+
+            if(updateBarsNow)
+                for(var i = 0; i < dataPoints.length; i++) {
+                    setData(i);
+                }
+        },
         coordsToPoint: function(lat,lng) {
             return Simulator.points[(Math.floor(90-lat)*generatorConfig.w + Math.floor(lng))];
         },
