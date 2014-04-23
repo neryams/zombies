@@ -80,29 +80,29 @@ exports.options = {
 			dataOptions: 'start: 0; end: 12; initial: 2; step: 0.1;'
 		});		
 	},
-	onStart: function(callback) {
+	startSimulation: function() {
 		// Code to start the simulation
 		var startRandomizer = 1000 + Math.round(Math.random()*4000);
-		var randPoint = null;
+		var startPoint = null;
 
 		// Loop through all the points and pick the starting point, the point with population closest to a random number
 		// don't want to start in an area with no people, but not in a huge city either.
 		for(var i = 0, n = this.S.points.length; i < n; i++) {
 			if(this.S.points[i].total_pop) {
-				if(!randPoint) {
-					randPoint = this.S.points[i];
+				if(!startPoint) {
+					startPoint = this.S.points[i];
 				} else {
-					if(Math.abs(randPoint.total_pop - startRandomizer) > Math.abs(this.S.points[i].total_pop - startRandomizer))
-						randPoint = this.S.points[i];
+					if(Math.abs(startPoint.total_pop - startRandomizer) > Math.abs(this.S.points[i].total_pop - startRandomizer))
+						startPoint = this.S.points[i];
 				}
 			}
 		}
 		// Create the fort/factory location
-		this.fort = randPoint;
-		this.S.modules['factory'].val('locations',randPoint,'append');
+		this.fort = startPoint;
+		this.S.modules['factory'].val('locations',startPoint,'append');
 
 		// Send the starting point back to the callback function to start the simulation
-		callback(randPoint);
+		return startPoint;
 	},
 	name: 'Self-Replicating Robots',
 	description: 'Robots make more of themselves using ',
