@@ -108,7 +108,7 @@ var Renderer = function (scaling,onLoad) {
         // Bars to show various point properties
         var geometry = new THREE.BoxGeometry(0.75, 0.75, 1);
         // Move the 'position point' of the cube to the bottom so it sits on the surface of the globe.
-        geometry.applyMatrix( new THREE.Matrix4().makeTranslation(0, 0, 0.5) );
+        geometry.applyMatrix( new THREE.Matrix4().makeTranslation(0, 0, -0.5) );
         DataBarMesh = new THREE.Mesh(geometry); // humans
 
         Camera.lookAt( Scene.position );
