@@ -18,8 +18,9 @@ exports.options = {
 		for(var i = 0, n = this.S.populatedPoints.length; i < n; i++) {
 			this.world_pop += this.S.populatedPoints[i].total_pop;
 		}
-
-		var mainBar = this.S.UI.interfaceParts.top_bar;
+	},
+	ui: function(UI) {
+		var mainBar = UI.interfaceParts.top_bar;
 
 		mainBar.addDataField({
 			type: 'field',

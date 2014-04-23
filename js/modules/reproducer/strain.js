@@ -46,10 +46,9 @@ exports.options = {
 			}
 		}
 	},
-	ui: function() {
+	ui: function(UI) {
 		// Add data view options for the resources
-		var viewList = this.interfaceParts.viewList;
-		var UI = this;
+		var viewList = UI.interfaceParts.viewList;
 		
 		viewList.addOption('ui:buttons.dataviews_inner.tech', function() {
 			UI.switchVisual('tech', [
@@ -74,7 +73,7 @@ exports.options = {
 			]);
 		});
 		// Add slider for zombie behavior: how much 
-		this.interfaceParts.main_control.addDataField('control_collect',{
+		UI.interfaceParts.main_control.addDataField('control_collect',{
 			type:'slider',
 			title: 'Resource to put towards reproduction',
 			dynamic: 'control_moneyRatio',

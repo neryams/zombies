@@ -505,7 +505,7 @@ Simulator.prototype.addModule = function(id,moduleArray) {
 				newModule.init();
 
 			if(newModule.ui) 
-				newModule.ui.call(this.UI);
+				newModule.ui.call(newModule, this.UI);
 
 			// Add children recursively
 			for(i = 0, n = newModule.children.length; i < n; i++)
