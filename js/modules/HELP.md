@@ -42,8 +42,9 @@ A string, with a few options that change the behavior of the module
 This function will run every turn, and it's parameters will depend on the module type.
 
 <a name="si_run">
-### strain, infect
+### type: strain, infect
 </a>
+Runs once for every horde every turn
 
 	exports.run = function(horde, passData) {
 	};
@@ -55,18 +56,20 @@ Pointer to the current horde object
 Basic object that is passed along the chain of modules, for storing data for the currently processing horde
 
 <a name="sp_run">
-### spread
+### type: spread
 </a>
+Runs once for every land point (DataPoint) every turn (only points with or with adjacent hordes)
 
 	exports.run = function(location) {
 	};
 
 **location**
-Pointer to the current location point object
+Pointer to the current location DataPoint object
 
 <a name="ev_run">
-### event
+### type: event
 </a>
+Runs once a turn
 
 	exports.run = function() {
 	};
@@ -88,6 +91,15 @@ Pointer to the current location point object
 		dependencies    : array,
 		children        : array
 	};
+
+### startSimulation `DataPoint function()`
+Runs once when the user picks this strain.
+
+* **required for strain modules, unused for all others**
+* must return a DataPoint object which is sent to other modules with onStart functions as the starting square 
+
+### init `null function()`
+Runs once during loading before simulation starts. Use it to initialize module variables, objects, etc.
 
 ## Datapoint Properties
 * `infected`
