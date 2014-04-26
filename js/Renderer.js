@@ -650,7 +650,7 @@ var Renderer = function (scaling,onLoad) {
 
         if(point !== undefined) {
             var currentLength = point.vertices[1].length(),
-                newLength = 198;
+                newLength = 199;
 
             if(value === undefined)
                 value = (currentLength - 200) / 60;

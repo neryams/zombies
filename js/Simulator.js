@@ -315,10 +315,10 @@ function Simulator(R, UI, generatorConfig, generatorData) {
 
 	Horde.prototype.pointsToWatch = this.pointsToWatch;
 	this.hordes = [];
-	this.hordes.sizeSort = function (a, b) {
+	this.hordes._sizeSort = function (a, b) {
 		return b.size - a.size;
 	};
-	this.hordes.toAdd = [];
+	this.hordes._toAdd = [];
 	this.hordes.total = function() {
 		var result = [],
 			total = 0;
@@ -332,29 +332,31 @@ function Simulator(R, UI, generatorConfig, generatorData) {
 		}
 		return total;
 	};
-	this.hordes.sortPush = function(horde) {
-		this.toAdd.push(horde);
+	this.hordes._push = this.hordes.push;
+	this.hordes.push = function(horde) {
+		this._toAdd.push(horde);
 	};
 	this.hordes.addAllNew = function() {
-		if(this.toAdd.length) {
+		this.sort(this._sizeSort);
+		var n;
+		if(this._toAdd.length) {
 			// Sort the new hordes biggest to smallest
-			this.toAdd.sort(this.sizeSort);
-			this.sort(this.sizeSort);
-			var n, newHordes = [];
-			while(this.length > 0 || this.toAdd.length > 0) {
+			this._toAdd.sort(this._sizeSort);
+			var newHordes = [];
+			while(this.length > 0 || this._toAdd.length > 0) {
 				n = newHordes.length;
 
 				// If new hordes list is empty, add the rest of the originals reverse order
-				if(!this.toAdd.length)
+				if(!this._toAdd.length)
 					newHordes.push(this.pop());
 				// If originals hordes list is empty, add the rest of the news reverse order
 				else if(!this.length)
-					newHordes.push(this.toAdd.pop());
+					newHordes.push(this._toAdd.pop());
 				// Check the last (smallest) horde in the orignals and the news, put the smaller one on first
-				else if(this[this.length-1].size < this.toAdd[this.toAdd.length-1].size)
+				else if(this[this.length-1].size < this._toAdd[this._toAdd.length-1].size)
 					newHordes.push(this.pop());
 				else
-					newHordes.push(this.toAdd.pop());
+					newHordes.push(this._toAdd.pop());
 
 				if(newHordes[n].location.hordes.length > 0)
 					newHordes[n].location.hordes.length = 0;
@@ -362,9 +364,18 @@ function Simulator(R, UI, generatorConfig, generatorData) {
 			// Reverse the sorted combined arrays back onto the hordes array
 			while(newHordes.length > 0) {
 				n = this.length;
-				this.push(newHordes.pop());
+				this._push(newHordes.pop());
 				this[n].order = n;
 				this[n].location.hordes.push(this[n]);
+			}
+		} else {
+			var i;
+			for(i = 0, n = this.length; i < n; i++) {
+				if(this[i].location.hordes.length > 0)
+					this[i].location.hordes.length = 0;				
+			}
+			for(i = 0, n = this.length; i < n; i++) {
+				this[i].location.hordes.push(this[i]);			
 			}
 		}
 	};
