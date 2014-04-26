@@ -101,7 +101,7 @@ exports.options = {
 				}
 			},
 			{cost: 400,
-				paths:['climate_2'],
+				paths:['climate_1'],
 				name:'Water Affinity II',
 				onUpgrade: wetAcc,
 				description:'Zombies become stronger in wet conditions.',
@@ -116,7 +116,7 @@ exports.options = {
 			},
 			{
 				cost: 400,
-				paths:['climate_1'],
+				paths:['climate_2'],
 				name:'Cold Affinity II',
 				onUpgrade: coldAcc,
 				description:'Zombies become stronger in cold.',
