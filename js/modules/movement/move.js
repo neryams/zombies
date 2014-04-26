@@ -174,11 +174,11 @@ exports.options = {
 					dataPoint = dataPoint.adjacent[Math.floor(direction/2)].adjacent[Math.ceil(direction/2)%4];
 				}
 
-				if(dataPoint.nearby_pop)
-					if(i < dataPoint.nearby_pop.length) {
-						returnAmount += dataPoint.nearby_pop[i] / (totalDistance*totalDistance);
+				if(dataPoint.nearby_prop)
+					if(i < dataPoint.nearby_prop.length) {
+						returnAmount += dataPoint.nearby_prop[i] / (totalDistance*totalDistance);
 					} else {
-						returnAmount += dataPoint.nearby_pop[dataPoint.nearby_pop.length - 1] / (totalDistance*totalDistance);
+						returnAmount += dataPoint.nearby_prop[dataPoint.nearby_prop.length - 1] / (totalDistance*totalDistance);
 					}
 				i++;
 			}

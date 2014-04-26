@@ -33,5 +33,5 @@ exports.options = {
 		);*/
 	},
 	runtime: 1,
-	children: ['movement.addEncounters','movement.move']
+	children: ['movement.addEncounters','movement.move','movement.dataPointUpdate']
 };

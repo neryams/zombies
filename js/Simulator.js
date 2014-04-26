@@ -930,9 +930,6 @@ Simulator.prototype.tick = function() {
 		options.reportPassData = false;
 
 		S.tick_hordes(function(current) {
-			// Update nearby square populations
-			current.location.updateNearbyPop(S.iteration);
-
 			if(!current.renderer.cacheLat || current.renderer.cacheLat != current.location.lat || current.renderer.cacheLng != current.location.lng) {
 				R.updateHorde(current);
 				current.renderer.cacheLat = current.location.lat;
