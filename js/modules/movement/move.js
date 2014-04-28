@@ -11,21 +11,21 @@ exports.run = function(current,passData,multiplier) {
 	    current.movement += passData.mobility * multiplier;
 
 		// If zombies can smell humans, get the movement weighting values in an array
-		//if(this.humanSense > 0) {
-		if(true) { this.humanSense = 1500;
+		//if(this.detectStrength > 0) {
+		if(this.canDetect) {
 			var direction = this.S.iteration%4;
-			if(!current.smellCache) {
-				current.smellCache = [-1,-1,-1,-1,-1,-1,-1,-1];
+			if(!current.moveWeighting) {
+				current.moveWeighting = [-1,-1,-1,-1,-1,-1,-1,-1];
 			}
 			// If humans in this direction have never been calculated, do this direction and the opposing one (for symmetry)
 			// Go around the square once doing the opposing directions
-			if(current.smellCache[this.S.iteration%4] < 0) {
-				current.smellCache[direction]   = this.getSmells(currentLocation, direction, this.humanSense);
-				current.smellCache[direction+4] = this.getSmells(currentLocation, direction+4, this.humanSense);
+			if(current.moveWeighting[this.S.iteration%4] < 0) {
+				current.moveWeighting[direction]   = this.detectDirection(currentLocation, direction, this.detectStrength);
+				current.moveWeighting[direction+4] = this.detectDirection(currentLocation, direction+4, this.detectStrength);
 			// If this direction has been calculated, only update squares once every 2 turns and only one direction at a time. TODO: raise this if it seems OK for speed
 			} else {
 				direction = this.S.iteration%8;
-				current.smellCache[direction]   = this.getSmells(currentLocation, direction, this.humanSense);
+				current.moveWeighting[direction]   = this.detectDirection(currentLocation, direction, this.detectStrength);
 			}
 		}
 
@@ -35,15 +35,15 @@ exports.run = function(current,passData,multiplier) {
 			randAngle = Math.random()*8, // modify this to point towards more people
 			chances = this.getChances(currentLocation.lat, current.movement);
 
-		if(current.smellCache) {
+		if(current.moveWeighting) {
 			// Weight randAngle based on the weighting values calculated earler
 			var topStrength,
 				thisStrength,
 				newRandAngle;
 			// go up to 8 so the random direction weighting wraps around
 			for(var i = 0; i <= 8; i++) {
-				if(current.smellCache[i%8] > 1) {
-					thisStrength = (randAngle - i)/current.smellCache[i%8];
+				if(current.moveWeighting[i%8] > 1) {
+					thisStrength = (randAngle - i)/current.moveWeighting[i%8];
 				}
 				else {
 					thisStrength = randAngle - i;
@@ -95,8 +95,8 @@ exports.run = function(current,passData,multiplier) {
 				}
 				else if(targetA.water && targetB.water) {
 					allWater = true;
-					this.smellCache[Math.floor(randAngle)] = 0;
-					this.smellCache[Math.ceil(randAngle)] = 0;
+					current.moveWeighting[Math.floor(randAngle)] = 0;
+					current.moveWeighting[Math.ceil(randAngle)] = 0;
 				}
 			}
 			if(!allWater) {
@@ -123,8 +123,8 @@ exports.run = function(current,passData,multiplier) {
 exports.options = {
 	init: function() {
 		this.bakedMoveChance = [];
-		this.smellCache = [];
-		this.smellSense = 0;
+		this.canDetect = true;
+		this.detectStrength = 1500;
 		this.swimming = false;
 		this.getChances = function (lat,movement) {
 			lat = Math.floor(Math.abs(lat));
@@ -154,9 +154,7 @@ exports.options = {
 			}
 			return this.bakedMoveChance[lat][movement].slice(0); // return a copy so the array can be manipulated without destroying the cache
 		};
-		this.getSmells = function (dataPoint, direction, maxDistance) {
-			/*var surroundPop = current.adjacent[0].total_pop + current.adjacent[1].total_pop + current.adjacent[2].total_pop + current.adjacent[3].total_pop + 
-				current.adjacent[1].adjacent[0].total_pop + current.adjacent[1].adjacent[2].total_pop + current.adjacent[3].adjacent[0].total_pop + current.adjacent[3].adjacent[2].total_pop;*/
+		this.detectDirection = function (dataPoint, direction, maxDistance) {
 			var returnAmount = 0,
 				totalDistance = 0,
 				i = 0;
@@ -164,7 +162,6 @@ exports.options = {
 				if(direction % 2 === 0) { // horizontal and vertical
 					totalDistance += this.S.bakedValues.latDistances[Math.floor(Math.abs(dataPoint.lat))][direction/2];
 					dataPoint = dataPoint.adjacent[direction/2];
-
 				} else { // diagonal
 					totalDistance += this.S.bakedValues.latDistances[
 							Math.floor( Math.abs(dataPoint.lat) )

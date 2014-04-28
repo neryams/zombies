@@ -1,4 +1,6 @@
 function DataPoint(i,config) {
+	this.hordes = [];
+	this.adjacent = [];
 	if(typeof i == 'object') {
 		for (var key in i)
 			if(i.hasOwnProperty(key))
@@ -8,8 +10,6 @@ function DataPoint(i,config) {
 		this.lng = i%config.w + 0.5;
 		this.id = i;
 	}
-	this.hordes = [];
-	this.renderer = {};
 }
 DataPoint.prototype = {
 	id: 0,
