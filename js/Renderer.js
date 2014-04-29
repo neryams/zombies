@@ -46,7 +46,8 @@ var Renderer = function (scaling,onLoad) {
         onRender = function () {},
         ready = false,
         generatorConfig = null,
-        dataPoints = [];
+        dataPoints = [],
+        hordes = {};
 
     // Define constants
     var PI_HALF = Math.PI / 2;
@@ -344,41 +345,46 @@ var Renderer = function (scaling,onLoad) {
     },
 
     updateHorde = function(horde, remove) {
-        if(remove && horde.renderer.particleVertex) {
+        var selectedHorde = hordes[horde.id];
+        if(selectedHorde === undefined)
+            selectedHorde = hordes[horde.id] = {};
+
+        if(remove && selectedHorde.particleVertex) {
             hordeSystem.length--;
 
             // Replace this vector with the last vector in the array
-            hordeSystem.particles.vertices[hordeSystem.length].index = horde.renderer.particleVertex.index;
-            hordeSystem.particles.vertices[horde.renderer.particleVertex.index] = hordeSystem.particles.vertices[hordeSystem.length];
+            hordeSystem.particles.vertices[hordeSystem.length].index = selectedHorde.particleVertex.index;
+            hordeSystem.particles.vertices[selectedHorde.particleVertex.index] = hordeSystem.particles.vertices[hordeSystem.length];
 
-            horde.renderer.particleVertex.index = hordeSystem.length;
-            hordeSystem.particles.vertices[hordeSystem.length] = horde.renderer.particleVertex;
-            horde.renderer.particleVertex.set(0,0,0);
-            delete horde.renderer.particleVertex;
-            delete horde.renderer.particleSizeAttrib;
+            selectedHorde.particleVertex.index = hordeSystem.length;
+            hordeSystem.particles.vertices[hordeSystem.length] = selectedHorde.particleVertex;
+            selectedHorde.particleVertex.set(0,0,0);
+            delete selectedHorde.particleVertex;
+            delete selectedHorde.particleSizeAttrib;
         } else {
-            if(horde.renderer.particleVertex) {
-                horde.renderer.particleVertex.copy(coordToCartesian(horde.location.lat-0.5+Math.random(), horde.location.lng-0.5+Math.random()));
+            if(selectedHorde.particleVertex) {
+                selectedHorde.particleVertex.copy(coordToCartesian(horde.location.lat-0.5+Math.random(), horde.location.lng-0.5+Math.random()));
             } else {
                 var currentParticle = hordeSystem.particles.vertices[hordeSystem.length];
                 currentParticle.copy(coordToCartesian(horde.location.lat-0.5+Math.random(), horde.location.lng-0.5+Math.random()));
                 currentParticle.index = hordeSystem.length;
 
-                horde.renderer.particleVertex = currentParticle;
-                horde.renderer.particleSizeAttrib = hordeSystem.attributes.size.value[hordeSystem.length];
+                selectedHorde.particleVertex = currentParticle;
+                selectedHorde.particleSizeAttrib = hordeSystem.attributes.size.value[hordeSystem.length];
                 hordeSystem.length++;
             }
+
+            if(hordeSystem.maxSize < horde.size)
+                hordeSystem.maxSize = horde.size;
+
+            var newParticleSize = (hordeSystem.maxSize > 500 ? 5 : hordeSystem.maxSize / 125 + 1) * horde.size / hordeSystem.maxSize + 1.75;
+            if(selectedHorde.particleSizeAttrib.length() != newParticleSize) {
+                selectedHorde.particleSizeAttrib.setLength(newParticleSize);
+            }
+            hordeSystem.attributes.size.needsUpdate = true;
         }
+        
         hordeSystem.particles.verticesNeedUpdate = true;
-
-        if(hordeSystem.maxSize < horde.size)
-            hordeSystem.maxSize = horde.size;
-
-        var newParticleSize = (hordeSystem.maxSize > 500 ? 5 : hordeSystem.maxSize / 125 + 1) * horde.size / hordeSystem.maxSize + 1.75;
-        if(horde.renderer.particleSizeAttrib.length() != newParticleSize) {
-            horde.renderer.particleSizeAttrib.setLength(newParticleSize);
-        }
-        hordeSystem.attributes.size.needsUpdate = true;
     },
 
     render = function() {
@@ -653,10 +659,10 @@ var Renderer = function (scaling,onLoad) {
                 newLength = 199;
 
             if(value === undefined)
-                value = (currentLength - 200) / 60;
+                value = (currentLength - 200) / 30;
 
             if(value > 0) {
-                newLength = 60 * value + 200;
+                newLength = 30 * value + 200;
                 point.vertices[1].setLength(newLength);
                 point.vertices[3].setLength(newLength);
                 point.vertices[4].setLength(newLength);

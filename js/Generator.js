@@ -598,7 +598,6 @@ Planet.prototype.generatePop = function(heightmap, borderNoise) {
 			delete this.data[i].coast_direction;
 			delete this.data[i].wind;
 
-			this.data[i].updateNearbyPop();
 			if(i % 1000 === 0)
 				this.progress.advance(0.35 + 0.6 * i / this.data.length);
 		}

@@ -3,12 +3,9 @@
 */
 exports.type = 'infect';
 exports.run = function(current,passData) {
-	var tempAdjust = 1 / (Math.pow((this.idealTemp - passData.target.temperature)/(this.rangeTemp),2) + 1);
-	var precAdjust = 1 / (Math.pow((this.idealWet - passData.target.precipitation)/(this.rangeWet),2) + 1);
-
-	tempAdjust = 1 / (Math.pow((this.idealTemp - current.location.temperature)/(this.rangeTemp),2) + 1);
-	precAdjust = 1 / (Math.pow((this.idealWet - current.location.precipitation)/(this.rangeWet),2) + 1);
-	passData.infectChance   *= tempAdjust * precAdjust * 1.5;
+	var tempAdjust = 1 / (Math.pow((this.idealTemp - current.location.temperature)/(this.rangeTemp),2) + 1);
+	var precAdjust = 1 / (Math.pow((this.idealWet - current.location.precipitation)/(this.rangeWet),2) + 1);
+	
 	passData.zombieStrength *= tempAdjust * precAdjust * 1.5;
 	passData.mobility *= tempAdjust * precAdjust;
 	passData.encounterProbability *= tempAdjust * precAdjust;
@@ -16,9 +13,9 @@ exports.run = function(current,passData) {
 exports.options = {
 	onStart: function(startSquare) {
 		this.idealTemp = startSquare.temperature;
-		this.rangeTemp = 3;
+		this.rangeTemp = 8;
 		this.idealWet = startSquare.precipitation;
-		this.rangeWet = 5;
+		this.rangeWet = 10;
 	},
 	init: function() {
 		var warmAcc = function() {

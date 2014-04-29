@@ -10,103 +10,48 @@ exports.run = function(current,passData,multiplier) {
 			current.movement = 0;
 	    current.movement += passData.mobility * multiplier;
 
-		// If zombies can smell humans, get the movement weighting values in an array
-		//if(this.detectStrength > 0) {
-		if(this.canDetect) {
-			var direction = this.S.iteration%4;
-			if(!current.moveWeighting) {
-				current.moveWeighting = [-1,-1,-1,-1,-1,-1,-1,-1];
-			}
-			// If humans in this direction have never been calculated, do this direction and the opposing one (for symmetry)
-			// Go around the square once doing the opposing directions
-			if(current.moveWeighting[this.S.iteration%4] < 0) {
-				current.moveWeighting[direction]   = this.detectDirection(currentLocation, direction, this.detectStrength);
-				current.moveWeighting[direction+4] = this.detectDirection(currentLocation, direction+4, this.detectStrength);
-			// If this direction has been calculated, only update squares once every 2 turns and only one direction at a time. TODO: raise this if it seems OK for speed
-			} else {
-				direction = this.S.iteration%8;
-				current.moveWeighting[direction]   = this.detectDirection(currentLocation, direction, this.detectStrength);
-			}
-		}
+	    // Default movement direction is obtained from the default direction for the turn
+		var target = passData.target,
+			targetDistance = passData.targetDistance,
+			max = 0;
 
-		// Get the random numbers for the movement.
-		// randAngle is the randomly picked direction, where 0-7 are adjacent squares clockwise from top
-		var rand = Math.sqrt(passData.rand),
-			randAngle = Math.random()*8, // modify this to point towards more people
-			chances = this.getChances(currentLocation.lat, current.movement);
-
-		if(current.moveWeighting) {
-			// Weight randAngle based on the weighting values calculated earler
-			var topStrength,
-				thisStrength,
-				newRandAngle;
-			// go up to 8 so the random direction weighting wraps around
-			for(var i = 0; i <= 8; i++) {
-				if(current.moveWeighting[i%8] > 1) {
-					thisStrength = (randAngle - i)/current.moveWeighting[i%8];
-				}
-				else {
-					thisStrength = randAngle - i;
-				}
-
-				// Keep track of which grid square is strongest after weighting
-				if(!topStrength || topStrength > Math.abs(thisStrength)) {
-					topStrength = Math.abs(thisStrength);
-					newRandAngle = thisStrength + i;
+		// If zombies can smell humans, get the movement weighting values to change the direction
+		if(current.moveWeighting !== undefined) {
+			// Get highest value weighting 
+			var maxDir = -1;
+			for(var direction = 0; direction < current.moveWeighting.length; direction++) {
+				if(current.moveWeighting[direction] > max) {
+					max = current.moveWeighting[direction];
+					maxDir = direction;
 				}
 			}
-			randAngle = newRandAngle;
-		}
 
-		var ratioA = 1 - randAngle%1,
-			ratioB = randAngle%1,
-			targetA = Math.floor(randAngle),
-			targetB = Math.ceil(randAngle)%8;
-		var chanceA = targetA%4,
-			chanceB = targetB%4;
-		if(targetA > 4)
-			chanceA = 4 - chanceA;
-		if(targetB > 4)
-			chanceB = 4 - chanceB;
-
-		var chance = chances[chanceA]*ratioA + chances[chanceB]*ratioB;
-
-		if(rand > 1 - chance*current.size) {
-			// Move the zombies
-			if(targetA % 2 === 0) {
-				targetA = currentLocation.adjacent[targetA/2];
-			} else {
-				targetA = currentLocation.adjacent[Math.floor(targetA/2)].adjacent[Math.ceil(targetA/2)%4];
-			}
-			if(targetB % 2 === 0) {
-				targetB = currentLocation.adjacent[targetB/2];
-			} else {
-				targetB = currentLocation.adjacent[Math.floor(targetB/2)].adjacent[Math.ceil(targetB/2)%4];
-			}
-
-			// if the zombies don't swim, don't send them in that direction
-			var allWater = false;
-			if(!this.swimming) {
-				if(targetA.water && !targetB.water) {
-					chances[chanceA] = 0;
-				}
-				else if(!targetA.water && targetB.water) {
-					chances[chanceB] = 0;
-				}
-				else if(targetA.water && targetB.water) {
-					allWater = true;
-					current.moveWeighting[Math.floor(randAngle)] = 0;
-					current.moveWeighting[Math.ceil(randAngle)] = 0;
-				}
-			}
-			if(!allWater) {
-				current.movement = 0;
-				if(chances[chanceA]*ratioA > chances[chanceB]*ratioB) {
-					current.move(targetA);
+			// If any direction has a positibe weight, set the highest one to be the movement direction
+			if(max > 0) {
+				if(maxDir % 2 === 0) {
+					target = currentLocation.adjacent[maxDir/2];
 				} else {
-					current.move(targetB);
+					target = currentLocation.adjacent[Math.floor(maxDir/2)].adjacent[Math.ceil(maxDir/2)%4];
 				}
+
+				if(maxDir%2 === 0)
+					targetDistance = this.S.bakedValues.latDistances[
+							Math.floor( Math.abs(currentLocation.lat) )
+						][
+							maxDir / 2
+						];
+				else
+					targetDistance = this.S.bakedValues.latDistances[
+							Math.floor( Math.abs(currentLocation.lat) )
+						][
+							Math.floor(maxDir/2)+4
+						];
 			}
+		}
+
+		if(current.movement > targetDistance) {
+			current.movement -= targetDistance;
+			current.move(target);
 		} else {
 			// zombie horde did not move, possibly combine with a horde in the same square
 			if(current.location.hordes.length > 1 && passData.rand > 1 - (this.S.hordes.length / 40000)) {
@@ -123,64 +68,6 @@ exports.run = function(current,passData,multiplier) {
 exports.options = {
 	init: function() {
 		this.bakedMoveChance = [];
-		this.canDetect = true;
-		this.detectStrength = 1500;
-		this.swimming = false;
-		this.getChances = function (lat,movement) {
-			lat = Math.floor(Math.abs(lat));
-			movement = Math.floor(movement);
-			//var chances = this.S.bakedValues.latCumChance[lat];
-			if(!this.bakedMoveChance[lat])
-				this.bakedMoveChance[lat] = [];
-			if(!this.bakedMoveChance[lat][movement]) {
-				var result = [],
-					meanMovement = Math.sqrt(24*movement),
-					sigma = meanMovement/3,
-					distance;
-
-				/* Old change generation. Makes zombies never spread to lesser change squares*/
-				for(var direction = 0; direction < 4; direction++) {
-					if(direction%2 === 0)
-						distance = this.S.bakedValues.latDistances[lat][direction/2];
-					else
-						distance = this.S.bakedValues.latDistances[lat][Math.floor(direction/2)+4];
-					// Normal curve approximation formula
-					var x = (distance*0.5 - meanMovement)/(1.414213562*sigma),
-						t = 1.0/(1.0 + 0.3275911*x);
-					result[direction] = (((((1.061405429*t - 1.453152027)*t) + 1.421413741)*t - 0.284496736)*t + 0.254829592)*t*Math.pow(Math.E,-x*x);
-				}
-				
-				this.bakedMoveChance[lat][movement] = result;
-			}
-			return this.bakedMoveChance[lat][movement].slice(0); // return a copy so the array can be manipulated without destroying the cache
-		};
-		this.detectDirection = function (dataPoint, direction, maxDistance) {
-			var returnAmount = 0,
-				totalDistance = 0,
-				i = 0;
-			while(totalDistance < maxDistance) {
-				if(direction % 2 === 0) { // horizontal and vertical
-					totalDistance += this.S.bakedValues.latDistances[Math.floor(Math.abs(dataPoint.lat))][direction/2];
-					dataPoint = dataPoint.adjacent[direction/2];
-				} else { // diagonal
-					totalDistance += this.S.bakedValues.latDistances[
-							Math.floor( Math.abs(dataPoint.lat) )
-						][
-							Math.floor(direction / 2) + 4
-						];
-					dataPoint = dataPoint.adjacent[Math.floor(direction/2)].adjacent[Math.ceil(direction/2)%4];
-				}
-
-				if(dataPoint.nearby_prop)
-					if(i < dataPoint.nearby_prop.length) {
-						returnAmount += dataPoint.nearby_prop[i] / (totalDistance*totalDistance);
-					} else {
-						returnAmount += dataPoint.nearby_prop[dataPoint.nearby_prop.length - 1] / (totalDistance*totalDistance);
-					}
-				i++;
-			}
-			return returnAmount;
-		};
 	},
 	runtime: 30,
 	dependencies: ['movement.base']
