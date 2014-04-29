@@ -6,10 +6,7 @@ exports.run = function(current,passData) {
 	var tempAdjust = 1 / (Math.pow((this.idealTemp - current.location.temperature)/(this.rangeTemp),2) + 1);
 	var precAdjust = 1 / (Math.pow((this.idealWet - current.location.precipitation)/(this.rangeWet),2) + 1);
 	
-	passData.zombieStrength *= tempAdjust * precAdjust * 1.5;
-	passData.mobility *= tempAdjust * precAdjust;
-	passData.encounterProbability *= tempAdjust * precAdjust;
-};
+	passData.zombieStrength *= tempAdjust * precAdjust * 1.5;};
 exports.options = {
 	onStart: function(startSquare) {
 		this.idealTemp = startSquare.temperature;

@@ -130,7 +130,12 @@ var Debugger = function() {
 			infoTree.clearAll();
 			infoTree.parse(buildTreeFromObject(data, 3));
 			for(var i = 0; i < openItems.length; i++) {
-				infoTree.open(openItems[i]);
+				try {
+					infoTree.open(openItems[i]);
+				}
+				catch (e) {
+					console.log(e);
+				}
 			}
 		},
 		updateInfo: function() {
