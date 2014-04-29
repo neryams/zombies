@@ -117,7 +117,7 @@ Upgrade.prototype.generateGene = function(pieceSize, shape) {
 
 Upgrade.prototype.set = function(property,value) {
 	this[property] = value;
-	this.S.UI.updateEvolution(this.id,property,value);
+	this.S.UI.evolutions.set(this.id,property,value);
 };
 
 Upgrade.prototype.purchase = function() {
@@ -231,7 +231,8 @@ function Simulator(R, UI, generatorConfig, generatorData) {
 		money: 500000,
 		panic: 0,
 		gridSize: 5,
-		date: new Date()
+		date: new Date(),
+		displayData: ''
 	};
 	this.status.date.setTime(1577880000000); // Jan 1st, 2030
 	this.modules = {};
@@ -314,10 +315,10 @@ function Simulator(R, UI, generatorConfig, generatorData) {
 
 	Horde.prototype.pointsToWatch = this.pointsToWatch;
 	this.hordes = [];
-	this.hordes.sizeSort = function (a, b) {
+	this.hordes._sizeSort = function (a, b) {
 		return b.size - a.size;
 	};
-	this.hordes.toAdd = [];
+	this.hordes._toAdd = [];
 	this.hordes.total = function() {
 		var result = [],
 			total = 0;
@@ -331,29 +332,31 @@ function Simulator(R, UI, generatorConfig, generatorData) {
 		}
 		return total;
 	};
-	this.hordes.sortPush = function(horde) {
-		this.toAdd.push(horde);
+	this.hordes._push = this.hordes.push;
+	this.hordes.push = function(horde) {
+		this._toAdd.push(horde);
 	};
 	this.hordes.addAllNew = function() {
-		if(this.toAdd.length) {
+		this.sort(this._sizeSort);
+		var n;
+		if(this._toAdd.length) {
 			// Sort the new hordes biggest to smallest
-			this.toAdd.sort(this.sizeSort);
-			this.sort(this.sizeSort);
-			var n, newHordes = [];
-			while(this.length > 0 || this.toAdd.length > 0) {
+			this._toAdd.sort(this._sizeSort);
+			var newHordes = [];
+			while(this.length > 0 || this._toAdd.length > 0) {
 				n = newHordes.length;
 
 				// If new hordes list is empty, add the rest of the originals reverse order
-				if(!this.toAdd.length)
+				if(!this._toAdd.length)
 					newHordes.push(this.pop());
 				// If originals hordes list is empty, add the rest of the news reverse order
 				else if(!this.length)
-					newHordes.push(this.toAdd.pop());
+					newHordes.push(this._toAdd.pop());
 				// Check the last (smallest) horde in the orignals and the news, put the smaller one on first
-				else if(this[this.length-1].size < this.toAdd[this.toAdd.length-1].size)
+				else if(this[this.length-1].size < this._toAdd[this._toAdd.length-1].size)
 					newHordes.push(this.pop());
 				else
-					newHordes.push(this.toAdd.pop());
+					newHordes.push(this._toAdd.pop());
 
 				if(newHordes[n].location.hordes.length > 0)
 					newHordes[n].location.hordes.length = 0;
@@ -361,9 +364,18 @@ function Simulator(R, UI, generatorConfig, generatorData) {
 			// Reverse the sorted combined arrays back onto the hordes array
 			while(newHordes.length > 0) {
 				n = this.length;
-				this.push(newHordes.pop());
+				this._push(newHordes.pop());
 				this[n].order = n;
 				this[n].location.hordes.push(this[n]);
+			}
+		} else {
+			var i;
+			for(i = 0, n = this.length; i < n; i++) {
+				if(this[i].location.hordes.length > 0)
+					this[i].location.hordes.length = 0;				
+			}
+			for(i = 0, n = this.length; i < n; i++) {
+				this[i].location.hordes.push(this[i]);			
 			}
 		}
 	};
@@ -413,38 +425,41 @@ Simulator.prototype.start = function(strainId) {
 	Math.seedrandom(); // Before we start the simulation, generate a new random seed so the game itself is unpredictable with respect to the land generation.
 
 	var that = this;
-	this.strain.onStart(function(startSq) {
-		// Sort out the children for the upgrades, convert string pointers to related upgrades to actual pointers.
-		for (var key in that.upgrades) {
-			var pathPointers = [],
-				current;
-			if (that.upgrades.hasOwnProperty(key)) {
-				current = that.upgrades[key];
-				for(var i = 0; i < current.paths.length; i++) {
-					if(that.upgrades[current.paths[i]] !== undefined) {
-						that.upgrades[current.paths[i]].children.push(current);
-						pathPointers.push(that.upgrades[current.paths[i]]);
-					}
+	var startSq = this.strain.startSimulation();
+
+	// Sort out the children for the upgrades, convert string pointers to related upgrades to actual pointers.
+	for (var key in that.upgrades) {
+		var pathPointers = [],
+			current;
+		if (that.upgrades.hasOwnProperty(key)) {
+			current = that.upgrades[key];
+			for(i = 0; i < current.paths.length; i++) {
+				if(that.upgrades[current.paths[i]] !== undefined) {
+					that.upgrades[current.paths[i]].children.push(current);
+					pathPointers.push(that.upgrades[current.paths[i]]);
 				}
-				delete current.paths;
-				current.paths = pathPointers;
 			}
+			delete current.paths;
+			current.paths = pathPointers;
 		}
-		that.upgrades[that.strain.id].set('active',true);
+	}
+	that.upgrades[that.strain.id].set('active',true);
 
-		// Initialize all the other modules
-		for(var id in that.modules)
-			if(that.modules[id].onStart && that.modules[id].type != 'strain')
-				that.modules[id].onStart(startSq);
+	// Initialize all the other modules
+	for(var id in that.modules)
+		if(that.modules[id].onStart)
+			that.modules[id].onStart(startSq);
 
-		that.R.lookAt(startSq);
+	that.R.lookAt(startSq);
 
-		if(debugMenu.active) {
-			debugMenu.setSimulator(that).newTick();
-		}
+	if(debugMenu.active) {
+		debugMenu.setSimulator(that).newTick();
+	}
 
-		that.tick();
-	});
+	that.status.displayData = 'total_pop';
+	that.status.updateAllPoints = true;
+
+	that.tick();
 };
 
 Simulator.prototype.end = function(state) {
@@ -499,6 +514,9 @@ Simulator.prototype.addModule = function(id,moduleArray) {
 
 			if(newModule.init)
 				newModule.init();
+
+			if(newModule.ui) 
+				newModule.ui.call(newModule, this.UI);
 
 			// Add children recursively
 			for(i = 0, n = newModule.children.length; i < n; i++)
@@ -575,6 +593,7 @@ Simulator.prototype.pause = function() {
 };
 Simulator.prototype.unPause = function() {
 	this.paused = false;
+	this.tick();
 };
 
 Simulator.prototype.addUpgrades = function(module) {
@@ -616,7 +635,7 @@ Simulator.prototype.addUpgrades = function(module) {
 		delete currentLevel.onUpgrade;
     }
     // send all the levels to the UI
-    this.UI.addEvolution(module.id,levels);
+    this.UI.evolutions.addNew(module.id,levels);
 
     return this.upgrades;
 };
@@ -868,8 +887,6 @@ Simulator.prototype.tick = function() {
 		R = this.R;
 
 	S.status.date.setTime(1577880000000 + 86400000*S.iteration);
-	if(S.paused)
-		return false;
 
 	var i,
 		options = {
@@ -877,6 +894,11 @@ Simulator.prototype.tick = function() {
 			reportPassData: false
 		};
 	if(S.strain !== null) {
+		var updatedStatus = S.UI.updateUI();
+		for (var key in updatedStatus)
+			if (updatedStatus.hasOwnProperty(key))
+				S.status[key] = updatedStatus[key];
+
 		if(debugMenu.active) {
 			debugMenu.console.initTick();
 			
@@ -888,16 +910,16 @@ Simulator.prototype.tick = function() {
 		S.tick_begin(options);
 
 		if(S.strain.onTick)
-			S.strain.onTick();
+			S.strain.onTick(S.iteration);
 		for(i = 0; i < S.activeModules.infect.length; i++)
 			if(S.activeModules.infect[i].onTick)
-				S.activeModules.infect[i].onTick();
+				S.activeModules.infect[i].onTick(S.iteration);
 		for(i = 0; i < S.activeModules.spread.length; i++)
 			if(S.activeModules.spread[i].onTick)
-				S.activeModules.spread[i].onTick();
+				S.activeModules.spread[i].onTick(S.iteration);
 		for(i = 0; i < S.activeModules.event.length; i++)
 			if(S.activeModules.event[i].onTick)
-				S.activeModules.event[i].onTick();
+				S.activeModules.event[i].onTick(S.iteration);
 
 		S.tick_hordes(S.strain.process, S.strain.id, options);
 
@@ -908,9 +930,6 @@ Simulator.prototype.tick = function() {
 		options.reportPassData = false;
 
 		S.tick_hordes(function(current) {
-			// Update nearby square populations
-			current.location.updateNearbyPop(S.iteration);
-
 			if(!current.renderer.cacheLat || current.renderer.cacheLat != current.location.lat || current.renderer.cacheLng != current.location.lng) {
 				R.updateHorde(current);
 				current.renderer.cacheLat = current.location.lat;
@@ -941,22 +960,23 @@ Simulator.prototype.tick = function() {
 
 		// Update all the points in the renderer that may have been affected 
 		// Iterate over the sparse array
-		S.tick_activePoints(function(point) {
-			S.updateSquare.call(S, point);
-		});
-		
+		var changedPoints = [];
+		if(S.status.displayData !== '') {
+			if(S.status.updateAllPoints) {
+				S.pointsToWatch = S.points.slice(0);
+				delete S.status.updateAllPoints;
+			}
+			S.tick_activePoints(function(point) {
+				changedPoints.push([point.id, point[S.status.displayData] / S.config.maximums[S.status.displayData]]);
+			});
+			S.UI.updateVisual(changedPoints);
+		}
 		S.pointsToWatch.length = 0;
 
-		S.R.updateMatrix();
-
-		var updatedStatus = S.UI.updateUI(S.status);
-		for (var key in updatedStatus)
-			if (updatedStatus.hasOwnProperty(key) && key != 'money')
-				S.status[key] = updatedStatus[key];
-
+		S.UI.updateUI(S.status);
 		S.hordes.addAllNew();
 
-		if(debugMenu.active && debugMenu.console.options.manualTicks) {
+		if(S.paused || (debugMenu.active && debugMenu.console.options.manualTicks)) {
 			if(S.interval) {
 				clearInterval(S.interval);
 				S.interval = false;
@@ -971,87 +991,10 @@ Simulator.prototype.tick = function() {
 		S.iteration++;
 	}
 };
-Simulator.prototype.updateSquare = function(target, force) {
-	if(!target.cache) {
-		this.R.setData(target, this.config.max_pop);
-		target.cache = { infected: target.infected, total_pop: target.total_pop };
-	} else if(force || (target.cache.infected != target.infected || target.cache.total_pop != target.total_pop)) {
-		this.R.setData(target, this.config.max_pop);
-		target.cache.infected = target.infected;
-		target.cache.total_pop = target.total_pop;
-	}
-};
 Simulator.prototype.rendererDecal = function(id, lat, lng, size, texture) {
 	this.R.decal(id, lat, lng, size, texture);
 };
 
-/*
-	Infection modifier objects. Runs the activated functions on every tick of the simulator.
-	Parameters: 
-		type -- string | what kind of module this is. 
-			Valid Values:
-				infect  -- runs processFunction ON EVERY SQUARE at INFECT TIME with parameters CURRENT, TARGET and STRENGTH
-					Modifies chance (various options of STRENGTH) of a square (CURRENT) infecting another square or self (TARGET) based on the parameters of each square.
-				strain  -- runs processFunction ON EVERY SQUARE at INFECT TIME with parameters CURRENT, TARGET, STRENGTH, and CHANCE.
-					Returns TRUE if the target had no infections and now does (becomes newly 'active'). 
-					UNIQUE, multiple 'strain's will remove all but the last.
-					Runs after infect. Changes parameters in TARGET based on CURRENT and STRENGTH. Actually infects people or dead bodies, kills people, raises panic, all of that jazz.
-					CHANCE is the multiplier for the effects on the target square (if the target square isn't itself). It's the chance that the square was selected, since further squares will
-					actually get hit less often.
-				spread  -- runs processFunction ON EVERY SQUARE with parameter CURRENT and STRENGTH. 
-					Runs after strain. Can simulate resistance killing infected, burning bodies, closing airports, developing medicine, etc.
-				event   -- runs processFunction once at the end of every tick. Can also be non-active (alwaysActive = false) to run function ON USER INPUT.
-					Recieves parameters SIMULATORDATA, and optional second parameter that is the mouse click event with attached jQuery.on event.data.
-					Affects other modules by changing their data.  Useful for activating, modifying or deactivating modules based on world events or infection upgrades.
-		processFunction -- function | function that performs tasks at intervals depending on the type of the module
-			parameters
-				strain, infect --
-					current: current square
-					passData: object that is passed to every module and should be used by final modules to affect squares and hordes
-					multiple: results should be multiplied by this value, number of times module has been skipped
-
-		options -- object | Optional. Sets other options.
-			Valid options:
-				dependencies -- array | List of modules that should be loaded before this one. If they are not loaded, they will be initialized before this one is.
-				children     -- array | List of modules that should be loaded after this one, if they aren't already.
-				alwaysActive -- bool  | Defaults to false. If true, module is immediately activated and run on every tick of the simulation (If false, activate with a event type module)
-					If type is 'strain', this should be set to false so the user can pick the strain
-				runtime      -- Default 10. Integer that defines run order. Smaller numbers will run first. Typically you will enter all definition functions 
-					as 0-8 (lower numbers may be overwritten), addition as 9, and multiplication can be default.
-				init         -- function that runs when the module is first read. Takes one parameter, SIMULATORDATA. on 'strain' type modules, takes two, SIMULATORDATA and CALLBACK.
-					Strain modules should end in CALLBACK(startSquareDataPoint)
-				onStart      -- function that runs after the simulation is started and strain.init has run
-				onActivate   -- function that runs every time a module is activated.
-				onDectivate   -- function that runs every time a module is deactivated.
-				onMutationChange   -- function that runs every time the player submits a new mutation. 1st parameter is the grid array with selected mutations.
-				reset        -- function that runs when a module is deactivated or the levels are reset.
-	
-	Properties of Data Points (CURRENT and TARGET)
-		infected
-		total_pop
-		dead
-		water
-		polar
-		coast_distance
-		precipitation
-		temperature
-		height
-		country
-		adjacent
-			adjacent can also include airports and seaports
-
-	Data that can be accessed inside SIMULATORDATA in init, onStart, and onActivate
-		S.points[i] -- array of all Data Points
-		S.countries -- array of all Countries
-		S.R  -- reference to renderer class for visual effects etc
-		S.UI        -- reference to UI class for user input buttons etc
-		S.modules   -- all the currently loaded modules
-		ALL OPERATION ON MODULE INITIALIZE MUST ONLY STORE DATA IN MODULE OR IN OTHER MODULES
-
-	Common functions on simulator
-		.addActive(module id)    -- Make the module run at regular intervals specified by the type.
-		.removeActive(module id) -- Make the module not run at regular intervals
-*/
 function Module(type,processFunction,options) {
 	this.type = type;
 	this.process = processFunction.bind(this);

@@ -1,4 +1,6 @@
 function DataPoint(i,config) {
+	this.hordes = [];
+	this.adjacent = [];
 	if(typeof i == 'object') {
 		for (var key in i)
 			if(i.hasOwnProperty(key))
@@ -8,8 +10,6 @@ function DataPoint(i,config) {
 		this.lng = i%config.w + 0.5;
 		this.id = i;
 	}
-	this.hordes = [];
-	this.renderer = {};
 }
 DataPoint.prototype = {
 	id: 0,
@@ -30,50 +30,4 @@ DataPoint.prototype = {
 	panic: 0,
 	adjacent:[],
 	hordes:[]
-};
-DataPoint.prototype.updateNearbyPop = function (turnNumber) {
-	if(!this.nearby_pop)
-		this.nearby_pop = [this.total_pop];
-	else if(this.nearby_pop[0] != this.total_pop)
-		this.nearby_pop[0] = this.total_pop;
-
-	if(!this.nearby_pop.lastCalculated || turnNumber - this.nearby_pop.lastCalculated > 10) {
-		// Calculate the averaged populations of squares for finding groups of people etc
-		if(this.nearby_pop[this.nearby_pop.length-1] > 0) {
-			var steps,target = this;
-
-			var total_pop = this.total_pop;
-			for (var j = 1; j <= 15; j++) {
-				target = target.adjacent[0];
-				steps = j;
-				do {
-					target = target.adjacent[1];
-					total_pop += target.total_pop;
-				} while (--steps);
-				steps = j*2;
-				do {
-					target = target.adjacent[2];
-					total_pop += target.total_pop;
-				} while (--steps);
-				steps = j*2;
-				do {
-					target = target.adjacent[3];
-					total_pop += target.total_pop;
-				} while (--steps);
-				steps = j*2;
-				do {
-					target = target.adjacent[0];
-					total_pop += target.total_pop;
-				} while (--steps);
-				steps = j;
-				do {
-					target = target.adjacent[1];
-					total_pop += target.total_pop;
-				} while (--steps);
-
-				this.nearby_pop[j] = total_pop;
-			}
-		}
-		this.nearby_pop.lastCalculated = turnNumber;
-	}
 };

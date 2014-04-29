@@ -7,13 +7,13 @@ exports.run = function() {
 		// Check world panic, level up is panic is higher than the defined threshold
 		if(this.S.status.panic > this.panicThresholds[this.currPanicLevel]) {
 			if(this.panicThresholds.length > this.currPanicLevel){
-				this.S.UI.addNews('world_research.' + this.currPanicLevel);
+				this.addGlobalNews(this.currPanicLevel);
 				this.currPanicLevel++;
 			}
 			else {
-				this.S.UI.addNews('world_research.end');
+				this.addGlobalNews('end');
 				this.currPanicLevel = 0;
-				this.worldPanic.hide();
+				this.worldPanicBar.hide();
 			}
 		}
 
@@ -31,11 +31,11 @@ exports.run = function() {
 				if(this.S.countries[i].panic > this.countryPanicThresholds[this.S.countries[i].currPanicLevel]) {
 					// If the panic level is past the maximum, turn off the growth.
 					if(this.countryPanicThresholds.length > this.S.countries[i].currPanicLevel) {
-						this.S.UI.addNews('country_military.' + this.S.countries[i].currPanicLevel, this.S.countries[i].name);
+						this.addCountryNews(this.S.countries[i].currPanicLevel, this.S.countries[i].name);
 						this.S.countries[i].currPanicLevel++;
 					}
 					else {
-						this.S.UI.addNews('country_military.end', this.S.countries[i].name);
+						this.addCountryNews('end', this.S.countries[i].name);
 						this.S.countries[i].currPanicLevel = 0;
 					}
 				}
@@ -57,13 +57,20 @@ exports.options = {
 		for(var i = 1; i < this.S.countries.length; i++) {
 			this.S.countries[i].currPanicLevel = 1;
 		}
-		this.panicThresholds = [0,1000,1000000,30000000];
+		this.panicThresholds = [0,1000,100000,1000000];
 		this.currPanicLevel = 1;
-		this.countryPanicThresholds = [0,400,80000,160000,320000];
+		this.countryPanicThresholds = [0,500,5000,160000,320000];
+	},
+	ui: function(UI) {
+		var mainInfo = UI.interfaceParts.main_info;
+		this.addGlobalNews = function(panicLevel) {
+			UI.addNews('world_research.' + panicLevel);
+		};
+		this.addCountryNews = function(panicLevel, name) {
+			UI.addNews('country_military.' + panicLevel, name);
+		};
 
-		var mainInfo = this.S.UI.interfaceParts.main_info;
-
-		mainInfo.addDataField({
+		this.worldPanicBar = mainInfo.addDataField({
 			type: 'progressBar',
 			title: 'ui:labels.world_panic',
 			dynamic: 'world_panic'

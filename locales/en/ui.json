@@ -6,11 +6,12 @@
 			"temperature": "Temperature",
 			"rain": "Precipication",
 			"political": "Political",
+			"disable": "Disable Overlay",
+			"population": "Population",
 			"tech": "Robot Parts",
 			"trees": "Vegetation",
-			"disable": "Disable Overlay"
+			"disable_visual": "Toggle Data Bars"
 		},
-		"population": "Toggle Population",
 		"evolution": "Evolution",
 		"mutation": "Mutation",
 		"news": "News Ticker",

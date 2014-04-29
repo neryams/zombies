@@ -130,7 +130,12 @@ var Debugger = function() {
 			infoTree.clearAll();
 			infoTree.parse(buildTreeFromObject(data, 3));
 			for(var i = 0; i < openItems.length; i++) {
-				infoTree.open(openItems[i]);
+				try {
+					infoTree.open(openItems[i]);
+				}
+				catch (e) {
+					console.log(e);
+				}
 			}
 		},
 		updateInfo: function() {
@@ -150,10 +155,9 @@ var Debugger = function() {
 				// Get selected row as string
 				var selected = hordeTable.getSelectedId(false,true);
 
-				if(lat)
-					hordeTable.filter('#lat#',lat, false);
-				if(lng)
-					hordeTable.filter('#lng#',lng, true);
+				hordeTable.filter(function(row){   //here it filters all titles from the dataset 
+					return row.lat === lat && row.lng === lng;
+				});
 
 				if(hordeTable.getFirstId()) {
 					hordeTable.select(hordeTable.getFirstId());
@@ -185,8 +189,9 @@ var Debugger = function() {
 		selectSquare: function(lat, lng) {
 			var pointsTable = $$('infoPoints');
 			if(lat && lng && pointsTable.count() > 0) {
-				pointsTable.filter('#lat#',lat, false);
-				pointsTable.filter('#lng#',lng, true);
+				pointsTable.filter(function(row){   //here it filters all titles from the dataset 
+					return row.lat === lat && row.lng === lng;
+				});
 
 				if(pointsTable.getFirstId()) {
 					pointsTable.select(pointsTable.getFirstId());

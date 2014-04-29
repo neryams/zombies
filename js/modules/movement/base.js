@@ -9,9 +9,13 @@ exports.run = function(current,passData) {
 };
 exports.options = {
 	init: function() {
-		this.speed = 1.5; // movement speed of zombies in kph. Average walking speed is 4.5-5.5 kph so they start pretty slow
+		this.speed = 5.5; // movement speed of zombies in kph. Average walking speed is 4.5-5.5 kph so they start pretty slow
 		this.burstSpeed = 0;
 		this.panic = 0;
+
+		this.canDetect = true;
+		this.detectStrength = 1500;
+		this.swimming = false;
 		/*
 		var speedUpgrade = function() {
 			this.val('speed',1.5,'+');
@@ -33,5 +37,5 @@ exports.options = {
 		);*/
 	},
 	runtime: 1,
-	children: ['movement.addEncounters','movement.move']
+	children: ['movement.addEncounters','movement.move','movement.dataPointUpdate']
 };

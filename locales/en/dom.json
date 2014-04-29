@@ -11,7 +11,12 @@
 					"<span class=\"range-slider-active-segment\"></span>",
 					"<input type=\"hidden\">",
 				"</div>"
-			]
+			],
+			"choiceToggle": {
+				"link": "<a href=\"#\" data-options=\"__alignment__\" data-dropdown=\"__link__\" class=\"dataField-button\">__label__</a>",
+				"listContainer": "<ul id=\"__link__\" class=\"f-dropdown\" data-dropdown-content></ul>",
+				"listItem": "<li></li>"
+			}
 		},
 		"evolution": {
 			"tooltipBase": "<div><h3>__name__</h3></div>",

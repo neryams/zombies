@@ -29,57 +29,80 @@ exports.options = {
 			} // Do not set an ID for the strain upgrade. The simulator needs to use the default name to give you the upgrade when you start the game.
 		);
 
+		this.S.config.maximums.tech = 0;
+		this.S.config.maximums.trees = 0;
 		for(var i = 0, n = this.S.points.length; i < n; i++) {
 			if(this.S.points[i].water) {
 				this.S.points[i].tech = 0;
 				this.S.points[i].trees = 0;
 			} else {
 				this.S.points[i].tech = Math.pow(Math.log(this.S.points[i].total_pop+1),4);
-				this.S.points[i].trees = Math.log(this.S.config.max_pop/(this.S.points[i].total_pop+10) + 1)*this.S.points[i].precipitation*this.S.points[i].temperature;
+				this.S.points[i].trees = Math.log(this.S.config.maximums.total_pop/(this.S.points[i].total_pop+10) + 1)*this.S.points[i].precipitation*this.S.points[i].temperature;
+			
+				if(this.S.config.maximums.tech < this.S.points[i].tech)
+					this.S.config.maximums.tech = this.S.points[i].tech;
+				if(this.S.config.maximums.trees < this.S.points[i].trees)
+					this.S.config.maximums.trees = this.S.points[i].trees;
 			}
 		}
-
+	},
+	ui: function(UI) {
 		// Add data view options for the resources
-		var dataViewList = this.S.UI.interfaceParts.dataViewList;
+		var viewList = UI.interfaceParts.viewList;
 		
-		dataViewList.addOption('ui:buttons.dataviews_inner.tech', dataViewList.visualTooltip('tech',function(point) {
-			return Math.round((point.tech)*10)/10 + ' parts';
-		}));
-		dataViewList.addOption('ui:buttons.dataviews_inner.trees', dataViewList.visualTooltip('trees',function(point) {
-			return Math.round((point.trees)*10)/10 + ' vegetation';
-		}));
-
+		viewList.addOption('ui:buttons.dataviews_inner.tech', function() {
+			UI.switchVisual('tech', [ // hsl
+				0.3,
+				1.0,
+				0.5
+			],[
+				0,
+				1.0,
+				0.3
+			]);
+		});
+		viewList.addOption('ui:buttons.dataviews_inner.trees', function() {
+			UI.switchVisual('trees', [ // hsl
+				0.15,
+				0.75,
+				0.65
+			],[
+				0.4,
+				1.0,
+				0.40
+			]);
+		});
 		// Add slider for zombie behavior: how much 
-		this.S.UI.interfaceParts.main_control.addDataField('control_collect',{
+		UI.interfaceParts.main_control.addDataField('control_collect',{
 			type:'slider',
 			title: 'Resource to put towards reproduction',
 			dynamic: 'control_moneyRatio',
 			dataOptions: 'start: 0; end: 12; initial: 2; step: 0.1;'
-		});
+		});		
 	},
-	onStart: function(callback) {
+	startSimulation: function() {
 		// Code to start the simulation
 		var startRandomizer = 1000 + Math.round(Math.random()*4000);
-		var randPoint = null;
+		var startPoint = null;
 
 		// Loop through all the points and pick the starting point, the point with population closest to a random number
 		// don't want to start in an area with no people, but not in a huge city either.
 		for(var i = 0, n = this.S.points.length; i < n; i++) {
 			if(this.S.points[i].total_pop) {
-				if(!randPoint) {
-					randPoint = this.S.points[i];
+				if(!startPoint) {
+					startPoint = this.S.points[i];
 				} else {
-					if(Math.abs(randPoint.total_pop - startRandomizer) > Math.abs(this.S.points[i].total_pop - startRandomizer))
-						randPoint = this.S.points[i];
+					if(Math.abs(startPoint.total_pop - startRandomizer) > Math.abs(this.S.points[i].total_pop - startRandomizer))
+						startPoint = this.S.points[i];
 				}
 			}
 		}
 		// Create the fort/factory location
-		this.fort = randPoint;
-		this.S.modules['factory'].val('locations',randPoint,'append');
+		this.fort = startPoint;
+		this.S.modules['factory'].val('locations',startPoint,'append');
 
 		// Send the starting point back to the callback function to start the simulation
-		callback(randPoint);
+		return startPoint;
 	},
 	name: 'Self-Replicating Robots',
 	description: 'Robots make more of themselves using ',
