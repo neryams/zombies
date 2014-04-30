@@ -9,7 +9,8 @@ exports.run = function(location) {
 
 		if(location.hordes.length > 0) {
 			var dirA = this.detectDirection(location, direction, detectStrength),
-				dirB = this.detectDirection(location, direction + 4, detectStrength);
+				dirB = this.detectDirection(location, direction + 4, detectStrength),
+				self = this.detectDirection(location);
 
 			for(var i = 0; i < location.hordes.length; i++) {
 				// Go around the square calculating the opposing directions
@@ -19,6 +20,7 @@ exports.run = function(location) {
 
 				currentHorde.moveWeighting[direction] = dirA;
 				currentHorde.moveWeighting[direction + 4] = dirB;
+				currentHorde.moveWeighting.self = self;
 			}
 		}
 	}
@@ -30,40 +32,43 @@ exports.options = {
 		this.detectDirection = function (dataPoint, direction, maxDistance) {
 			var returnAmount = 0,
 				totalDistance = 1,
-				i = 0;
+				i = 1;
+
+			if(direction === undefined) {
+				this.calculatePointNearbyProp(dataPoint);
+				return dataPoint.nearby_prop[0];
+			}
+
 			while(totalDistance < maxDistance) {
-				if(direction % 2 === 0) // horizontal and vertical
+				if(direction % 2 === 0)  {// horizontal and vertical
 					dataPoint = dataPoint.adjacent[direction/2];
-				else
-					dataPoint = dataPoint.adjacent[Math.floor(direction/2)].adjacent[Math.ceil(direction/2)%4];
-
-				if(i === 0 && dataPoint.water && !this.S.modules['movement.base'].val('swimming')) {
-					return 0;
-				} else {
-					this.calculatePointNearbyProp(dataPoint);
-
-					var reduceBy = 1 - totalDistance / maxDistance;
-
-					if(i < dataPoint.nearby_prop.length) {
-						returnAmount += dataPoint.nearby_prop[i] / (totalDistance * totalDistance);
-					} else {
-						returnAmount += dataPoint.nearby_prop[dataPoint.nearby_prop.length - 1] / (totalDistance * totalDistance);
-					}
-				}
-
-				if(direction % 2 === 0) { // horizontal and vertical
 					totalDistance += this.S.bakedValues.latDistances[
 							Math.floor( Math.abs(dataPoint.lat) )
 						][
 							direction/2
 						];
-				} else { // diagonal
+				}
+				else {
+					dataPoint = dataPoint.adjacent[Math.floor(direction/2)].adjacent[Math.ceil(direction/2)%4];
 					totalDistance += this.S.bakedValues.latDistances[
 							Math.floor( Math.abs(dataPoint.lat) )
 						][
 							Math.floor(direction / 2) + 4
 						];
 				}
+
+				if(i === 1 && dataPoint.water && !this.S.modules['movement.base'].val('swimming')) {
+					return 0;
+				} else {
+					this.calculatePointNearbyProp(dataPoint);
+
+					if(i < dataPoint.nearby_prop.length) {
+						returnAmount += dataPoint.nearby_prop[i] / i;
+					} else {
+						returnAmount += dataPoint.nearby_prop[dataPoint.nearby_prop.length - 1] / i;
+					}
+				}
+
 				i++;
 			}
 			return returnAmount;
@@ -107,7 +112,7 @@ exports.options = {
 						totals += target[this.smellItem];
 					} while (--steps);
 
-					location.nearby_prop[j] = totals;
+					location.nearby_prop[j] = totals / Math.pow(j * 2 + 1, 2);
 				}
 				location.nearby_prop.lastCalculated = this.S.iteration;
 			}
