@@ -6,7 +6,7 @@ exports.options = {
 	init: function() {
 		this.rateAdjust = 0;
 		var adjustReproduction = function() {
-			this.val('rateAdjust',3,'+');
+			this.val('rateAdjust',1.5,'*');
 		};
 		this.S.addUpgrades(this,
 			{cost: 200,
@@ -26,7 +26,7 @@ exports.options = {
 			},
 			{
 				cost: 200,
-				paths:['reproducer.upgrade-repro_0'],
+				paths:['reproducer.upgrade-collect_0'],
 				name:'Reproduction Boost',
 				onUpgrade: adjustReproduction,
 				description:'Zombies Reproduce more.',

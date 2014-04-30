@@ -7,7 +7,8 @@ exports.run = function(current,passData) {
 	passData.encounterProbability = 0;
 	passData.mobility = 0;
 	passData.panic = 0;
-	passData.collect = 10;
+	passData.collect = 6;
+
 	this.S.modules['reproducer.reproduce'].val('ratio_money',Math.min(Math.max(this.S.status.control_moneyRatio - 1, 0), 10)/10);
 };
 exports.options = {
