@@ -4,7 +4,8 @@ exports.run = function(current, passData, multiplier) {
 		if(current.collected === undefined)
 			current.collected = 0;
 
-		var resource_collected = passData.collect * current.size;
+		// Not just multiplying by horde size because the horde still has to walk through the point
+		var resource_collected = passData.collect * Math.log(current.size * 10 + 1);
 
 		passData.panic += resource_collected;
 
@@ -29,9 +30,9 @@ exports.run = function(current, passData, multiplier) {
 };
 exports.options = {
 	init: function() {
-		this.efficiency = 200;
+		this.efficiency = 100;
 		this.ratio_money = 0.1;
 	},
 	runtime: 20,
-	children: ['reproducer.upgrade-repro']
+	children: ['reproducer.upgrade-collect']
 };
