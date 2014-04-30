@@ -37,5 +37,5 @@ exports.options = {
 		);*/
 	},
 	runtime: 1,
-	children: ['movement.addEncounters','movement.move','movement.dataPointUpdate']
+	children: ['movement.addEncounters','movement.move','movement.dataPointUpdate','movement.upgrade-swim']
 };
