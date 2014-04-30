@@ -232,44 +232,6 @@ $(function () {
             }
         };
 
-        generatorWorker = new Worker('js/Generator.js');
-        generatorWorker.addEventListener('message', function(event) {
-            switch (event.data.cmd) {
-                case 'progress':
-                    MI.load.progress(event.data.message,event.data.progress);
-                    break;
-                case 'ready':
-                    if(node && userConfig.saveGenerator) {
-                        userConfig.saveData.config = event.data.config;
-                    }
-
-                    generatorLoadConfig(event.data.config);
-                    break;
-                case 'data':
-                    if(node && userConfig.saveGenerator) {
-                        userConfig.saveData.points = JSON.parse(JSON.stringify(event.data.points));
-                        userConfig.saveData.countries = JSON.parse(JSON.stringify(event.data.countries));
-                        userConfig.saveData.name = event.data.generatedName;
-                    }
-
-                    generatorLoadData(event.data.points, event.data.countries, event.data.generatedName);
-                    break;
-                case 'texture':
-                    generatorTexture = new Float32Array(event.data.texture);
-                    if(node && userConfig.saveGenerator) {
-                        userConfig.saveData.texture = generatorTexture;
-                    }
-
-                    loadingState++;
-                    checkLoadingState(loadingState);
-                    break;
-                case 'complete':
-                    loadingState++;
-                    checkLoadingState(loadingState);
-                    break;
-            }
-        }, false);
-
         if(node && userConfig.saveGenerator) {
             fs.readFile('./generated.data', function (err, data) {
                 if (err) {
@@ -279,7 +241,6 @@ $(function () {
                     userConfig.saveData = JSON.parse(data);
                     userConfig.saveData.loaded = true;
 
-                    generatorWorker.terminate();
                     generatorWorker = {
                         postMessage: function() {
                             generatorLoadConfig(userConfig.saveData.config);
@@ -300,6 +261,44 @@ $(function () {
                 startLoad();
             });
         } else {
+            generatorWorker = new Worker('js/Generator.js');
+            generatorWorker.addEventListener('message', function(event) {
+                switch (event.data.cmd) {
+                    case 'progress':
+                        MI.load.progress(event.data.message,event.data.progress);
+                        break;
+                    case 'ready':
+                        if(node && userConfig.saveGenerator) {
+                            userConfig.saveData.config = event.data.config;
+                        }
+
+                        generatorLoadConfig(event.data.config);
+                        break;
+                    case 'data':
+                        if(node && userConfig.saveGenerator) {
+                            userConfig.saveData.points = JSON.parse(JSON.stringify(event.data.points));
+                            userConfig.saveData.countries = JSON.parse(JSON.stringify(event.data.countries));
+                            userConfig.saveData.name = event.data.generatedName;
+                        }
+
+                        generatorLoadData(event.data.points, event.data.countries, event.data.generatedName);
+                        break;
+                    case 'texture':
+                        generatorTexture = new Float32Array(event.data.texture);
+                        if(node && userConfig.saveGenerator) {
+                            userConfig.saveData.texture = generatorTexture;
+                        }
+
+                        loadingState++;
+                        checkLoadingState(loadingState);
+                        break;
+                    case 'complete':
+                        loadingState++;
+                        checkLoadingState(loadingState);
+                        break;
+                }
+            }, false);
+
             startLoad();
         }
 
