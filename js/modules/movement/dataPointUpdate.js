@@ -36,7 +36,7 @@ exports.options = {
 
 			if(direction === undefined) {
 				this.calculatePointNearbyProp(dataPoint);
-				return dataPoint.nearby_prop[0];
+				return dataPoint.nearby_prop[0] * 2;
 			}
 
 			while(totalDistance < maxDistance) {
@@ -63,9 +63,9 @@ exports.options = {
 					this.calculatePointNearbyProp(dataPoint);
 
 					if(i < dataPoint.nearby_prop.length) {
-						returnAmount += dataPoint.nearby_prop[i] / i;
+						returnAmount += dataPoint.nearby_prop[i] / Math.pow(totalDistance,(i-1)/10);
 					} else {
-						returnAmount += dataPoint.nearby_prop[dataPoint.nearby_prop.length - 1] / i;
+						returnAmount += dataPoint.nearby_prop[dataPoint.nearby_prop.length - 1] / Math.pow(totalDistance,(i-1)/10);
 					}
 				}
 
@@ -82,37 +82,38 @@ exports.options = {
 			location.nearby_prop[0] = totals;
 
 			if(location.nearby_prop.length <= 1 || (this.S.iteration - location.nearby_prop.lastCalculated > 10 && location.nearby_prop[location.nearby_prop.length-1] > 0)) {
-				var steps,target = location;
+				var reduce,steps,target = location;
 
 				for (var j = 1; j <= 15; j++) {
 					target = target.adjacent[0];
 					steps = j;
+					reduce = Math.pow(j * 2 + 1, 2);
 					do {
 						target = target.adjacent[1];
-						totals += target[this.smellItem];
+						totals += target[this.smellItem] / reduce;
 					} while (--steps);
 					steps = j*2;
 					do {
 						target = target.adjacent[2];
-						totals += target[this.smellItem];
+						totals += target[this.smellItem] / reduce;
 					} while (--steps);
 					steps = j*2;
 					do {
 						target = target.adjacent[3];
-						totals += target[this.smellItem];
+						totals += target[this.smellItem] / reduce;
 					} while (--steps);
 					steps = j*2;
 					do {
 						target = target.adjacent[0];
-						totals += target[this.smellItem];
+						totals += target[this.smellItem] / reduce;
 					} while (--steps);
 					steps = j;
 					do {
 						target = target.adjacent[1];
-						totals += target[this.smellItem];
+						totals += target[this.smellItem] / reduce;
 					} while (--steps);
 
-					location.nearby_prop[j] = totals / Math.pow(j * 2 + 1, 2);
+					location.nearby_prop[j] = totals;
 				}
 				location.nearby_prop.lastCalculated = this.S.iteration;
 			}
