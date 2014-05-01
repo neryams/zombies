@@ -120,7 +120,7 @@ function MainInterface(UI,R) {
 				1.0,// s
 				0.5 // l
 			]);
-		}, true);
+		}, true); // default
 
 		UI.addDataField('alert',{
 			type: 'modal'

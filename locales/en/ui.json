@@ -10,7 +10,7 @@
 			"population": "Population",
 			"tech": "Robot Parts",
 			"trees": "Vegetation",
-			"disable_visual": "Toggle Data Bars"
+			"disable_visual": "Disable Data Bars"
 		},
 		"evolution": "Evolution",
 		"mutation": "Mutation",

@@ -13,7 +13,8 @@ var Renderer = function (scaling,onLoad) {
         hordeSystem = {
             length: 0,
             maxSize: 0,
-            particles: null
+            particles: null,
+            arrayLinks: []
         },
         WindowConfig = {
             windowX: 0,
@@ -46,8 +47,7 @@ var Renderer = function (scaling,onLoad) {
         onRender = function () {},
         ready = false,
         generatorConfig = null,
-        dataPoints = [],
-        hordes = {};
+        dataPoints = [];
 
     // Define constants
     var PI_HALF = Math.PI / 2;
@@ -345,43 +345,48 @@ var Renderer = function (scaling,onLoad) {
     },
 
     updateHorde = function(horde, remove) {
-        var selectedHorde = hordes[horde.id];
+        var selectedHorde = hordeSystem[horde.id];
         if(selectedHorde === undefined)
-            selectedHorde = hordes[horde.id] = {};
+            selectedHorde = hordeSystem[horde.id] = {};
 
         if(remove && selectedHorde.particleVertex) {
+            selectedHorde.particleVertex.set(0,0,0);
+            selectedHorde.particleSizeAttrib.setLength(0.5);
+
             hordeSystem.length--;
 
             // Replace this vector with the last vector in the array
-            hordeSystem.particles.vertices[hordeSystem.length].index = selectedHorde.particleVertex.index;
-            hordeSystem.particles.vertices[selectedHorde.particleVertex.index] = hordeSystem.particles.vertices[hordeSystem.length];
+            hordeSystem.particles.vertices[selectedHorde.index] = hordeSystem.particles.vertices[hordeSystem.length];
+            hordeSystem.attributes.size.value[selectedHorde.index] = hordeSystem.attributes.size.value[hordeSystem.length];
+            hordeSystem.arrayLinks[selectedHorde.index] = hordeSystem.arrayLinks[hordeSystem.length];
+            hordeSystem.arrayLinks[selectedHorde.index].index = selectedHorde.index;
 
-            selectedHorde.particleVertex.index = hordeSystem.length;
             hordeSystem.particles.vertices[hordeSystem.length] = selectedHorde.particleVertex;
-            selectedHorde.particleVertex.set(0,0,0);
-            delete selectedHorde.particleVertex;
-            delete selectedHorde.particleSizeAttrib;
-        } else {
-            if(selectedHorde.particleVertex) {
-                selectedHorde.particleVertex.copy(coordToCartesian(horde.location.lat-0.5+Math.random(), horde.location.lng-0.5+Math.random()));
-            } else {
-                var currentParticle = hordeSystem.particles.vertices[hordeSystem.length];
-                currentParticle.copy(coordToCartesian(horde.location.lat-0.5+Math.random(), horde.location.lng-0.5+Math.random()));
-                currentParticle.index = hordeSystem.length;
+            hordeSystem.attributes.size.value[hordeSystem.length] = selectedHorde.particleSizeAttrib;
+            hordeSystem.arrayLinks.length = hordeSystem.length;
 
-                selectedHorde.particleVertex = currentParticle;
+            delete hordeSystem[horde.id];
+        } else {
+            if(selectedHorde.particleVertex === undefined) {
+                // If horde does not have a particle, create one
+                selectedHorde.particleVertex = hordeSystem.particles.vertices[hordeSystem.length];
                 selectedHorde.particleSizeAttrib = hordeSystem.attributes.size.value[hordeSystem.length];
+                hordeSystem.arrayLinks[hordeSystem.length] = selectedHorde;
+                selectedHorde.index = hordeSystem.length;
                 hordeSystem.length++;
             }
+
+            selectedHorde.particleVertex.copy(coordToCartesian(horde.location.lat-0.5+Math.random(), horde.location.lng-0.5+Math.random()));
 
             if(hordeSystem.maxSize < horde.size)
                 hordeSystem.maxSize = horde.size;
 
-            var newParticleSize = (hordeSystem.maxSize > 500 ? 5 : hordeSystem.maxSize / 125 + 1) * horde.size / hordeSystem.maxSize + 1.75;
+            // Particle size ranges from 6.75 to 2.75
+            var newParticleSize = (hordeSystem.maxSize > 5000 ? 26 : hordeSystem.maxSize / 200 + 1) * horde.size / hordeSystem.maxSize + 1.75;
             if(selectedHorde.particleSizeAttrib.length() != newParticleSize) {
                 selectedHorde.particleSizeAttrib.setLength(newParticleSize);
+                hordeSystem.attributes.size.needsUpdate = true;
             }
-            hordeSystem.attributes.size.needsUpdate = true;
         }
         
         hordeSystem.particles.verticesNeedUpdate = true;
