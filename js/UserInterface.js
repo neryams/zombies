@@ -1126,6 +1126,16 @@ var UserInterface = function UserInterface(Renderer) {
 
 		return {
 			update: update,
+			save: function(overwrite) {
+				if(overwrite || !status.lastPointFunction) 
+					status.lastPointFunction = status.pointFunction;
+			},
+			restore: function() {
+				if(status.lastPointFunction) {
+					status.pointFunction = status.lastPointFunction;
+					delete status.lastPointFunction;
+				}
+			},
 			activate: function(content) {
 				status.active = true;
 				if(typeof content === 'string') {

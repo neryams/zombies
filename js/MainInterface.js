@@ -75,15 +75,20 @@ function MainInterface(UI,R) {
 			class: 'icon layers'
 		});
 
+		dataViewList.lastTooltipFunction = false;
 		dataViewList.visualTooltip = function(visual, mathFunction) {
 			return function() {
 				R.setVisualization(visual);
-				UI.toggleGlobeTooltip(true, mathFunction);
+				UI.tooltip.save(false); // don't overwrite existing
+				UI.tooltip.setPointFunction(function(lat, lng) {
+					var point_prop = Simulator.getPointProperties(lat, lng);
+					return mathFunction(point_prop);
+				});
 			};
 		};
 		dataViewList.addOption('ui:buttons.dataviews_inner.disable', function() {
 			R.closeVisualization();
-			UI.toggleGlobeTooltip(false);
+			UI.tooltip.restore();
 		});
 		dataViewList.addOption('ui:buttons.dataviews_inner.political', dataViewList.visualTooltip('country',function(point) {
 			if(point.country) {
@@ -117,11 +122,15 @@ function MainInterface(UI,R) {
 				0.5 // l
 			]);
 			UI.tooltip.setPointFunction(function(lat, lng) {
-				return Simulator.getPointProperties(lat, lng).total_pop + ' people';
+				var value = Simulator.getPointProperties(lat, lng).total_pop;
+				if(value > 0)
+					return value + ' people';
+				else
+					return false;
 			});
 		}, true); // default
 
-		viewOptionsMenu.addDataField({
+		viewOptionsMenu.addDataField('toggleTooltips',{
 			type: 'toggle',
 			toggle: function(active) {
 				if(active)
@@ -129,6 +138,7 @@ function MainInterface(UI,R) {
 				else
 					UI.tooltip.deactivate();
 			},
+
 			class: 'icon moreinfo'
 		});
 
