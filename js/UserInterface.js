@@ -1245,44 +1245,6 @@ var UserInterface = function UserInterface(Renderer) {
 		addDataField: function(id, options) {
 			return mainSection.addDataField.call(mainSection, id, options);
 		},
-		enableTooltip: function(getPointInfo) {
-			$('#ui').off('mousemove.render_tooltip');
-			$('#ui').on('mousemove.render_tooltip', null, getPointInfo, function(event) {
-				UIstatus.mouse.x = event.clientX;
-				UIstatus.mouse.y = event.clientY;
-				sphere_coords = Renderer.getSphereCoords(UIstatus.mouse.x,UIstatus.mouse.y,200);
-				if(sphere_coords && !isNaN(sphere_coords[0]) && !isNaN(sphere_coords[1]) && !UIstatus.pauseRenderer) {
-					$('#tooltip').css('top',UIstatus.mouse.y+10).css('left',UIstatus.mouse.x+30);
-					//$('#tooltip').css('display','block').html('asf');
-					var point = Renderer.coordsToPoint(sphere_coords[0],sphere_coords[1]);
-
-					if(point !== undefined && (!point.water || point.total_pop > 0)) {
-						$('#tooltip').show();
-						$('#tooltip').html(event.data(point));
-
-						// Debug information to mouse over points
-						if(debugMenu.console.options.mouseOverDebugData) {
-							$('#tooltip').html(JSON.stringify(point,
-								function(key,value) {
-									if(key == 'adjacent' || key == 'renderer')
-										return undefined;
-									else if(key == 'army')
-										return {size: value.size, experience: value.experience, nationality: value.nationality};
-									else
-										return value;
-								}, '&nbsp;').replace(/\n/g, '<br />')).css('font-size', '8pt');
-						}
-					}
-					else
-						$('#tooltip').hide();
-				}
-				else
-					$('#tooltip').hide();
-			});
-		},
-		disableTooltip: function() {
-			$('#ui').off('mousemove.render_tooltip');
-		},
 		updateVisual: function(targets) {
 			for(var i = 0; i < targets.length; i++) {
 				Renderer.setData(targets[i][0], targets[i][1]);

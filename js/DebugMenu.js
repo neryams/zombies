@@ -55,9 +55,6 @@ var debugMenu = {
 		endTurn: function() {
 			if(this.S)
 				this.S.tick();
-		},
-		toggleGlobeTooltip: function(activate) {
-			this.S.UI.toggleGlobeTooltip(activate);
 		}
     },
     console: {
@@ -70,7 +67,6 @@ var debugMenu = {
 		},
 		options: {
 			manualTicks: false,
-			mouseOverDebugData: false,
 			activeHorde: null,
 			activePoint: null,
 			profileTick: false

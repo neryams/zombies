@@ -50,8 +50,7 @@ $body-font: 'Arial', sans-serif;
 	@include button(rem-calc(8));
 	
 	&.active {
-		padding-bottom: rem-calc(5);
-		border-bottom: rem-calc(3) solid $success-color;
+		background-color: lighten( $primary-color, 20% );
 	}
 }
 .dataField-modal .menu {
