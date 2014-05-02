@@ -46,6 +46,14 @@ $body-font: 'Arial', sans-serif;
 .dataField-button {
 	@include button(rem-calc(8));
 }
+.dataField-toggle {
+	@include button(rem-calc(8));
+	
+	&.active {
+		padding-bottom: rem-calc(5);
+		border-bottom: rem-calc(3) solid $success-color;
+	}
+}
 .dataField-modal .menu {
 	position: absolute;
 	bottom: 0;
@@ -155,11 +163,14 @@ canvas.draggable {
 
 /* Tooltips */
 
-#tooltip {
-	display: inline-block;
-	width: auto;
-}
-.tooltip {	
+.tooltip {
+	&.globe {
+		margin-left: -9px;
+		display: inline;
+		width: auto;
+		margin-top: 4px;
+	}
+
 	h3 {
 		color: black;
 		font-size: rem-calc(20);

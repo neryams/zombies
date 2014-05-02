@@ -41,6 +41,7 @@
 			]
 		}
 	},
+	"tooltip": "<span class=\"tooltip globe\"><span class=\"content\" /><span class=\"nub\" /></span>",
 	"alerts": {
 		"win_message": "<p>$t(messages:win_message)</p>",
 		"lose_message": "<p>$t(messages:lose_message)</p>"

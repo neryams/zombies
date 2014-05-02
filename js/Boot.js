@@ -163,7 +163,6 @@ $(function () {
                     }
 
                     // Function also initializes UI.
-                    UI.setSimulator(S);
                     generatorWorker.terminate();
                     var loadEnd = false,
                         startGame = function(strain) {
@@ -212,6 +211,7 @@ $(function () {
                 MI.load.endGenerator();
                 S = new Simulator(R,UI,generatorConfig,data);
                 S.setName(name);
+                UI.simulator.link(S);
                 loadingState++;
                 checkLoadingState(loadingState);
             };

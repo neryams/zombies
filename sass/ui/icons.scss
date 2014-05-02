@@ -6,7 +6,8 @@ $iconPath: "../ui/icons";
 	background-repeat: no-repeat;
 	padding: 0;
 }
-.dataField-button.icon {
+.dataField-button.icon,
+.dataField-toggle.icon {
 	display: inline-block;
 	height: 32px;
 	width: 32px;
@@ -28,5 +29,8 @@ $iconPath: "../ui/icons";
 	}
 	&.visual {
 		background-image: url(#{$iconPath}/appbar.eye.png);
+	}
+	&.moreinfo {
+		background-image: url(#{$iconPath}/appbar.cursor.information.png);
 	}
 }

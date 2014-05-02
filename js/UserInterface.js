@@ -16,8 +16,7 @@ Date.prototype.getMonthNameShort = function() {
 };
 
 var UserInterface = function UserInterface(Renderer) {
-	var S,
-		sphere_coords,
+	var sphere_coords,
 		interfaceParts = {},
 		status = {
 			gridSize: 0
@@ -49,11 +48,16 @@ var UserInterface = function UserInterface(Renderer) {
 		if(!config.type)
 			config.type = 'div';
 
-		if(typeof this._typeOptions[config.type] === 'function') {
-			this._merge( this._typeOptions[config.type].call(this, config) );
-		} else {
-			this._merge( $(i18n.t('dom:interface.dataField.default', { element: config.type })) );
-		}
+		var thisField = this;
+		var buildFromType = function(typeId) {
+			if(typeof thisField._typeOptions[typeId] === 'function') {
+				return thisField._typeOptions[typeId].call(thisField, config, buildFromType);
+			} else {
+				return $(i18n.t('dom:interface.dataField.default', { element: typeId }));
+			}
+		};
+
+		this._merge( buildFromType(config.type) );
 
 		for (var key in config)
 			if (config.hasOwnProperty(key)) {
@@ -96,25 +100,6 @@ var UserInterface = function UserInterface(Renderer) {
 			var newDataField = new DataField(id, options, this);
 			return newDataField;
 		},
-		showToolTip: function(text,width) {
-			var position = this.offset();
-
-			var tooltip = $('#tooltip');
-
-			tooltip.empty();
-			if(width)
-				tooltip.css('width',width);
-			if(text instanceof jQuery)
-				tooltip.append(text);
-			else
-				tooltip.html(text);
-			tooltip.css('top',position.top - (tooltip.height() + 20)).css('left',position.left).addClass('');
-			tooltip.fadeIn(250);
-
-			this.on('mouseleave', function () {
-				tooltip.hide();
-			});
-		},
 		clone: function() {
 			var newDataField = Object.create(DataField.prototype, this);
 			newDataField.length = 0;
@@ -129,6 +114,29 @@ var UserInterface = function UserInterface(Renderer) {
 				else
 					button.html(label);
 				return button;
+			},
+			toggle: function(config, inherit) {
+				// Inherit from button
+				var toggle = inherit('button');
+
+				this.active = config.active ? true : false;
+
+				if(typeof config.toggle === 'function') {
+					var _this = this;
+					toggle.on('click', function() {
+						if(_this.active) {
+							_this.active = false;
+							_this.removeClass('active');
+						}
+						else {
+							_this.active = true;
+							_this.addClass('active');
+						}
+						config.toggle(_this.active);
+					});
+				}
+
+				return toggle;
 			},
 			modal: function(config) {
 				var modal = $('<div id="modal-' + this.id + '" class="reveal-modal" data-reveal></div>');
@@ -276,13 +284,13 @@ var UserInterface = function UserInterface(Renderer) {
 					if(isDefault) {
 						this.filter('ul').find('.active').removeClass('active');
 						listItem.addClass('active');
+						onpick.call(_this, this);
 					}
 				};
 
 				return [button,list];
 			}
 		},
-		_status: status,
 		_merge: function(toMerge) {
 			var _this = this;
 
@@ -453,21 +461,6 @@ var UserInterface = function UserInterface(Renderer) {
 
 				options.type = 'div';
 
-				var evolutionTooltip = function() {
-					var row, evol = evolutions[$(this).data('id')];
-					var toolTipContent = $(i18n.t('dom:interface.evolution.tooltipBase', { name: evol.name }));
-					if(evol.cost > 0)
-						toolTipContent.append($(i18n.t('dom:interface.evolution.tooltipRow', { label: 'ui:evolution.cost', value: evol.cost })));
-					if(evol.gene) {
-						row = $(i18n.t('dom:interface.evolution.tooltipRow', { label: 'ui:evolution.gene', value: '' }));
-						row.find('.value').append(evol.gene.imageElement);
-						toolTipContent.append(row);
-					}
-
-					toolTipContent.append($(i18n.t('dom:interface.evolution.tooltipDesc')));
-					evol.element.showToolTip(toolTipContent,200);
-				};
-
 				var evolutionSelect = function(event) {
 					event.preventDefault();
 					var i, upgradeId = $(this).data('id'),
@@ -508,7 +501,19 @@ var UserInterface = function UserInterface(Renderer) {
 						currentLevel.style = {};
 
 					// Create the evolution upgrade button in the menu
-						// Clone a div element for each level so it can be treated as a separate evolution
+
+
+					var toolTipContent = $(i18n.t('dom:interface.evolution.tooltipBase', { name: currentLevel.name }));
+					if(currentLevel.cost > 0)
+						toolTipContent.append($(i18n.t('dom:interface.evolution.tooltipRow', { label: 'ui:evolution.cost', value: currentLevel.cost })));
+					if(currentLevel.gene) {
+						var row = $(i18n.t('dom:interface.evolution.tooltipRow', { label: 'ui:evolution.gene', value: '' }));
+						row.find('.value').append(currentLevel.gene.imageElement);
+						toolTipContent.append(row);
+					}
+					toolTipContent.append($(i18n.t('dom:interface.evolution.tooltipDesc')));
+					options.tooltip = $('<div/>').append(toolTipContent).html();
+
 					var currentElement = evolveMenu.addDataField('_evol'+name, options).addClass('evolutionButton_' + currentId);
 					var icon = $('<a class="evoIcon" />')
 						.css('background-position', '-' + ((currentLevel.style.bg || defaultStyle.bg)*(currentLevel.style.size || defaultStyle.size)) + 'px 0')
@@ -559,9 +564,6 @@ var UserInterface = function UserInterface(Renderer) {
 						var geneGraphic = currentLevel.gene.imageThumbnail.clone();
 						currentElement.append(geneGraphic.addClass('geneIcon').css('bottom',imageCanvas.height/-2).css('right',imageCanvas.height/-2));
 					}
-
-					// Mouseover tooltip for evolution
-					icon.on('mouseenter.evolutionTooltip', evolutionTooltip);
 
 					// Click event for evolution in the upgrade menu
 					icon.on('click.evolutionSelect', evolutionSelect);
@@ -669,7 +671,7 @@ var UserInterface = function UserInterface(Renderer) {
 
 			buyEvolutions = function() {
 				var upgrade,
-					success = S.purchaseUpgrades(selectedUpgrades.slice(0));
+					success = S.purchaseUpgrades(selectedUpgrades);
 				while(selectedUpgrades.length) {
 					upgrade = evolutions[selectedUpgrades.pop()];
 					if(success) {
@@ -735,7 +737,7 @@ var UserInterface = function UserInterface(Renderer) {
 					}
 
 				if(mutations.length > 0)
-					if(!S.purchaseMutation(mutations.slice(0)))
+					if(!S.purchaseMutation(mutations))
 						console.error('mutation not valid!');
 			},
 
@@ -1082,60 +1084,72 @@ var UserInterface = function UserInterface(Renderer) {
 				});
 			}
 		};
-	};
-
-	/*
-		Parameter is a function that takes one paramater, a function that takes a dataPoint and returns a string.
-		You will call this function to set up a tooltip that returns a property of a point on the planet
-	*/
-	var activatePlanetTooltip = function(getPointInfo) {
-		$('#ui').off('mousemove.render_tooltip');
-		$('#ui').on('mousemove.render_tooltip', null, getPointInfo, function(event) {
-			UIstatus.mouse.x = event.clientX;
-			UIstatus.mouse.y = event.clientY;
-			sphere_coords = Renderer.getSphereCoords(UIstatus.mouse.x,UIstatus.mouse.y,200);
-			if(sphere_coords && !isNaN(sphere_coords[0]) && !isNaN(sphere_coords[1]) && !UIstatus.pauseRenderer) {
-				$('#tooltip').css('top',UIstatus.mouse.y+10).css('left',UIstatus.mouse.x+30);
-				//$('#tooltip').css('display','block').html('asf');
-				var point = Renderer.coordsToPoint(sphere_coords[0],sphere_coords[1]);
-
-				if(point !== undefined && (!point.water || point.total_pop > 0)) {
-					$('#tooltip').show();
-					$('#tooltip').html(event.data(point));
-
-					// Debug information to mouse over points
-					if(debugMenu.console.options.mouseOverDebugData) {
-						$('#tooltip').html(JSON.stringify(point,
-							function(key,value) {
-								if(key == 'adjacent' || key == 'renderer')
-									return undefined;
-								else if(key == 'army')
-									return {size: value.size, experience: value.experience, nationality: value.nationality};
-								else
-									return value;
-							}, '&nbsp;').replace(/\n/g, '<br />')).css('font-size', '8pt');
-					}
-				}
-				else
-					$('#tooltip').hide();
-			}
-			else
-				$('#tooltip').hide();
-		});
-	},
-
-	deactivatePlanetTooltip = function() {
-		hideTooltip();
-		$('#ui').off('mousemove.render_tooltip');
 	},
 
 	addDataField = function(id,options) {
 		return new DataField(id,options,$('#ui'));
-	},
-
-	hideTooltip = function() {
-		$('#tooltip').hide();
 	};
+
+	var MouseTooltip = function() {
+		var toolTipElement = $(i18n.t('dom:tooltip'));
+
+		var toolTipContent = toolTipElement.find('.content'),
+			status = {
+				active: false,
+				pointFunction: false,
+				hidden: true
+			};
+
+		toolTipElement.hide();
+		$('#ui').append(toolTipElement);
+
+		var update = function() {
+				if(status.active && status.pointFunction && !UIstatus.pauseRenderer) {
+					var sphere_coords = Renderer.getSphereCoords(UIstatus.mouse.x,UIstatus.mouse.y),
+						result;
+
+					if(sphere_coords && !isNaN(sphere_coords[0]) && !isNaN(sphere_coords[1])) {
+						result = status.pointFunction(sphere_coords[0], sphere_coords[1]);
+						toolTipContent.html(result);
+					}
+					toolTipElement.css('left', UIstatus.mouse.x).css('top', UIstatus.mouse.y);
+
+					if(!result && !status.hidden) {
+						toolTipElement.hide();
+						status.hidden = true;
+					} else if(result && status.hidden) {
+						toolTipElement.show();
+						status.hidden = false;
+					}
+				}
+			};
+
+		return {
+			update: update,
+			activate: function(content) {
+				status.active = true;
+				if(typeof content === 'string') {
+					toolTipContent.html(content);
+					status.pointFunction = false;
+				}
+				else if(typeof content === 'function') {
+					status.pointFunction = content;
+				}
+				update();
+			},
+			deactivate: function() {
+				toolTipContent.html('');
+				toolTipElement.hide();
+				status.active = false;
+			},
+			setPointFunction: function(process) {
+				status.pointFunction = process;
+				update();
+			}
+		};
+	};
+
+	var MT = MouseTooltip();
 
 	// Function that runs on every frame, sending mouse movement from UI as coordinates to the renderer to move 3-d elements around
 	Renderer.onRender(function() {
@@ -1149,6 +1163,8 @@ var UserInterface = function UserInterface(Renderer) {
 				Renderer.zoomCamera(-UIstatus.mouse.scroll);
 				UIstatus.mouse.scroll = 0;
 			}
+
+			MT.update();
 		}
 		else
 			Renderer.stopCameraMovement();
@@ -1172,21 +1188,82 @@ var UserInterface = function UserInterface(Renderer) {
 
 	var E = Evolutions();
 
+	var SimulatorLink = function() {
+		var S;
+
+		return {
+			link: function(Simulator) {
+				S = Simulator;
+			},
+			pause: function() {
+				return S.pause();
+			},
+			unPause: function() {
+				return S.unPause();
+			},
+			purchaseMutation: function(mutations) {
+				return S.purchaseMutation(mutations.slice(0));
+			},
+			availableUpgrades: function(selectedUpgrades) {
+				return S.availableUpgrades(selectedUpgrades);
+			},
+			purchaseUpgrades: function(selectedUpgrades) {
+				return S.purchaseUpgrades(selectedUpgrades.slice(0));
+			},
+			getPointProperties: function(lat, lng) {
+				return S.getPointProperties(lat, lng);
+			}
+		};
+	};
+
+	var S = SimulatorLink();
+
 	return {
 		interfaceParts: interfaceParts,
 		status: UIstatus,
 		evolutions: E,
+		tooltip: MT,
+		simulator: S,
 		addDataField: function(id, options) {
 			return mainSection.addDataField.call(mainSection, id, options);
 		},
-		toggleGlobeTooltip: function(activate,getPointInfo) {
-			if(activate)
-				activatePlanetTooltip(getPointInfo);
-			else
-				deactivatePlanetTooltip();
+		enableTooltip: function(getPointInfo) {
+			$('#ui').off('mousemove.render_tooltip');
+			$('#ui').on('mousemove.render_tooltip', null, getPointInfo, function(event) {
+				UIstatus.mouse.x = event.clientX;
+				UIstatus.mouse.y = event.clientY;
+				sphere_coords = Renderer.getSphereCoords(UIstatus.mouse.x,UIstatus.mouse.y,200);
+				if(sphere_coords && !isNaN(sphere_coords[0]) && !isNaN(sphere_coords[1]) && !UIstatus.pauseRenderer) {
+					$('#tooltip').css('top',UIstatus.mouse.y+10).css('left',UIstatus.mouse.x+30);
+					//$('#tooltip').css('display','block').html('asf');
+					var point = Renderer.coordsToPoint(sphere_coords[0],sphere_coords[1]);
+
+					if(point !== undefined && (!point.water || point.total_pop > 0)) {
+						$('#tooltip').show();
+						$('#tooltip').html(event.data(point));
+
+						// Debug information to mouse over points
+						if(debugMenu.console.options.mouseOverDebugData) {
+							$('#tooltip').html(JSON.stringify(point,
+								function(key,value) {
+									if(key == 'adjacent' || key == 'renderer')
+										return undefined;
+									else if(key == 'army')
+										return {size: value.size, experience: value.experience, nationality: value.nationality};
+									else
+										return value;
+								}, '&nbsp;').replace(/\n/g, '<br />')).css('font-size', '8pt');
+						}
+					}
+					else
+						$('#tooltip').hide();
+				}
+				else
+					$('#tooltip').hide();
+			});
 		},
-		setSimulator: function(Simulator) {
-			S = Simulator;
+		disableTooltip: function() {
+			$('#ui').off('mousemove.render_tooltip');
 		},
 		updateVisual: function(targets) {
 			for(var i = 0; i < targets.length; i++) {
@@ -1237,6 +1314,8 @@ var UserInterface = function UserInterface(Renderer) {
 				} else {
 					Renderer.togglePopDisplay(true);
 				}
+
+				MT.update();
 			} else {
 				for (key in changedStatus)
 					if (changedStatus.hasOwnProperty(key))

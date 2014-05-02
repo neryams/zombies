@@ -994,6 +994,9 @@ Simulator.prototype.tick = function() {
 Simulator.prototype.rendererDecal = function(id, lat, lng, size, texture) {
 	this.R.decal(id, lat, lng, size, texture);
 };
+Simulator.prototype.getPointProperties = function(lat, lng) {
+	return this.points[Math.floor(lng + 0.5) + (90 - Math.floor(lat + 0.5)) * 360];
+};
 
 function Module(type,processFunction,options) {
 	this.type = type;

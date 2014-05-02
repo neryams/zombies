@@ -610,18 +610,21 @@ var Renderer = function (scaling,onLoad) {
         return visualization.textureCanvas;
     },
 
-    getSphereCoords = function(mouseX,mouseY) {
+    getSphereCoords = function(mouseX, mouseY) {
+        var toDeg = 180/Math.PI,
+            diameter = 200;
+
         var distX = mouseX - WindowConfig.windowX/2;
         var distY = mouseY - WindowConfig.windowY/2;
         if(Math.sqrt(distX*distX + distY*distY) < getSphereScreenSize(Camera.position.z)/2) {
-            var intersect = checkIntersection( event.clientX, event.clientY );
+            var intersect = checkIntersection( mouseX, mouseY );
 
-            var phi = Math.acos(intersect.y/200) - WindowConfig.rotation.y;
-            var theta = Math.asin(intersect.x/Math.sin(phi)/200) + WindowConfig.rotation.x;
-            if(theta*180/Math.PI + 90 > 0)
-                return [(90 - Math.abs(phi*180/Math.PI)),(theta*180/Math.PI + 90)%360,intersect];
+            var phi = Math.acos(intersect.y/diameter) - WindowConfig.rotation.y;
+            var theta = Math.asin(intersect.x/Math.sin(phi)/diameter) + WindowConfig.rotation.x;
+            if(theta*toDeg + 90 > 0)
+                return [(90 - Math.abs(phi*toDeg)),(theta*toDeg + 90)%360,intersect];
             else
-                return [(90 - Math.abs(phi*180/Math.PI)),360 + (theta*180/Math.PI + 90)%360,intersect];
+                return [(90 - Math.abs(phi*toDeg)),360 + (theta*toDeg + 90)%360,intersect];
         }
         return false;
     },

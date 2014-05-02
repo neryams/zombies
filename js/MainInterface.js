@@ -1,7 +1,7 @@
 /* exported MainInterface */
-/* global S */
 function MainInterface(UI,R) {
 	var status = UI.status;
+	var Simulator = UI.simulator;
 	/*
 		Functions for generating the loading bar
 		Parameters:
@@ -40,10 +40,6 @@ function MainInterface(UI,R) {
 	},
 
 	buildUI = function() {
-		UI.addDataField('tooltip', {
-			class: 'tooltip'
-		}).attr('id', 'tooltip').appendTo($('body'));
-
 		var mainControl = UI.interfaceParts.main_control,
 			mainInfo = UI.interfaceParts.main_info,
 			mainBar = UI.interfaceParts.top_bar;
@@ -120,7 +116,21 @@ function MainInterface(UI,R) {
 				1.0,// s
 				0.5 // l
 			]);
+			UI.tooltip.setPointFunction(function(lat, lng) {
+				return Simulator.getPointProperties(lat, lng).total_pop + ' people';
+			});
 		}, true); // default
+
+		viewOptionsMenu.addDataField({
+			type: 'toggle',
+			toggle: function(active) {
+				if(active)
+					UI.tooltip.activate();
+				else
+					UI.tooltip.deactivate();
+			},
+			class: 'icon moreinfo'
+		});
 
 		UI.addDataField('alert',{
 			type: 'modal'
@@ -175,25 +185,25 @@ function MainInterface(UI,R) {
 			$(this).off('mousemove.dragging');
 		});
 
+
+		$('#ui').on('mousemove', function (event) {
+			status.mouse.x = event.clientX;
+			status.mouse.y = event.clientY;
+			// If user moves the mouse enough, declare this mousedown as NOT a click.
+			if(status.mouse.click && Math.abs(status.mouse.lastx - status.mouse.x) + Math.abs(status.mouse.lasty - status.mouse.y) > 2)
+				status.mouse.click = false;
+		});
 		$('#ui').on('mousedown.moveCamera', function (event) {
 			if(!status.pauseR && status.mouse.bound === null) {
 				event.preventDefault();
 				status.mouse.down = true;
+				status.mouse.click = true;
 				status.mouse.x = status.mouse.lastx = event.clientX;
 				status.mouse.y = status.mouse.lasty = event.clientY;
-				status.mouse.click = true;
 				R.stopCameraMovement();
-				$(this).on('mousemove.moveCamera', function (event) {
-					status.mouse.x = event.clientX;
-					status.mouse.y = event.clientY;
-					// If user moves the mouse enough, declare this mousedown as NOT a click.
-					if(Math.abs(status.mouse.lastx - status.mouse.x) + Math.abs(status.mouse.lasty - status.mouse.y) > 3)
-						status.mouse.click = false;
-				});
 			}
 		});
 		$('#ui').on('mouseup.moveCamera', function () {
-			$(this).off('mousemove.moveCamera');
 			// If mouse didn't move, do the click
 			if(status.mouse.click) {
 				var sphereCoords = R.clickSphere(status.mouse.x,status.mouse.y);
@@ -214,6 +224,7 @@ function MainInterface(UI,R) {
 				}
 			}
 		});
+
 
         //UI.interfaceParts.evolveMenu_button.element.trigger('click');
         //UI.interfaceParts.mutateMenu_button.element.trigger('click');
