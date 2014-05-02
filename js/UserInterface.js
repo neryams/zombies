@@ -120,6 +120,14 @@ var UserInterface = function UserInterface(Renderer) {
 				var toggle = inherit('button');
 
 				this.active = config.active ? true : false;
+				this.activate = function() {
+					if(!this.active)
+						this.click();
+				};
+				this.deactivate = function() {
+					if(this.active)
+						this.click();
+				};
 
 				if(typeof config.toggle === 'function') {
 					var _this = this;

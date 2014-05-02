@@ -84,11 +84,14 @@ function MainInterface(UI,R) {
 					var point_prop = Simulator.getPointProperties(lat, lng);
 					return mathFunction(point_prop);
 				});
+
+				UI.interfaceParts.toggleTooltips.activate();
 			};
 		};
 		dataViewList.addOption('ui:buttons.dataviews_inner.disable', function() {
 			R.closeVisualization();
 			UI.tooltip.restore();
+			UI.interfaceParts.toggleTooltips.deactivate();
 		});
 		dataViewList.addOption('ui:buttons.dataviews_inner.political', dataViewList.visualTooltip('country',function(point) {
 			if(point.country) {
