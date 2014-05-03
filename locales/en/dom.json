@@ -20,8 +20,8 @@
 		},
 		"evolution": {
 			"tooltipBase": "<div><h3>__name__</h3></div>",
-			"tooltipRow": "<div class=\"row\"><div class=\"label\">$t(__label__)</div><div class=\"value\">__value__</div></div>",
-			"tooltipDesc": "<p></p>"
+			"tooltipRow": "<div class=\"row\"><div class=\"columns small-4\">$t(__label__)</div><div class=\"columns small-8 value\">__value__</div></div>",
+			"tooltipDesc": "<p>__text__</p>"
 		},
 		"mutation":{
 			"grid":[

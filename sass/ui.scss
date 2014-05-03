@@ -43,6 +43,9 @@ $body-font: 'Arial', sans-serif;
 }
 
 /* Datafield Type Styling */
+.dataField.has-tip {
+	border-bottom: 0;
+}
 .dataField-button {
 	@include button(rem-calc(8));
 }
@@ -170,10 +173,20 @@ canvas.draggable {
 		margin-top: 4px;
 	}
 
+	p {
+		font-size: rem-calc(12);
+
+		&:last-child {
+			margin-bottom: 0;
+		}
+	}
+
 	h3 {
-		color: black;
 		font-size: rem-calc(20);
 		margin-top: 0;
+	}
+	.row {
+		margin: rem-calc(8) 0;
 	}
 	.label {
 		@include grid-column(4);

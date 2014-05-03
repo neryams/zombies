@@ -508,9 +508,24 @@ var UserInterface = function UserInterface(Renderer) {
 					if(!currentLevel.style)
 						currentLevel.style = {};
 
+					if(currentLevel.gene) {
+						currentLevel.gene = {
+							shape: levels[i].gene.shape,
+							color: levels[i].gene.color,
+							height: levels[i].gene.height,
+							width: levels[i].gene.width,
+						};
+
+						// Draw gene shape image, (the tetris pieces)
+						var img = drawGene(imageCanvas, SQUARE_SIZE, currentLevel.gene);
+						var imgSmall = drawGene(imageCanvas, Math.round(SQUARE_SIZE/2.5), currentLevel.gene);
+
+						// Copy a image elemnt for the user interface and put the gene image into it.
+						currentLevel.gene.imageElement = $('<img />').attr('src', img);
+						currentLevel.gene.imageThumbnail = $('<img />').attr('src', imgSmall);
+					}
+
 					// Create the evolution upgrade button in the menu
-
-
 					var toolTipContent = $(i18n.t('dom:interface.evolution.tooltipBase', { name: currentLevel.name }));
 					if(currentLevel.cost > 0)
 						toolTipContent.append($(i18n.t('dom:interface.evolution.tooltipRow', { label: 'ui:evolution.cost', value: currentLevel.cost })));
@@ -519,7 +534,7 @@ var UserInterface = function UserInterface(Renderer) {
 						row.find('.value').append(currentLevel.gene.imageElement);
 						toolTipContent.append(row);
 					}
-					toolTipContent.append($(i18n.t('dom:interface.evolution.tooltipDesc')));
+					toolTipContent.append($(i18n.t('dom:interface.evolution.tooltipDesc', { text: currentLevel.description })));
 					options.tooltip = $('<div/>').append(toolTipContent).html();
 
 					var currentElement = evolveMenu.addDataField('_evol'+name, options).addClass('evolutionButton_' + currentId);
@@ -547,31 +562,16 @@ var UserInterface = function UserInterface(Renderer) {
 						currentElement.css('margin-left',-(currentLevel.style.size/2)).css('margin-top',-(currentLevel.style.size/2));
 					}
 
-					evolutions[currentId] = currentLevel;
-					if(currentLevel.gene)
-						currentLevel.gene = {
-							shape: levels[i].gene.shape,
-							color: levels[i].gene.color,
-							height: levels[i].gene.height,
-							width: levels[i].gene.width,
-						};
-						
-					currentLevel.element = currentElement;
-					currentLevel.children = [];
-
-					// Draw gene shape image, (the tetris peices)
 					if(currentLevel.gene) {
-						var img = drawGene(imageCanvas, SQUARE_SIZE, currentLevel.gene);
-						var imgSmall = drawGene(imageCanvas, Math.round(SQUARE_SIZE/2.5), currentLevel.gene);
-
-						// Copy a image elemnt for the user interface and put the gene image into it.
-						currentLevel.gene.imageElement = $('<img />').attr('src', img);
-						currentLevel.gene.imageThumbnail = $('<img />').attr('src', imgSmall);
-
 						// Add gene graphic to evolution panel icons
 						var geneGraphic = currentLevel.gene.imageThumbnail.clone();
 						currentElement.append(geneGraphic.addClass('geneIcon').css('bottom',imageCanvas.height/-2).css('right',imageCanvas.height/-2));
 					}
+
+					evolutions[currentId] = currentLevel;
+												
+					currentLevel.element = currentElement;
+					currentLevel.children = [];
 
 					// Click event for evolution in the upgrade menu
 					icon.on('click.evolutionSelect', evolutionSelect);
