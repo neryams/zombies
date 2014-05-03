@@ -43,8 +43,18 @@ $body-font: 'Arial', sans-serif;
 }
 
 /* Datafield Type Styling */
+.dataField.has-tip {
+	border-bottom: 0;
+}
 .dataField-button {
 	@include button(rem-calc(8));
+}
+.dataField-toggle {
+	@include button(rem-calc(8));
+	
+	&.active {
+		background-color: lighten( $primary-color, 20% );
+	}
 }
 .dataField-modal .menu {
 	position: absolute;
@@ -155,15 +165,28 @@ canvas.draggable {
 
 /* Tooltips */
 
-#tooltip {
-	display: inline-block;
-	width: auto;
-}
-.tooltip {	
+.tooltip {
+	&.globe {
+		margin-left: -9px;
+		display: inline;
+		width: auto;
+		margin-top: 4px;
+	}
+
+	p {
+		font-size: rem-calc(12);
+
+		&:last-child {
+			margin-bottom: 0;
+		}
+	}
+
 	h3 {
-		color: black;
 		font-size: rem-calc(20);
 		margin-top: 0;
+	}
+	.row {
+		margin: rem-calc(8) 0;
 	}
 	.label {
 		@include grid-column(4);

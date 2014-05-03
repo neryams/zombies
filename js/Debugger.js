@@ -228,11 +228,6 @@ webix.ui({
 				{ view:'button', id:'endTickButton', disabled: true, value:'End Turn', width:100, align:'center', click: function() {
 					Simulator.endTurn();
 				}},
-				{ view:'toggle', offLabel:'Enable Mouseover Debug', onLabel:'Disable Mouseover Debug', width:180, align:'center',
-					on:{'onChange': function(newval) {
-						Console.options.mouseOverDebugData = !!newval; // 1 -> true
-					}}
-				},
 				{ id:'profileTick', view:'toggle', offLabel:'Profile Next Turn', onLabel:'Stop Profiling', width:125, align:'center',
 					on:{'onChange': function(newval) {
 						Console.options.profileTick = !!newval;

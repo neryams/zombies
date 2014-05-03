@@ -61,6 +61,13 @@ exports.options = {
 				1.0,
 				0.3
 			]);
+			UI.tooltip.setPointFunction(function(lat, lng) {
+				var value = UI.simulator.getPointProperties(lat, lng).tech;
+				if(value > 0)
+					return value + ' robot parts';
+				else
+					return false;
+			});
 		});
 		viewList.addOption('ui:buttons.dataviews_inner.trees', function() {
 			UI.switchVisual('trees', [ // hsl
@@ -72,6 +79,13 @@ exports.options = {
 				1.0,
 				0.40
 			]);
+			UI.tooltip.setPointFunction(function(lat, lng) {
+				var value = UI.simulator.getPointProperties(lat, lng).trees;
+				if(value > 0)
+					return value + ' vegetation';
+				else
+					return false;
+			});
 		});
 		// Add slider for zombie behavior: how much 
 		UI.interfaceParts.main_control.addDataField('control_collect',{
