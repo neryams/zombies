@@ -12,7 +12,11 @@ resources/
 *.tar
 *.zip
 
-# Compiled files #
+# Image files     #
+######################
+ui/
+
+# Compiled files     #
 ######################
 css/
 
