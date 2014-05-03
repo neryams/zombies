@@ -79,11 +79,10 @@ function MainInterface(UI,R) {
 		dataViewList.visualTooltip = function(visual, mathFunction) {
 			return function() {
 				R.setVisualization(visual);
-				UI.tooltip.save(false); // don't overwrite existing
 				UI.tooltip.setPointFunction(function(lat, lng) {
 					var point_prop = Simulator.getPointProperties(lat, lng);
 					return mathFunction(point_prop);
-				});
+				}, 1);
 
 				UI.interfaceParts.toggleTooltips.activate();
 			};

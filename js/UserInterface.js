@@ -16,8 +16,7 @@ Date.prototype.getMonthNameShort = function() {
 };
 
 var UserInterface = function UserInterface(Renderer) {
-	var sphere_coords,
-		interfaceParts = {},
+	var interfaceParts = {},
 		status = {
 			gridSize: 0
 		},
@@ -1104,7 +1103,7 @@ var UserInterface = function UserInterface(Renderer) {
 		var toolTipContent = toolTipElement.find('.content'),
 			status = {
 				active: false,
-				pointFunction: false,
+				pointFunction: [],
 				hidden: true
 			};
 
@@ -1112,12 +1111,14 @@ var UserInterface = function UserInterface(Renderer) {
 		$('#ui').append(toolTipElement);
 
 		var update = function() {
-				if(status.active && status.pointFunction && !UIstatus.pauseRenderer) {
+				if(status.active && status.pointFunction.length > 0 && !UIstatus.pauseRenderer) {
+					var pointFunction = status.pointFunction[status.pointFunction.length - 1];
+
 					var sphere_coords = Renderer.getSphereCoords(UIstatus.mouse.x,UIstatus.mouse.y),
 						result;
 
 					if(sphere_coords && !isNaN(sphere_coords[0]) && !isNaN(sphere_coords[1])) {
-						result = status.pointFunction(sphere_coords[0], sphere_coords[1]);
+						result = pointFunction(sphere_coords[0], sphere_coords[1]);
 						toolTipContent.html(result);
 					}
 					toolTipElement.css('left', UIstatus.mouse.x).css('top', UIstatus.mouse.y);
@@ -1130,39 +1131,33 @@ var UserInterface = function UserInterface(Renderer) {
 						status.hidden = false;
 					}
 				}
+			},
+			setPointFunction = function(process, queueLevel) {
+				if(queueLevel === undefined)
+					queueLevel = 0;
+
+				status.pointFunction[queueLevel] = process;
+				update();
 			};
 
 		return {
 			update: update,
-			save: function(overwrite) {
-				if(overwrite || !status.lastPointFunction) 
-					status.lastPointFunction = status.pointFunction;
-			},
+			setPointFunction: setPointFunction,
 			restore: function() {
-				if(status.lastPointFunction) {
-					status.pointFunction = status.lastPointFunction;
-					delete status.lastPointFunction;
-				}
+				status.pointFunction.pop();
+				while(status.pointFunction.length > 0 && status.pointFunction[status.pointFunction.length - 1] === undefined)
+					status.pointFunction.pop();
 			},
-			activate: function(content) {
+			activate: function(content, queueLevel) {
 				status.active = true;
-				if(typeof content === 'string') {
-					toolTipContent.html(content);
-					status.pointFunction = false;
+				if(typeof content === 'function') {
+					setPointFunction(content, queueLevel);
 				}
-				else if(typeof content === 'function') {
-					status.pointFunction = content;
-				}
-				update();
 			},
 			deactivate: function() {
 				toolTipContent.html('');
 				toolTipElement.hide();
 				status.active = false;
-			},
-			setPointFunction: function(process) {
-				status.pointFunction = process;
-				update();
 			}
 		};
 	};
