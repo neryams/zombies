@@ -1183,9 +1183,12 @@ var UserInterface = function UserInterface(Renderer) {
 			}
 
 			MT.update();
+			return false; // not paused
 		}
-		else
+		else {
 			Renderer.stopCameraMovement();
+			return true; // paused
+		}
 	});
 
 	// Build the containers for the UI elements

@@ -418,9 +418,9 @@ var Renderer = function (scaling,onLoad) {
         Sphere.rotation.y = -WindowConfig.rotation.x;
         Sphere.rotation.x = WindowConfig.rotation.y;
 
-        onRender();
-
-        SceneRenderer.render( Scene, Camera );
+        if(!onRender()) {
+            SceneRenderer.render( Scene, Camera );
+        }
     },
 
     animate = function() {
