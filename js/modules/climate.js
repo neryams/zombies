@@ -30,14 +30,9 @@ exports.options = {
 		this.S.addUpgrades(this,
 			{cost: 200,
 				paths:['zombie.strain','reproducer.strain'],
-				name:'Heat Affinity I',
+				name:'Heatsinks',
 				onUpgrade: warmAcc,
-				description:'Zombies become stronger in warmth.',
-				gene:{
-					size: 3,
-					shape: 'r',
-					color: 'yellow'
-				},
+				description:'Robots can move more without overheating.',
 				style: {
 					bg: 2,
 					angle: 1,
@@ -46,32 +41,41 @@ exports.options = {
 				}
 			},
 			{
-				cost: 200,
-				paths:['zombie.strain','reproducer.strain'],
-				name:'Water Affinity I',
-				onUpgrade: wetAcc,
-				description:'Zombies become stronger in wet conditions.',
-				gene:{
-					size: 3,
-					shape: 'r',
-					color: 'blue'
-				},
+				cost: 400,
+				paths:['climate_0'],
+				name:'Heatsinks',
+				onUpgrade: warmAcc,
+				description:'Robots can move more without overheating.',
 				style: {
-					bg: 1,
-					angle:1.1667
+					bg: 2
 				}
 			},
 			{
 				cost: 200,
 				paths:['zombie.strain','reproducer.strain'],
-				name:'Cold Affinity I',
+				name:'Water Resist',
+				onUpgrade: wetAcc,
+				description:'Robots break less in wet conditions.',
+				style: {
+					bg: 1,
+					angle:1.1667
+				}
+			},
+			{cost: 400,
+				paths:['climate_2'],
+				name:'Water Resist',
+				onUpgrade: wetAcc,
+				description:'Robots break less in wet conditions.',
+				style: {
+					bg: 1
+				}
+			},
+			{
+				cost: 200,
+				paths:['zombie.strain','reproducer.strain'],
+				name:'Oil Upgrade',
 				onUpgrade: coldAcc,
-				description:'Zombies become stronger in cold.',
-				gene:{
-					size: 3,
-					shape: 'r',
-					color: 'green'
-				},
+				description:'Robots slow down less in cold.',
 				style: {
 					bg: 3,
 					angle: 1.3333,
@@ -81,44 +85,10 @@ exports.options = {
 			},
 			{
 				cost: 400,
-				paths:['climate_0'],
-				name:'Heat Affinity II',
-				onUpgrade: warmAcc,
-				description:'Zombies become stronger in warmth.',
-				gene:{
-					size: 3,
-					shape: 'r',
-					color: 'yellow'
-				},
-				style: {
-					bg: 2
-				}
-			},
-			{cost: 400,
-				paths:['climate_1'],
-				name:'Water Affinity II',
-				onUpgrade: wetAcc,
-				description:'Zombies become stronger in wet conditions.',
-				gene:{
-					size: 3,
-					shape: 'r',
-					color: 'blue'
-				},
-				style: {
-					bg: 1
-				}
-			},
-			{
-				cost: 400,
-				paths:['climate_2'],
-				name:'Cold Affinity II',
+				paths:['climate_4'],
+				name:'Oil Upgrade',
 				onUpgrade: coldAcc,
-				description:'Zombies become stronger in cold.',
-				gene:{
-					size: 3,
-					shape: 'r',
-					color: 'green'
-				},
+				description:'Robots slow down less in cold.',
 				style: {
 					bg: 3
 				}

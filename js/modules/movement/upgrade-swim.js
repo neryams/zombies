@@ -8,12 +8,13 @@ exports.options = {
 		};
 		this.S.addUpgrades(this,
 			{cost: 200,
-				paths:['reproducer.strain'],
+				paths:['climate_3'],
 				name:'Waterproofing',
 				onUpgrade: swimEnable,
 				description:'Robots can traverse water slowly',
 				style: {
-					angle: 0.5
+					angle: 0.5,
+					distance: 40
 				}
 			}
 		);

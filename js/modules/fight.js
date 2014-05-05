@@ -33,5 +33,5 @@ exports.run = function(current, passData, multiplier) {
 };
 exports.options = {
 	runtime: 20,
-	children: ['upgrade-strength']
+	children: ['upgrades.strength']
 };
