@@ -12,7 +12,7 @@ exports.run = function(current,passData) {
 	this.S.modules['reproducer.reproduce'].val('ratio_money',Math.min(Math.max(this.S.status.control_moneyRatio - 1, 0), 10)/10);
 };
 exports.options = {
-	init: function() {
+	init: function(dataPoints) {
 		this.S.modules['factory'].val('productionSpeed',1);
 
 		// Create the starting seed for the upgrade tree. Strains should only have one upgrade. Add other free upgrades via other modules.
@@ -32,18 +32,18 @@ exports.options = {
 
 		this.S.config.maximums.tech = 0;
 		this.S.config.maximums.trees = 0;
-		for(var i = 0, n = this.S.points.length; i < n; i++) {
-			if(this.S.points[i].water) {
-				this.S.points[i].tech = 0;
-				this.S.points[i].trees = 0;
+		for(var i = 0, n = dataPoints.length; i < n; i++) {
+			if(dataPoints[i].water) {
+				dataPoints[i].tech = 0;
+				dataPoints[i].trees = 0;
 			} else {
-				this.S.points[i].tech = Math.pow(Math.log(this.S.points[i].total_pop+1),4);
-				this.S.points[i].trees = Math.log(this.S.config.maximums.total_pop/(this.S.points[i].total_pop+10) + 1)*this.S.points[i].precipitation*this.S.points[i].temperature;
+				dataPoints[i].tech = Math.pow(Math.log(dataPoints[i].total_pop+1),4);
+				dataPoints[i].trees = Math.log(this.S.config.maximums.total_pop/(dataPoints[i].total_pop+10) + 1)*dataPoints[i].precipitation*dataPoints[i].temperature;
 			
-				if(this.S.config.maximums.tech < this.S.points[i].tech)
-					this.S.config.maximums.tech = this.S.points[i].tech;
-				if(this.S.config.maximums.trees < this.S.points[i].trees)
-					this.S.config.maximums.trees = this.S.points[i].trees;
+				if(this.S.config.maximums.tech < dataPoints[i].tech)
+					this.S.config.maximums.tech = dataPoints[i].tech;
+				if(this.S.config.maximums.trees < dataPoints[i].trees)
+					this.S.config.maximums.trees = dataPoints[i].trees;
 			}
 		}
 	},
@@ -95,20 +95,20 @@ exports.options = {
 			dataOptions: 'start: 0; end: 12; initial: 2; step: 0.1;'
 		});		
 	},
-	startSimulation: function() {
+	startSimulation: function(dataPoints) {
 		// Code to start the simulation
 		var startRandomizer = 1000 + Math.round(Math.random()*4000);
 		var startPoint = null;
 
 		// Loop through all the points and pick the starting point, the point with population closest to a random number
 		// don't want to start in an area with no people, but not in a huge city either.
-		for(var i = 0, n = this.S.points.length; i < n; i++) {
-			if(this.S.points[i].total_pop) {
+		for(var i = 0, n = dataPoints.length; i < n; i++) {
+			if(dataPoints[i].total_pop) {
 				if(!startPoint) {
-					startPoint = this.S.points[i];
+					startPoint = dataPoints[i];
 				} else {
-					if(Math.abs(startPoint.total_pop - startRandomizer) > Math.abs(this.S.points[i].total_pop - startRandomizer))
-						startPoint = this.S.points[i];
+					if(Math.abs(startPoint.total_pop - startRandomizer) > Math.abs(dataPoints[i].total_pop - startRandomizer))
+						startPoint = dataPoints[i];
 				}
 			}
 		}

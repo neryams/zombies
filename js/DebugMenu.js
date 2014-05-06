@@ -118,7 +118,7 @@ var debugMenu = {
 			this.window.ui.updateInfo();
 
 			this.window.ui.updateGlobalInfo({
-				iteration: this.S.iteration,
+				iteration: this.S.status.iteration,
 				hordeCount: this.S.hordes.length
 			});
 		},

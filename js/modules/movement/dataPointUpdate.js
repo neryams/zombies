@@ -5,7 +5,7 @@ exports.type = 'spread';
 exports.run = function(location) {
 	if(this.S.modules['movement.base'].val('canDetect')) {
 		var detectStrength = this.S.modules['movement.base'].val('detectStrength');
-		var direction = this.S.iteration % 4;
+		var direction = this.S.status.iteration % 4;
 
 		if(location.hordes.length > 0) {
 			var dirA = this.detectDirection(location, direction, detectStrength),
@@ -81,7 +81,7 @@ exports.options = {
 			var totals = location[this.smellItem];
 			location.nearby_prop[0] = totals;
 
-			if(location.nearby_prop.length <= 1 || (this.S.iteration - location.nearby_prop.lastCalculated > 10 && location.nearby_prop[location.nearby_prop.length-1] > 0)) {
+			if(location.nearby_prop.length <= 1 || (this.S.status.iteration - location.nearby_prop.lastCalculated > 10 && location.nearby_prop[location.nearby_prop.length-1] > 0)) {
 				var reduce,steps,target = location;
 
 				for (var j = 1; j <= 15; j++) {
@@ -115,7 +115,7 @@ exports.options = {
 
 					location.nearby_prop[j] = totals;
 				}
-				location.nearby_prop.lastCalculated = this.S.iteration;
+				location.nearby_prop.lastCalculated = this.S.status.iteration;
 			}
 		};
 	},

@@ -228,11 +228,11 @@ function Simulator(UI, loadModules, generatorConfig, generatorData) {
 	// Initialize Simulation
 
 	var hordes = [];
-	this.hordes._sizeSort = function (a, b) {
+	hordes._sizeSort = function (a, b) {
 		return b.size - a.size;
 	};
 	hordes._toAdd = [];
-	this.hordes.total = function() {
+	hordes.total = function() {
 		var result = [],
 			total = 0;
 		for(var i = 0; i < this.length; i++) {
@@ -245,11 +245,11 @@ function Simulator(UI, loadModules, generatorConfig, generatorData) {
 		}
 		return total;
 	};
-	hordes._push = this.hordes.push;
-	this.hordes.push = function(horde) {
+	hordes._push = hordes.push;
+	hordes.push = function(horde) {
 		this._toAdd.push(horde);
 	};
-	this.hordes.addAllNew = function() {
+	hordes.addAllNew = function() {
 		this.sort(this._sizeSort);
 		var n;
 		if(this._toAdd.length) {
@@ -300,7 +300,11 @@ function Simulator(UI, loadModules, generatorConfig, generatorData) {
 			gridSize: 5,
 			date: new Date(),
 			displayData: '',
-			pointsToWatch: []
+			pointsToWatch: [],
+			iteration: 0,
+			get hordeCount() {
+				return hordes.length;
+			}
 		},
 
 		strain,
@@ -312,22 +316,16 @@ function Simulator(UI, loadModules, generatorConfig, generatorData) {
 			spread:[],
 			event:[]
 		},
-		iteration = 0,
 		upgrades = {},
 		bakedValues = {
 			latDistances: [],
 			latCumChance: []
 		},
 		points =  generatorData.points,
-		populatedPoints = [],
 		countries = generatorData.countries,
 		config = generatorConfig;
 
 	status.date.setTime(1577880000000); // Jan 1st, 2030
-
-	for(var i = 0, n = generatorData.points.length; i < n; i++)
-		if(generatorData.points[i].total_pop > 0)
-			populatedPoints.push(generatorData.points[i]);
 
 	// Pre-generate some values for the simulation so they only have to be calculated once
 	var getGridDistance = function (lat,latdelta,lngdelta) {
@@ -341,17 +339,17 @@ function Simulator(UI, loadModules, generatorConfig, generatorData) {
 		return 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)) * 6378; // rough estimate of the radius of the earth in km (6378.1)
 	};
 
-	for (i = 0; i < 90; i++) {
+	for (var i = 0; i < 90; i++) {
 		// directly adjacent points clockwise from top, then diagonal points clockwise from top right.
 		bakedValues.latDistances.push([
-			getGridDistance(i+0.5,-1, 0),
-			getGridDistance(i+0.5, 0, 1),
-			getGridDistance(i+0.5, 1, 0),
-			getGridDistance(i+0.5, 0,-1),
-			getGridDistance(i+0.5,-1, 1),
-			getGridDistance(i+0.5, 1, 1),
-			getGridDistance(i+0.5, 1,-1),
-			getGridDistance(i+0.5,-1,-1)
+			getGridDistance(i + 0.5,-1, 0),
+			getGridDistance(i + 0.5, 0, 1),
+			getGridDistance(i + 0.5, 1, 0),
+			getGridDistance(i + 0.5, 0,-1),
+			getGridDistance(i + 0.5,-1, 1),
+			getGridDistance(i + 0.5, 1, 1),
+			getGridDistance(i + 0.5, 1,-1),
+			getGridDistance(i + 0.5,-1,-1)
 		]);
 		var total_dists = 0;
 		for(var j = 0; j < 8; j++) {
@@ -411,7 +409,7 @@ function Simulator(UI, loadModules, generatorConfig, generatorData) {
 						addModule(newModule.dependencies[i],moduleArray);
 
 					if(newModule.init)
-						newModule.init();
+						newModule.init(points);
 
 					if(newModule.ui) 
 						newModule.ui.call(newModule, UI);
@@ -669,7 +667,7 @@ function Simulator(UI, loadModules, generatorConfig, generatorData) {
 				if(i > 0 && i % options.simplifyAt < simplifyCof) {
 					i = simplifyCof * options.simplifyAt;
 					simplifyCof++;
-					i += iteration % simplifyCof;
+					i += status.iteration % simplifyCof;
 					if(i >= n)
 						break;
 				}
@@ -758,7 +756,7 @@ function Simulator(UI, loadModules, generatorConfig, generatorData) {
 				if(i > 0 && i % options.simplifyAt < simplifyCof) {
 					i = simplifyCof * options.simplifyAt;
 					simplifyCof++;
-					i += iteration % simplifyCof;
+					i += status.iteration % simplifyCof;
 					if(i >= n)
 						break;
 				}
@@ -782,7 +780,7 @@ function Simulator(UI, loadModules, generatorConfig, generatorData) {
 		},
 
 		tick = function() {
-			status.date.setTime(1577880000000 + 86400000*iteration);
+			status.date.setTime(1577880000000 + 86400000*status.iteration);
 
 			var i,
 				options = {
@@ -799,23 +797,23 @@ function Simulator(UI, loadModules, generatorConfig, generatorData) {
 					debugMenu.console.initTick();
 					
 					if(debugMenu.console.options.profileTick)
-						console.profile('Tick ' + iteration);
+						console.profile('Tick ' + status.iteration);
 					console.time('tickTime');
 				}
 
 				tick_begin(options);
 
 				if(strain.onTick)
-					strain.onTick(iteration);
+					strain.onTick(status.iteration);
 				for(i = 0; i < activeModules.infect.length; i++)
 					if(activeModules.infect[i].onTick)
-						activeModules.infect[i].onTick(iteration);
+						activeModules.infect[i].onTick(status.iteration);
 				for(i = 0; i < activeModules.spread.length; i++)
 					if(activeModules.spread[i].onTick)
-						activeModules.spread[i].onTick(iteration);
+						activeModules.spread[i].onTick(status.iteration);
 				for(i = 0; i < activeModules.event.length; i++)
 					if(activeModules.event[i].onTick)
-						activeModules.event[i].onTick(iteration);
+						activeModules.event[i].onTick(status.iteration);
 
 				tick_hordes(strain.process, strain.id, options);
 
@@ -868,8 +866,8 @@ function Simulator(UI, loadModules, generatorConfig, generatorData) {
 					UI.updateVisual(changedPoints);
 				}
 				status.pointsToWatch.length = 0;
-
 				UI.updateUI(status);
+
 				hordes.addAllNew();
 
 				if(status.paused || (debugMenu.active && debugMenu.console.options.manualTicks)) {
@@ -884,12 +882,8 @@ function Simulator(UI, loadModules, generatorConfig, generatorData) {
 				if(debugMenu.active)
 					debugMenu.console.newTick();
 
-				iteration++;
+				status.iteration++;
 			}
-		},
-
-		rendererDecal = function(id, lat, lng, size, texture) {
-			UI.rendererDecal(id, lat, lng, size, texture);
 		},
 
 		getPointProperties = function(lat, lng) {
@@ -897,6 +891,27 @@ function Simulator(UI, loadModules, generatorConfig, generatorData) {
 		};
 
 	var public = {
+		// modules only
+		hordes: hordes,
+		addUpgrades: addUpgrades,
+		modules: modules,
+		status: status,
+		bakedValues: bakedValues,
+		countries: countries,
+		UI: {
+			rendererDecal: function(id, lat, lng, size, texture) {
+				UI.rendererDecal(id, lat, lng, size, texture);
+			}
+		},
+
+		// true public functions, will need worker messages
+		config: config,
+		pause: pause,
+		unPause: unPause,
+		purchaseMutation: purchaseMutation,
+		availableUpgrades: availableUpgrades,
+		purchaseUpgrades: purchaseUpgrades,
+		getPointProperties: getPointProperties,
 		start: function(strainId) {
 			// Add all the modules specified in the contruction of the Simulator
 
@@ -909,7 +924,7 @@ function Simulator(UI, loadModules, generatorConfig, generatorData) {
 
 			Math.seedrandom(); // Before we start the simulation, generate a new random seed so the game itself is unpredictable with respect to the land generation.
 
-			var startSq = strain.startSimulation();
+			var startSq = strain.startSimulation(points);
 
 			// Sort out the children for the upgrades, convert string pointers to related upgrades to actual pointers.
 			for (var key in upgrades) {
@@ -937,7 +952,11 @@ function Simulator(UI, loadModules, generatorConfig, generatorData) {
 			UI.rendererLookAt(startSq);
 
 			if(debugMenu.active) {
-				debugMenu.setSimulator(public).newTick();
+				debugMenu.setSimulator($.extend({
+					points: points,
+					hordes: hordes,
+					tick: tick
+				}, public)).newTick();
 			}
 
 			status.displayData = 'total_pop';

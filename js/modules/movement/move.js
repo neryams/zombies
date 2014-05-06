@@ -61,7 +61,7 @@ exports.run = function(current,passData,multiplier) {
 			current.move(target);
 		} else {
 			// zombie horde did not move, possibly combine with a horde in the same square
-			if(current.location.hordes.length > 1 && passData.rand > 1 - (this.S.hordes.length / 40000)) {
+			if(current.location.hordes.length > 1 && passData.rand > 1 - (this.S.status.hordeCount / 40000)) {
 				var newRand = Math.pow(((passData.rand * 100) % 10) / 10, 3),
 					combineWith = Math.floor(current.location.hordes.length*newRand);
 				if(current.location.hordes[combineWith].id != current.id) {
