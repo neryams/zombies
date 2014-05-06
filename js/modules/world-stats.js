@@ -10,13 +10,14 @@ exports.run = function() {
 };
 exports.options = {
 	runtime: 100, // Always run this last to get accurate data
-	init: function() {
+	init: function(dataPoints) {
 		this.world_infected = 0;
 		this.world_pop = 0;
 
 		// Set the initial world population
-		for(var i = 0, n = this.S.populatedPoints.length; i < n; i++) {
-			this.world_pop += this.S.populatedPoints[i].total_pop;
+		for(var i = 0, n = dataPoints.length; i < n; i++) {
+			if(dataPoints[i].total_pop)
+				this.world_pop += dataPoints[i].total_pop;
 		}
 	},
 	ui: function(UI) {

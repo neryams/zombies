@@ -9,7 +9,6 @@
 var Renderer = function (scaling,onLoad) {
     // Initialize variables
     var Camera, Scene, Sphere, SceneRenderer, DataBarsMesh, DataBarsGeometry, DataBarMesh,
-        Simulator,
         hordeSystem = {
             length: 0,
             maxSize: 0,
@@ -129,13 +128,12 @@ var Renderer = function (scaling,onLoad) {
         addHordeParticles();
     },
 
-    simulatorStart = function(texture, generatorOptions, simulatorLink) {
+    simulatorStart = function(texture, generatorOptions, generatorDataAll) {
         generatorConfig = generatorOptions;
-        Simulator = simulatorLink;
+        var generatorData = generatorDataAll.points;
 
         // Function for filling the canvases with the data generated previously
         var buildImage = function(globeTexture, globeHeightmap, texture) {
-
             var current, dtI, gradX, gradY, gradI, color, currentTemp, currentWet,
                 ctxT = globeTexture.getContext('2d'),
                 ctxH = globeHeightmap.getContext('2d'),
@@ -170,10 +168,10 @@ var Renderer = function (scaling,onLoad) {
                 var positionV = ( (Math.floor(i / generatorConfig.tx_w) + 0.5) % data_ratio ) / data_ratio;
                 var positionH = ( (i % generatorConfig.tx_w + 0.5) % data_ratio ) / data_ratio;
 
-                currentTemp = blendProperties(Simulator.points[dtI].temperature, Simulator.points[dtI].adjacent[0].temperature, Simulator.points[dtI].adjacent[2].temperature, positionV);
-                currentWet = blendProperties(Simulator.points[dtI].precipitation, Simulator.points[dtI].adjacent[0].precipitation, Simulator.points[dtI].adjacent[2].precipitation, positionV);
-                currentTemp = (currentTemp + blendProperties(Simulator.points[dtI].temperature, Simulator.points[dtI].adjacent[3].temperature, Simulator.points[dtI].adjacent[1].temperature, positionH)) / 2;
-                currentWet = (currentWet + blendProperties(Simulator.points[dtI].precipitation, Simulator.points[dtI].adjacent[3].precipitation, Simulator.points[dtI].adjacent[1].precipitation, positionH)) / 2;
+                currentTemp = blendProperties(generatorData[dtI].temperature, generatorData[dtI].adjacent[0].temperature, generatorData[dtI].adjacent[2].temperature, positionV);
+                currentWet = blendProperties(generatorData[dtI].precipitation, generatorData[dtI].adjacent[0].precipitation, generatorData[dtI].adjacent[2].precipitation, positionV);
+                currentTemp = (currentTemp + blendProperties(generatorData[dtI].temperature, generatorData[dtI].adjacent[3].temperature, generatorData[dtI].adjacent[1].temperature, positionH)) / 2;
+                currentWet = (currentWet + blendProperties(generatorData[dtI].precipitation, generatorData[dtI].adjacent[3].precipitation, generatorData[dtI].adjacent[1].precipitation, positionH)) / 2;
 
                 // Get the x/y coordinates in the climate coloring textureW
                 gradY = Math.round((1 - (312.5 - currentTemp) / 60) * (maxColorHeight - 1));
@@ -204,6 +202,30 @@ var Renderer = function (scaling,onLoad) {
             }
             ctxT.putImageData(imgdT, 0, 0);
             ctxH.putImageData(imgdH, 0, 0);
+        };
+        var addData = function() {
+            var i;
+            console.time('rendererSetup');
+
+            for (i = 0; i < generatorData.length; i++) {
+                if(!generatorData[i].water && !generatorData[i].polar) {
+                    addPoint(generatorData[i].lat, generatorData[i].lng, generatorData[i]);
+                }
+            }
+
+            console.timeEnd('rendererSetup');
+
+            DataBarsMesh = new THREE.Mesh(DataBarsGeometry, new THREE.MeshLambertMaterial({
+                color: 0xffffff,
+                ambient: 0xffffff,
+                vertexColors: THREE.FaceColors,
+                morphTargets: false
+            }));
+            DataBarsMesh.scale.set(0, 0, 0);
+            DataBarsMesh.visible = false;
+            DataBarsMesh.castShadow = false;
+            DataBarsMesh.receiveShadow = true;
+            Sphere.add( DataBarsMesh );
         };
 
         /* Create Textures for Globe ----------- */
@@ -262,31 +284,6 @@ var Renderer = function (scaling,onLoad) {
         ready = true;
     },
 
-    addData = function() {
-        var i;
-        console.time('rendererSetup');
-
-        for (i = 0; i < Simulator.points.length; i++) {
-            if(!Simulator.points[i].water && !Simulator.points[i].polar) {
-                addPoint(Simulator.points[i].lat, Simulator.points[i].lng, Simulator.points[i]);
-            }
-        }
-
-        console.timeEnd('rendererSetup');
-
-        DataBarsMesh = new THREE.Mesh(DataBarsGeometry, new THREE.MeshLambertMaterial({
-            color: 0xffffff,
-            ambient: 0xffffff,
-            vertexColors: THREE.FaceColors,
-            morphTargets: false
-        }));
-        DataBarsMesh.scale.set(0, 0, 0);
-        DataBarsMesh.visible = false;
-        DataBarsMesh.castShadow = false;
-        DataBarsMesh.receiveShadow = true;
-        Sphere.add( DataBarsMesh );
-    },
-
     addPoint = function( lat, lng, datapoint ) {
         var phi = (90 - lat) * Math.PI / 180,
             theta = (180 - lng) * Math.PI / 180;
@@ -306,7 +303,8 @@ var Renderer = function (scaling,onLoad) {
         // Last 8 points in merged geometry should be the vertices of the moving bar
         dataPoints[datapoint.id] = {
             faces: DataBarsGeometry.faces.slice(-DataBarMesh.geometry.faces.length),
-            vertices: DataBarsGeometry.vertices.slice(-DataBarMesh.geometry.vertices.length)
+            vertices: DataBarsGeometry.vertices.slice(-DataBarMesh.geometry.vertices.length),
+            border_distance: datapoint.border_distance
         };
     },
 
@@ -453,7 +451,7 @@ var Renderer = function (scaling,onLoad) {
         return false;
     },
 
-    getVisualization = function(layer) {
+    getVisualization = function(layer, valuesArray) {
         if(visualization.textureStore[layer] !== undefined)
             return visualization.textureStore[layer];
 
@@ -558,17 +556,16 @@ var Renderer = function (scaling,onLoad) {
         }
         //dtI = Math.floor(i/generatorConfig.tx_w/data_ratio)*generatorConfig.w + Math.floor(i%generatorConfig.tx_w / data_ratio);
         for(i = 0, n = pix.length/4; i < n; i++) {
-            var currentSq = Simulator.points[i];
             pix[i*4] = pix[i*4+1] = pix[i*4+2] = 0;
             pix[i*4+3] = 255;
-            if(!currentSq.water && currentSq[layer] !== undefined) {
+            if(valuesArray[i] !== undefined && valuesArray[i] > 0) {
                 if(discrete) {
-                    var opacity = 1-(currentSq.border_distance-1)/3;
+                    var opacity = 1 - (dataPoints[i].border_distance - 1) / 3;
                     if(opacity < 0) opacity = 0;
-                    setColor(i,currentSq[layer],opacity);
+                    setColor(i, valuesArray[i], opacity);
                 }
                 else
-                    setColor(i,currentSq[layer],1);
+                    setColor(i, valuesArray[i], 1);
             }
         }
         ctx.putImageData(imgd, 0, 0);
@@ -719,9 +716,6 @@ var Renderer = function (scaling,onLoad) {
                 for(var i = 0; i < dataPoints.length; i++) {
                     setData(i);
                 }
-        },
-        coordsToPoint: function(lat,lng) {
-            return Simulator.points[(Math.floor(90-lat)*generatorConfig.w + Math.floor(lng))];
         },
         onRender: function(doOnRender) {
             onRender = doOnRender;

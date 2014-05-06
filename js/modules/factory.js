@@ -1,7 +1,7 @@
 exports.type = 'event';
 exports.run = function() {
 	if(this.productionSpeed > 0)
-		if(this.productionSpeed > this.baseInterval || this.S.iteration % (this.baseInterval / this.productionSpeed) === 0) {
+		if(this.productionSpeed > this.baseInterval || this.S.status.iteration % (this.baseInterval / this.productionSpeed) === 0) {
 			var robotsCreated = Math.ceil(this.productionSpeed / this.baseInterval);
 
 			for(var i = 0; i < this.locations.length; i++)

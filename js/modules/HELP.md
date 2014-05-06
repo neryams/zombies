@@ -78,8 +78,8 @@ Runs once a turn
 ## options
 
 	exports.options = {
-		[startSimulation : function(),]
-		init            : function(),
+		[startSimulation : function(dataPoints),]
+		init            : function(dataPoints),
 		ui              : function(UIObject),
 		onStart         : function(startSquare),
 		onTick          : function(iteration),
@@ -92,14 +92,16 @@ Runs once a turn
 		children        : array
 	};
 
-### startSimulation `DataPoint function()`
-Runs once when the user picks this strain.
+### startSimulation `DataPoint function(dataPoints)`
+Runs once when the user picks this strain.  
+`dataPoints` Array of all the points on the globe
 
 * **required for strain modules, unused for all others**
 * must return a DataPoint object which is sent to other modules with onStart functions as the starting square 
 
-### init `null function()`
-Runs once during loading before simulation starts. Use it to initialize module variables, objects, etc.
+### init `null function(dataPoints)`
+Runs once during loading before simulation starts. Use it to initialize module variables, objects, etc.  
+`dataPoints` Array of all the points on the globe
 
 ## Datapoint Properties
 * `infected`

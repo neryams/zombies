@@ -1,4 +1,5 @@
 /* globals webix */
+/* globals $$ */
 var Simulator = null,
 	Console = null,
 	Renderer = null;
