@@ -131,6 +131,7 @@ $(function () {
             generatorWorker,
             generatorConfig,
             generatorTexture,
+            loadModules,
             UI,MI,R,
             userConfig = {
                 seed: $('#s_seed').val(),
@@ -138,20 +139,6 @@ $(function () {
                 language: $('#s_lng').val(),
                 resolution: $('#s_rs').val(),
                 saveGenerator: !!$('#s_save:checked').val()
-            },
-            onLoadModules = function () {
-                // Open debug menu by default in node.
-                if(node)
-                    debugMenu.openConsole();
-
-                R = Renderer(userConfig.resolution, function() {
-                    UI = UserInterface(R);
-
-                    MI = MainInterface(UI,R);
-                    MI.load.start();
-                    generatorWorker.postMessage(userConfig);
-                    R.init();
-                });
             },
             checkLoadingState = function(completeSteps) {
                 if(completeSteps == 3) {
@@ -209,7 +196,7 @@ $(function () {
                 }
                 console.timeEnd('webWorkerTransferTimer');
                 MI.load.endGenerator();
-                S = new Simulator(R,UI,generatorConfig,data);
+                S = Simulator(UI, loadModules, generatorConfig, data);
                 S.setName(name);
                 UI.simulator.link(S);
                 loadingState++;
@@ -222,12 +209,30 @@ $(function () {
         });
 
         var startLoad = function () {
+            var onLoadModules = function () {
+                // Open debug menu by default in node.
+                if(node)
+                    debugMenu.openConsole();
+
+                R = Renderer(userConfig.resolution, function() {
+                    UI = UserInterface(R);
+
+                    MI = MainInterface(UI,R);
+
+                    // Start load
+                    MI.load.start();
+                    generatorWorker.postMessage(userConfig);
+                    
+                    R.init();
+                });
+            };
+
             // Load the chosen modules first, then initiate the game 
             // If this is not running in node, load modules form server
             if(!node) {
                 $.getScript('js/loadModules.php?modules='+$('#s_modules').val(), onLoadModules);
             } else {
-                Simulator.prototype.loadModules = $('#s_modules').val().split(',');
+                loadModules = $('#s_modules').val().split(',');
                 onLoadModules();
             }
         };

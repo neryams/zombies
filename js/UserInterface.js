@@ -1240,6 +1240,11 @@ var UserInterface = function UserInterface(Renderer) {
 		evolutions: E,
 		tooltip: MT,
 		simulator: S,
+		Renderer: {
+			lookAt: function(startSq) {
+				Renderer.lookAt(startSq);
+			}
+		},
 		addDataField: function(id, options) {
 			return mainSection.addDataField.call(mainSection, id, options);
 		},
@@ -1257,6 +1262,15 @@ var UserInterface = function UserInterface(Renderer) {
 			status.updateAllPoints = true;
 			changedStatus.displayData = true;
 			changedStatus.updateAllPoints = true;
+		},
+		rendererLookAt: function(startSq) {
+			Renderer.lookAt(startSq);
+		},
+		rendererDecal: function(id, lat, lng, size, texture) {
+			Renderer.decal(id, lat, lng, size, texture);
+		},
+		updateHorde: function(horde, remove) {
+			Renderer.updateHorde(horde, remove);
 		},
 		updateUI: function(data) {
 			var key;
