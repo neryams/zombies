@@ -38,7 +38,7 @@ if(is_dir('modules') && !empty($_GET['modules'])) {
 
 	insert_modules('modules', '');
 
-	echo "Simulator.prototype.loadModules=function(){";
+	echo "loadModules=function(){";
 
 	for($i = 0; $i < count($load_modules); $i++) {
 		echo "this.addModule('{$load_modules[$i]}',SimulatorModules);";
