@@ -1,4 +1,5 @@
 /* exported Simulator */
+/* globals gridPoint */
 function Simulator(UI, loadModules, generatorConfig, generatorData) {
 	function Upgrade(options) {
 		if(options)
@@ -153,30 +154,6 @@ function Simulator(UI, loadModules, generatorConfig, generatorData) {
 	Upgrade.prototype.activate = function() {
 		if(!this.module.isActive())
 			this.module.S.addActive(this.module.id);
-	};
-
-	function gridPoint(clone) {
-	    if(clone) {
-	        this.x = clone.x;
-	        this.y = clone.y;
-	    }
-	    return this;
-	}
-	gridPoint.prototype = {
-	    x: null,
-	    y: null,
-	    directions: [{y:-1,x:0},{y:0,x:-1},{y:1,x:0},{y:0,x:1}]
-	};
-	gridPoint.prototype.setCoords = function(x,y) {
-	    this.x = x;
-	    this.y = y;
-	};
-	gridPoint.prototype.addCoords = function(x,y) {
-	    this.x += x;
-	    this.y += y;
-	};
-	gridPoint.prototype.equals = function(gridpoint) {
-	    return this.x == gridpoint.x && this.y == gridpoint.y;
 	};
 
 	function Horde(size, location, inherit) {
@@ -590,13 +567,13 @@ function Simulator(UI, loadModules, generatorConfig, generatorData) {
 			return available;
 		},
 
-		purchaseUpgrades = function(upgrades) {
+		purchaseUpgrades = function(selectedUpgrades) {
 			var upgrade;
-			if(!availableUpgrades(upgrades))
+			if(!availableUpgrades(selectedUpgrades))
 				return false;
 			else
-				while(upgrades.length) {
-					upgrade = upgrades[upgrades.pop()];
+				while(selectedUpgrades.length) {
+					upgrade = upgrades[selectedUpgrades.pop()];
 					status.money -= upgrade.cost;
 					upgrade.purchase();
 				}
