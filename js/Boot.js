@@ -118,6 +118,7 @@ $(function () {
     $.getScript('js/third-party/hqx.min.js');
     $.getScript('js/DebugMenu.js');
     $.getScript('js/DataPoint.js');
+    $.getScript('js/gridPoint.js');
     $.getScript('js/Renderer.js');
     $.getScript('js/UserInterface.js');
     $.getScript('js/Simulator.js');
