@@ -1228,6 +1228,9 @@ var UserInterface = function UserInterface(Renderer) {
 			},
 			getPointProperties: function(lat, lng) {
 				return S.getPointProperties(lat, lng);
+			},
+			getAllPointProperty: function(property) {
+				return S.getAllPointProperty(property);
 			}
 		};
 	};

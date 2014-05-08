@@ -959,6 +959,16 @@ function Simulator(UI, loadModules, generatorConfig, generatorData) {
 		},
 		getStrainOptions: function() {
 			return strainOptions;
+		},
+		getAllPointProperty: function(property) {
+			var result = [];
+			for(var i = 0, n = points.length; i < n; i++) {
+				if(points[i][property] === undefined)
+					result[i] = 0;
+				else
+					result[i] = points[i][property];
+			}
+			return result;
 		}
 	};
 

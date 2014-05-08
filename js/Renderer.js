@@ -554,12 +554,12 @@ var Renderer = function (scaling,onLoad) {
                 };
                 console.warn('layer ' + layer + ' not found in visualizer');
         }
-        //dtI = Math.floor(i/generatorConfig.tx_w/data_ratio)*generatorConfig.w + Math.floor(i%generatorConfig.tx_w / data_ratio);
+
         for(i = 0, n = pix.length/4; i < n; i++) {
             pix[i*4] = pix[i*4+1] = pix[i*4+2] = 0;
             pix[i*4+3] = 255;
-            if(valuesArray[i] !== undefined && valuesArray[i] > 0) {
-                if(discrete) {
+            if(valuesArray[i] !== undefined && !!valuesArray[i]) {
+                if(discrete && dataPoints[i]) {
                     var opacity = 1 - (dataPoints[i].border_distance - 1) / 3;
                     if(opacity < 0) opacity = 0;
                     setColor(i, valuesArray[i], opacity);
@@ -792,9 +792,9 @@ var Renderer = function (scaling,onLoad) {
             tween.easing(TWEEN.Easing.Cubic.Out);
             tween.start();
         },
-        setVisualization: function( layer ) {
+        setVisualization: function( layer, data ) {
             if(ready) {
-                visualization.texture.image = getVisualization(layer);
+                visualization.texture.image = getVisualization(layer, data);
                 visualization.texture.needsUpdate = true;
                 visualization.mesh.material.map = visualization.texture;
                 visualization.mesh.visible = true;
