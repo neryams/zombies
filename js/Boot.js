@@ -212,9 +212,6 @@ $(function () {
         var startLoad = function () {
             var onLoadModules = function () {
                 // Open debug menu by default in node.
-                if(node)
-                    debugMenu.openConsole();
-
                 R = Renderer(userConfig.resolution, function() {
                     UI = UserInterface(R);
 
@@ -226,6 +223,10 @@ $(function () {
 
                     R.init();
                 });
+
+                if(node) 
+                    debugMenu.openConsole();
+                debugMenu.setRenderer(R);
             };
 
             // Load the chosen modules first, then initiate the game 

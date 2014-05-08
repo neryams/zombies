@@ -39,9 +39,11 @@ var debugMenu = {
 			});
 		}
     },
+	setRenderer: function(Renderer) {
+		this.renderer.R = Renderer;
+	},
 	setSimulator: function(Simulator) {
 		this.console.S = this.simulator.S = Simulator;
-		this.renderer.R = Simulator.R;
 		return this.console;
 	},
     renderer: {
