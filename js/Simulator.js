@@ -875,7 +875,7 @@ function Simulator(UI, loadModules, generatorConfig, generatorData) {
 		status: status,
 		bakedValues: bakedValues,
 		countries: countries,
-		UI: {
+		UILink: {
 			rendererDecal: function(id, lat, lng, size, texture) {
 				UI.rendererDecal(id, lat, lng, size, texture);
 			}

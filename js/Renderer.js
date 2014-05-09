@@ -64,20 +64,22 @@ var Renderer = function (scaling,onLoad) {
     climateBg.src = 'ui/climateGradient.jpg';
 
     // Load decal textures here
-    visualization.decalTextures.gun = new THREE.ImageUtils.loadTexture('ui/gun.png');
+    visualization.decalTextures.gun = new THREE.ImageUtils.loadTexture('ui/decals/gun.png');
+    visualization.decalTextures.seaport = new THREE.ImageUtils.loadTexture('ui/decals/port.png');
+    
+    /* Create 3D Globe --------------------- */
+    Camera = new THREE.PerspectiveCamera( 60, WindowConfig.windowX / WindowConfig.windowY, 1, 10000 );
+    Camera.position.z = 450;
+
+    Scene = new THREE.Scene();
+
+    var group = new THREE.Object3D();
+    Sphere = new THREE.Object3D();
+
+    group.add( Sphere );
+    Scene.add( group );
 
     var init = function() {
-        /* Create 3D Globe --------------------- */
-        Camera = new THREE.PerspectiveCamera( 60, WindowConfig.windowX / WindowConfig.windowY, 1, 10000 );
-        Camera.position.z = 450;
-
-        Scene = new THREE.Scene();
-
-        var group = new THREE.Object3D();
-        Sphere = new THREE.Object3D();
-
-        group.add( Sphere );
-        Scene.add( group );
 
         // lights
 
