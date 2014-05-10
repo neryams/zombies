@@ -743,16 +743,25 @@ var Renderer = function (scaling,onLoad) {
             } else
                 return false;
         },
-        decal: function(id, lat, lng, size, texture) {
+        decal: function(id, options) {
+            var defaults = {
+                lat: 0,
+                lng: 0,
+                size: 5,
+                texture: 'gun',
+                opacity: 1
+            };
+            options = $.extend({}, defaults, options);
+
             if(visualization.decals[id] === undefined) {
                 var geometry = new THREE.PlaneGeometry(1, 1, 1, 1);
-                var material = new THREE.MeshBasicMaterial({map: visualization.decalTextures[texture], side: THREE.DoubleSide, transparent: true, opacity: 1});
+                var material = new THREE.MeshBasicMaterial({map: visualization.decalTextures[options.texture], side: THREE.DoubleSide, transparent: true, opacity: options.opacity});
                 visualization.decals[id] = new THREE.Mesh(geometry, material);
 
-                visualization.decals[id].material.textureId = texture;
-                visualization.decals[id].scale.x = size;
-                visualization.decals[id].scale.y = size;
-                visualization.decals[id].position = coordToCartesian(lat,lng,205);
+                visualization.decals[id].material.textureId = options.texture;
+                visualization.decals[id].scale.x = options.size;
+                visualization.decals[id].scale.y = options.size;
+                visualization.decals[id].position = coordToCartesian(options.lat, options.lng,205);
                 visualization.decals[id].lookAt(Sphere.position);
 
                 Sphere.add(visualization.decals[id]);

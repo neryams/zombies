@@ -22,7 +22,13 @@ exports.options = {
 			var index = Math.floor(Math.pow(Math.random(),2) * coast_tiles.length);
 
 			coast_tiles[index].seaport = true;
-			this.S.UILink.rendererDecal('seaport' + coast_tiles[index].id, coast_tiles[index].lat, coast_tiles[index].lng, 10, 'seaport');
+			this.S.UILink.rendererDecal('seaport' + coast_tiles[index].id, {
+				lat: coast_tiles[index].lat,
+				lng: coast_tiles[index].lng,
+				size: 10,
+				texture: 'seaport',
+				opacity: 0.5
+			});
 		}
 	}
 };
