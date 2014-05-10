@@ -751,22 +751,28 @@ var Renderer = function (scaling,onLoad) {
                 texture: 'gun',
                 opacity: 1
             };
-            options = $.extend({}, defaults, options);
 
             if(visualization.decals[id] === undefined) {
+                options = $.extend({}, defaults, options);
+
                 var geometry = new THREE.PlaneGeometry(1, 1, 1, 1);
                 var material = new THREE.MeshBasicMaterial({map: visualization.decalTextures[options.texture], side: THREE.DoubleSide, transparent: true, opacity: options.opacity});
-                visualization.decals[id] = new THREE.Mesh(geometry, material);
+                var decal = visualization.decals[id] = new THREE.Mesh(geometry, material);
+                decal.material.textureId = options.texture;
+                decal.options = options;
+                decal.scale.x = options.size;
+                decal.scale.y = options.size;
+                decal.position = coordToCartesian(options.lat, options.lng,205);
+                decal.lookAt(Sphere.position);
 
-                visualization.decals[id].material.textureId = options.texture;
-                visualization.decals[id].scale.x = options.size;
-                visualization.decals[id].scale.y = options.size;
-                visualization.decals[id].position = coordToCartesian(options.lat, options.lng,205);
-                visualization.decals[id].lookAt(Sphere.position);
-
-                Sphere.add(visualization.decals[id]);
-            } else {
-                // If the decal already exists, animate it
+                Sphere.add(decal);
+            } else if(options !== undefined) {
+                var decal = visualization.decals[id];
+                if(options.opacity !== decal.options.opacity) {
+                    decal.material.opacity = options.opacity;
+                    decal.material.needsUpdate = true;
+                    decal.options.opacity = options.opacity;
+                }
             }
         },
         drawCircle: function(id, lat, lng, radius, color, thickness) {

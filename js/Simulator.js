@@ -127,7 +127,7 @@ function Simulator(UI, loadModules, generatorConfig, generatorData) {
 		this.active = true;
 		// If there is no gene, run the process.
 		if(!this.gene) {
-			this.onUpgrade();
+			this.onUpgrade.call(this.module);
 		}
 	};
 	Upgrade.prototype.resetGene = function() {
@@ -141,15 +141,10 @@ function Simulator(UI, loadModules, generatorConfig, generatorData) {
 		if(this.gene && this.active) {
 			this.gene.active = true;
 			this.gene.position = new gridPoint().setCoords(x,y);
-			this.onUpgrade();
+			this.onUpgrade.call(this.module);
 			return true;
 		}
 		return false;
-	};
-	Upgrade.prototype.val = function(val, newval, operation) {
-		if(!operation)
-			operation = '';
-		this.module.val(val, newval, operation, this);
 	};
 	Upgrade.prototype.activate = function() {
 		if(!this.module.isActive())

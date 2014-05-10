@@ -6,7 +6,7 @@ exports.options = {
 	init: function() {
 		this.rateAdjust = 0;
 		var adjustReproduction = function() {
-			this.val('rateAdjust',1.5,'*');
+			this.val('rateAdjust',2,'+');
 		};
 		this.S.addUpgrades(this,
 			{cost: 200,

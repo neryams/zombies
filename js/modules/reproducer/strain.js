@@ -13,8 +13,6 @@ exports.run = function(current,passData) {
 };
 exports.options = {
 	init: function(dataPoints) {
-		this.S.modules['factory'].val('productionSpeed',1);
-
 		// Create the starting seed for the upgrade tree. Strains should only have one upgrade. Add other free upgrades via other modules.
 		this.S.addUpgrades(this,
 			{
@@ -114,6 +112,7 @@ exports.options = {
 		}
 		// Create the fort/factory location
 		this.fort = startPoint;
+		this.S.modules['factory'].val('productionSpeed',1);
 		this.S.modules['factory'].val('locations',startPoint,'append');
 
 		// Send the starting point back to the callback function to start the simulation
