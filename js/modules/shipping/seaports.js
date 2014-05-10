@@ -1,8 +1,16 @@
 /* 
 	Seaports: Creates boats that can transport zombies across oceans
 */
-exports.type = 'event';
-exports.run = function() {
+exports.type = 'spread';
+exports.run = function(location) {
+	if(location.hordes.length > 0 && location.seaport) {
+		if(!location.seaport.active) {
+			location.seaport.active = true;
+			this.S.UILink.rendererDecal('seaport' + location.id, {
+				opacity: 1
+			});
+		}
+	}
 };
 exports.options = {
 	init: function(dataPoints) {
@@ -21,7 +29,9 @@ exports.options = {
 		for(i = 0; i < seaport_count; i++) {
 			var index = Math.floor(Math.pow(Math.random(),2) * coast_tiles.length);
 
-			coast_tiles[index].seaport = true;
+			coast_tiles[index].seaport = {
+				active: false
+			};
 			this.S.UILink.rendererDecal('seaport' + coast_tiles[index].id, {
 				lat: coast_tiles[index].lat,
 				lng: coast_tiles[index].lng,
@@ -30,5 +40,6 @@ exports.options = {
 				opacity: 0.5
 			});
 		}
-	}
+	},
+	dependencies: ['shipping.seaMove']
 };
