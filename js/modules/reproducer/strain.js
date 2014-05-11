@@ -94,7 +94,6 @@ exports.options = {
 		});		
 	},
 	startSimulation: function(dataPoints) {
-		this.S.modules['factory'].val('productionSpeed',1);
 		// Code to start the simulation
 		var startRandomizer = 1000 + Math.round(Math.random()*4000);
 		var startPoint = null;

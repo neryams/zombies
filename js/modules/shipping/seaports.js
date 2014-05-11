@@ -41,5 +41,6 @@ exports.options = {
 			});
 		}
 	},
-	dependencies: ['shipping.seaMove']
+	dependencies: ['shipping.seaMove'],
+	alwaysActive: true
 };
