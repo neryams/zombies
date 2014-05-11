@@ -743,9 +743,8 @@ var UserInterface = function UserInterface(Renderer) {
 						}
 					}
 
-				if(mutations.length > 0)
-					if(!S.purchaseMutation(mutations))
-						console.error('mutation not valid!');
+				if(!S.purchaseMutation(mutations))
+					console.error('mutation not valid!');
 			},
 
 			clearGrid = function() {

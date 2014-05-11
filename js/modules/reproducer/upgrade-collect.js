@@ -6,13 +6,17 @@ exports.options = {
 	init: function() {
 		this.rateAdjust = 0;
 		var adjustReproduction = function() {
-			this.val('rateAdjust',2,'+');
+			this.val('rateAdjust', 2, '+');
+		};
+		var adjustReproduction2 = function() {
+			this.val('rateAdjust', 2, '*');
 		};
 		this.S.addUpgrades(this,
 			{cost: 200,
 				paths:['reproducer.strain'],
 				name:'Reproduction Boost',
 				onUpgrade: adjustReproduction,
+				onGeneActivate: adjustReproduction2,
 				description:'Zombies Reproduce more.',
 				gene:{
 					size: 3,
@@ -29,6 +33,7 @@ exports.options = {
 				paths:['reproducer.upgrade-collect_0'],
 				name:'Reproduction Boost',
 				onUpgrade: adjustReproduction,
+				onGeneActivate: adjustReproduction2,
 				description:'Zombies Reproduce more.',
 				gene:{
 					size: 3,

@@ -126,7 +126,7 @@ function Simulator(UI, loadModules, generatorConfig, generatorData) {
 	Upgrade.prototype.purchase = function() {
 		this.active = true;
 		// If there is no gene, run the process.
-		if(!this.gene) {
+		if(typeof this.onUpgrade === 'function') {
 			this.onUpgrade.call(this.module);
 		}
 	};
@@ -141,7 +141,11 @@ function Simulator(UI, loadModules, generatorConfig, generatorData) {
 		if(this.gene && this.active) {
 			this.gene.active = true;
 			this.gene.position = new gridPoint().setCoords(x,y);
-			this.onUpgrade.call(this.module);
+			if(typeof this.onGeneActivate === 'function') {
+				this.module._applyChangesToBase = false;
+				this.onGeneActivate.call(this.module);
+				delete this.module._applyChangesToBase;
+			}
 			return true;
 		}
 		return false;
@@ -1009,6 +1013,7 @@ function Simulator(UI, loadModules, generatorConfig, generatorData) {
 		onActivate: false,
 		onDeactivate: false,
 		onTick: false,
+		_applyChangesToBase: true,
 
 		process: function() { return 0; },
 		isActive: function() {
@@ -1022,56 +1027,53 @@ function Simulator(UI, loadModules, generatorConfig, generatorData) {
 				for (var key in this.defaults)
 					if(this.defaults.hasOwnProperty(key))
 						this[key] = this.defaults[key];
-				delete this.defaults;
 			}
 		},
-		val: function(name, newval, operation, upgrade) {
+		val: function(name, newval, operation) {
 			/* jshint -W087 */
-			if(!newval && newval !== 0)
+			var apply = function(pointer) {
+				switch(operation) {
+					case '+':
+						pointer[name] += newval;
+						break;
+					case '-':
+						pointer[name] -= newval;
+						break;
+					case '*':
+						pointer[name] *= newval;
+						break;
+					case '/':
+						pointer[name] /= newval;
+						break;
+					case '^':
+						pointer[name] = Math.pow(pointer[name],newval);
+						break;
+					case 'append':
+						if(pointer[name] === undefined)
+							pointer[name] = [newval];
+						else
+							pointer[name].push(newval);
+						break;
+					default: 
+						pointer[name] = newval;
+				}
+			};
+
+			if(newval === undefined)
 				return this[name];
 			else {
 				// Gene upgrades should store a default value to it gcan be reverted when the gene is removed. 
 				if(!this.defaults)
 					this.defaults = {};
-				if(this.defaults[name] === undefined)
+				if(this.defaults[name] === undefined && typeof this[name] === 'number') 
 					this.defaults[name] = this[name];
 
 				// Make sure geneless upgrades actually change the default value as well so they are permanant.
-				if(upgrade !== undefined && !upgrade.gene) {
-					switch(operation) {
-						case '+':this.defaults[name] += newval;break;
-						case '-':this.defaults[name] -= newval;break;
-						case '*':this.defaults[name] *= newval;break;
-						case '/':this.defaults[name] /= newval;break;
-						case '^':this.defaults[name] = Math.pow(this[name],newval);break;
-						case 'append':
-							if(this.defaults[name].push === undefined)
-								this.defaults[name] = [this.defaults[name],newval];
-							else
-								this.defaults[name].push(newval);
-							break;
-						default: this.defaults[name] = newval;
-					}
+				if(this._applyChangesToBase)
+					apply(this.defaults);
 
-				}
-
-				switch(operation) {
-					case '+':this[name] += newval;break;
-					case '-':this[name] -= newval;break;
-					case '*':this[name] *= newval;break;
-					case '/':this[name] /= newval;break;
-					case '^':this[name] = Math.pow(this[name],newval);break;
-					case 'append':
-						if(this[name].push === undefined)
-							this[name] = [this[name],newval];
-						else
-							this[name].push(newval);
-						break;
-					default: this[name] = newval;
-				}
+				apply(this);
 			}
-			if(this[name] === Infinity)
-				debugger;
 		}
 	};
 
