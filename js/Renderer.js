@@ -64,20 +64,22 @@ var Renderer = function (scaling,onLoad) {
     climateBg.src = 'ui/climateGradient.jpg';
 
     // Load decal textures here
-    visualization.decalTextures.gun = new THREE.ImageUtils.loadTexture('ui/gun.png');
+    visualization.decalTextures.gun = new THREE.ImageUtils.loadTexture('ui/decals/gun.png');
+    visualization.decalTextures.seaport = new THREE.ImageUtils.loadTexture('ui/decals/port.png');
+    
+    /* Create 3D Globe --------------------- */
+    Camera = new THREE.PerspectiveCamera( 60, WindowConfig.windowX / WindowConfig.windowY, 1, 10000 );
+    Camera.position.z = 450;
+
+    Scene = new THREE.Scene();
+
+    var group = new THREE.Object3D();
+    Sphere = new THREE.Object3D();
+
+    group.add( Sphere );
+    Scene.add( group );
 
     var init = function() {
-        /* Create 3D Globe --------------------- */
-        Camera = new THREE.PerspectiveCamera( 60, WindowConfig.windowX / WindowConfig.windowY, 1, 10000 );
-        Camera.position.z = 450;
-
-        Scene = new THREE.Scene();
-
-        var group = new THREE.Object3D();
-        Sphere = new THREE.Object3D();
-
-        group.add( Sphere );
-        Scene.add( group );
 
         // lights
 
@@ -554,12 +556,12 @@ var Renderer = function (scaling,onLoad) {
                 };
                 console.warn('layer ' + layer + ' not found in visualizer');
         }
-        //dtI = Math.floor(i/generatorConfig.tx_w/data_ratio)*generatorConfig.w + Math.floor(i%generatorConfig.tx_w / data_ratio);
+
         for(i = 0, n = pix.length/4; i < n; i++) {
             pix[i*4] = pix[i*4+1] = pix[i*4+2] = 0;
             pix[i*4+3] = 255;
-            if(valuesArray[i] !== undefined && valuesArray[i] > 0) {
-                if(discrete) {
+            if(valuesArray[i] !== undefined && !!valuesArray[i]) {
+                if(discrete && dataPoints[i]) {
                     var opacity = 1 - (dataPoints[i].border_distance - 1) / 3;
                     if(opacity < 0) opacity = 0;
                     setColor(i, valuesArray[i], opacity);
@@ -741,21 +743,36 @@ var Renderer = function (scaling,onLoad) {
             } else
                 return false;
         },
-        decal: function(id, lat, lng, size, texture) {
+        decal: function(id, options) {
+            var defaults = {
+                lat: 0,
+                lng: 0,
+                size: 5,
+                texture: 'gun',
+                opacity: 1
+            };
+
             if(visualization.decals[id] === undefined) {
+                options = $.extend({}, defaults, options);
+
                 var geometry = new THREE.PlaneGeometry(1, 1, 1, 1);
-                var material = new THREE.MeshBasicMaterial({map: visualization.decalTextures[texture], side: THREE.DoubleSide, transparent: true, opacity: 1});
-                visualization.decals[id] = new THREE.Mesh(geometry, material);
+                var material = new THREE.MeshBasicMaterial({map: visualization.decalTextures[options.texture], side: THREE.DoubleSide, transparent: true, opacity: options.opacity});
+                var decal = visualization.decals[id] = new THREE.Mesh(geometry, material);
+                decal.material.textureId = options.texture;
+                decal.options = options;
+                decal.scale.x = options.size;
+                decal.scale.y = options.size;
+                decal.position = coordToCartesian(options.lat, options.lng,205);
+                decal.lookAt(Sphere.position);
 
-                visualization.decals[id].material.textureId = texture;
-                visualization.decals[id].scale.x = size;
-                visualization.decals[id].scale.y = size;
-                visualization.decals[id].position = coordToCartesian(lat,lng,205);
-                visualization.decals[id].lookAt(Sphere.position);
-
-                Sphere.add(visualization.decals[id]);
-            } else {
-                // If the decal already exists, animate it
+                Sphere.add(decal);
+            } else if(options !== undefined) {
+                var decal = visualization.decals[id];
+                if(options.opacity !== decal.options.opacity) {
+                    decal.material.opacity = options.opacity;
+                    decal.material.needsUpdate = true;
+                    decal.options.opacity = options.opacity;
+                }
             }
         },
         drawCircle: function(id, lat, lng, radius, color, thickness) {
@@ -792,9 +809,9 @@ var Renderer = function (scaling,onLoad) {
             tween.easing(TWEEN.Easing.Cubic.Out);
             tween.start();
         },
-        setVisualization: function( layer ) {
+        setVisualization: function( layer, data ) {
             if(ready) {
-                visualization.texture.image = getVisualization(layer);
+                visualization.texture.image = getVisualization(layer, data);
                 visualization.texture.needsUpdate = true;
                 visualization.mesh.material.map = visualization.texture;
                 visualization.mesh.visible = true;

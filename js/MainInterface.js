@@ -78,7 +78,8 @@ function MainInterface(UI,R) {
 		dataViewList.lastTooltipFunction = false;
 		dataViewList.visualTooltip = function(visual, mathFunction) {
 			return function() {
-				R.setVisualization(visual);
+				R.setVisualization(visual, Simulator.getAllPointProperty(visual));
+
 				UI.tooltip.setPointFunction(function(lat, lng) {
 					var point_prop = Simulator.getPointProperties(lat, lng);
 					return mathFunction(point_prop);
@@ -92,11 +93,13 @@ function MainInterface(UI,R) {
 			UI.tooltip.restore();
 			UI.interfaceParts.toggleTooltips.deactivate();
 		});
-		dataViewList.addOption('ui:buttons.dataviews_inner.political', dataViewList.visualTooltip('country',function(point) {
-			if(point.country) {
-				return '<strong>' + point.country.name + '</strong>';
-			}
-		}));
+		dataViewList.addOption('ui:buttons.dataviews_inner.political', dataViewList.visualTooltip('country',
+			function(point) {
+				if(point.country) {
+					return '<strong>' + point.country.name + '</strong>';
+				}
+			})
+		);
 		dataViewList.addOption('ui:buttons.dataviews_inner.rain', dataViewList.visualTooltip('precipitation',function(point) {
 			return Math.round(point.precipitation*10)/10 + 'mm';
 		}));

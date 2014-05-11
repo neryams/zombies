@@ -179,8 +179,11 @@ $(function () {
                     }, 150);
                 }
             },
-            generatorLoadConfig = function(config) {
+            generatorLoadConfig = function(config, setSeed) {
                 generatorConfig = config;
+                if(setSeed)
+                    Math.seedrandom(config.seed);
+
                 console.time('webWorkerTransferTimer');
             },
             generatorLoadData = function(points, countries, name) {
@@ -212,9 +215,6 @@ $(function () {
         var startLoad = function () {
             var onLoadModules = function () {
                 // Open debug menu by default in node.
-                if(node)
-                    debugMenu.openConsole();
-
                 R = Renderer(userConfig.resolution, function() {
                     UI = UserInterface(R);
 
@@ -226,6 +226,10 @@ $(function () {
 
                     R.init();
                 });
+
+                if(node) 
+                    debugMenu.openConsole();
+                debugMenu.setRenderer(R);
             };
 
             // Load the chosen modules first, then initiate the game 
@@ -249,7 +253,9 @@ $(function () {
 
                     generatorWorker = {
                         postMessage: function() {
-                            generatorLoadConfig(userConfig.saveData.config);
+                            // Set the seed so the module functions have a predictable seed when loading saved generator.
+                            generatorLoadConfig(userConfig.saveData.config, true);
+
                             generatorLoadData(userConfig.saveData.points, userConfig.saveData.countries, userConfig.saveData.name);
                             generatorTexture = [];
                             var i = 0;
