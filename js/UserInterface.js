@@ -1242,37 +1242,34 @@ var UserInterface = function UserInterface(Renderer) {
 		evolutions: E,
 		tooltip: MT,
 		simulator: S,
-		Renderer: {
+		renderer: {
 			lookAt: function(startSq) {
 				Renderer.lookAt(startSq);
+			},
+			decal: function(id, lat, lng, size, texture) {
+				Renderer.decal(id, lat, lng, size, texture);
+			},
+			updateVisual: function(targets) {
+				for(var i = 0; i < targets.length; i++) {
+					Renderer.setData(targets[i][0], targets[i][1]);
+				}
+				Renderer.updateMatrix();
+			},
+			switchVisual: function(data, colorStart, colorEnd) {
+				if(colorStart !== undefined && colorEnd !== undefined)
+					Renderer.setDataBarColor(colorStart, colorEnd);
+
+				status.displayData = data;
+				status.updateAllPoints = true;
+				changedStatus.displayData = true;
+				changedStatus.updateAllPoints = true;
+			},
+			updateHorde: function(horde, remove) {
+				Renderer.updateHorde(horde, remove);
 			}
 		},
 		addDataField: function(id, options) {
 			return mainSection.addDataField.call(mainSection, id, options);
-		},
-		updateVisual: function(targets) {
-			for(var i = 0; i < targets.length; i++) {
-				Renderer.setData(targets[i][0], targets[i][1]);
-			}
-			Renderer.updateMatrix();
-		},
-		switchVisual: function(data, colorStart, colorEnd) {
-			if(colorStart !== undefined && colorEnd !== undefined)
-				Renderer.setDataBarColor(colorStart, colorEnd);
-
-			status.displayData = data;
-			status.updateAllPoints = true;
-			changedStatus.displayData = true;
-			changedStatus.updateAllPoints = true;
-		},
-		rendererLookAt: function(startSq) {
-			Renderer.lookAt(startSq);
-		},
-		rendererDecal: function(id, lat, lng, size, texture) {
-			Renderer.decal(id, lat, lng, size, texture);
-		},
-		updateHorde: function(horde, remove) {
-			Renderer.updateHorde(horde, remove);
 		},
 		updateUI: function(data) {
 			var key;

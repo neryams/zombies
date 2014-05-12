@@ -50,7 +50,7 @@ exports.options = {
 		var viewList = UI.interfaceParts.viewList;
 		
 		viewList.addOption('ui:buttons.dataviews_inner.tech', function() {
-			UI.switchVisual('tech', [ // hsl
+			UI.renderer.switchVisual('tech', [ // hsl
 				0.3,
 				1.0,
 				0.5
@@ -68,7 +68,7 @@ exports.options = {
 			});
 		});
 		viewList.addOption('ui:buttons.dataviews_inner.trees', function() {
-			UI.switchVisual('trees', [ // hsl
+			UI.renderer.switchVisual('trees', [ // hsl
 				0.15,
 				0.75,
 				0.65

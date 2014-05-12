@@ -114,10 +114,10 @@ function MainInterface(UI,R) {
 		});
 
 		viewList.addOption('ui:buttons.dataviews_inner.disable_visual', function() {
-			UI.switchVisual('');
+			UI.renderer.switchVisual('');
 		});
 		viewList.addOption('ui:buttons.dataviews_inner.population', function() {
-			UI.switchVisual('total_pop', [
+			UI.renderer.switchVisual('total_pop', [
 				0.6,// h
 				1.0,// s
 				0.5 // l

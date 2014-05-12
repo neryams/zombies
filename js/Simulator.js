@@ -651,7 +651,7 @@ function Simulator(UI, loadModules, generatorConfig, generatorData) {
 
 				// If current horde is empty, remove it from the simulation
 				if(current.size < 1) {
-					UI.updateHorde(current, true);
+					UI.renderer.updateHorde(current, true);
 					current = hordes[i] = hordes.pop(); // don't use splice here, very expensive for huge array. Just swap element to remove with last.
 					n--;
 				}
@@ -801,7 +801,7 @@ function Simulator(UI, loadModules, generatorConfig, generatorData) {
 
 				tick_hordes(function(current) {
 					if(!current.renderer.cacheLat || current.renderer.cacheLat != current.location.lat || current.renderer.cacheLng != current.location.lng) {
-						UI.updateHorde(current);
+						UI.renderer.updateHorde(current);
 						current.renderer.cacheLat = current.location.lat;
 						current.renderer.cacheLng = current.location.lng;
 					}
@@ -839,7 +839,7 @@ function Simulator(UI, loadModules, generatorConfig, generatorData) {
 					tick_activePoints(function(point) {
 						changedPoints.push([point.id, point[status.displayData] / config.maximums[status.displayData]]);
 					});
-					UI.updateVisual(changedPoints);
+					UI.renderer.updateVisual(changedPoints);
 				}
 				status.pointsToWatch.length = 0;
 				UI.updateUI(status);
@@ -876,7 +876,7 @@ function Simulator(UI, loadModules, generatorConfig, generatorData) {
 		countries: countries,
 		UILink: {
 			rendererDecal: function(id, lat, lng, size, texture) {
-				UI.rendererDecal(id, lat, lng, size, texture);
+				UI.renderer.decal(id, lat, lng, size, texture);
 			}
 		},
 
@@ -925,7 +925,7 @@ function Simulator(UI, loadModules, generatorConfig, generatorData) {
 				if(modules[id].onStart)
 					modules[id].onStart(startSq);
 
-			UI.rendererLookAt(startSq);
+			UI.renderer.lookAt(startSq);
 
 			if(debugMenu.active) {
 				debugMenu.setSimulator($.extend({
