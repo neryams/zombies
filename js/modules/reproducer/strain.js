@@ -113,7 +113,7 @@ exports.options = {
 		// Create the fort/factory location
 		this.fort = startPoint;
 		this.S.modules['factory'].val('productionSpeed',1);
-		this.S.modules['factory'].val('locations',startPoint,'append');
+		this.S.modules['factory'].addLocation(startPoint);
 
 		// Send the starting point back to the callback function to start the simulation
 		return startPoint;

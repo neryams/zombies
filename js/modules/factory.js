@@ -14,5 +14,14 @@ exports.options = {
 		this.locations = [];
 		this.productionSpeed = 0;
 		this.baseInterval = 10;
+		this.addLocation = function(location) {
+			this.S.UILink.rendererDecal('factory' + location.id, {
+				lat: location.lat,
+				lng: location.lng,
+				size: 8,
+				texture: 'home'
+			});
+			this.val('locations',location,'append');
+		}
 	}
 };

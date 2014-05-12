@@ -65,7 +65,8 @@ var Renderer = function (scaling,onLoad) {
 
     // Load decal textures here
     visualization.decalTextures.gun = new THREE.ImageUtils.loadTexture('ui/decals/gun.png');
-    visualization.decalTextures.seaport = new THREE.ImageUtils.loadTexture('ui/decals/port.png');
+    visualization.decalTextures.seaport = new THREE.ImageUtils.loadTexture('ui/decals/seaport.png');
+    visualization.decalTextures.home = new THREE.ImageUtils.loadTexture('ui/decals/home.png');
     
     /* Create 3D Globe --------------------- */
     Camera = new THREE.PerspectiveCamera( 60, WindowConfig.windowX / WindowConfig.windowY, 1, 10000 );
@@ -376,7 +377,7 @@ var Renderer = function (scaling,onLoad) {
                 hordeSystem.length++;
             }
 
-            selectedHorde.particleVertex.copy(coordToCartesian(horde.location.lat-0.5+Math.random(), horde.location.lng-0.5+Math.random()));
+            selectedHorde.particleVertex.copy(coordToCartesian(horde.location.lat-0.5+Math.random(), horde.location.lng-0.5+Math.random(), 201));
 
             if(hordeSystem.maxSize < horde.size)
                 hordeSystem.maxSize = horde.size;
@@ -762,7 +763,7 @@ var Renderer = function (scaling,onLoad) {
                 decal.options = options;
                 decal.scale.x = options.size;
                 decal.scale.y = options.size;
-                decal.position = coordToCartesian(options.lat, options.lng,205);
+                decal.position = coordToCartesian(options.lat, options.lng, 200.5);
                 decal.lookAt(Sphere.position);
 
                 Sphere.add(decal);
@@ -799,7 +800,7 @@ var Renderer = function (scaling,onLoad) {
             }
 
             visualization.decals[id] = new THREE.Line(circleGeometry, material);
-            visualization.decals[id].position = coordToCartesian(lat,lng,201);
+            visualization.decals[id].position = coordToCartesian(lat,lng,200.5);
             visualization.decals[id].lookAt(Sphere.position);
 
             Sphere.add( visualization.decals[id] );
