@@ -4,5 +4,5 @@
 exports.type = 'event';
 exports.run = function() {};
 exports.options = {
-	children: ['reproducer.strain','world-stats','population']
+	children: ['reproducer.strain','world-stats','population','beacon']
 };
