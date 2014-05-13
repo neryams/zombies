@@ -221,9 +221,27 @@ function MainInterface(UI,R) {
 		$('#ui').on('mouseup.moveCamera', function () {
 			// If mouse didn't move, do the click
 			if(status.mouse.click) {
-				var sphereCoords = R.clickSphere(status.mouse.x,status.mouse.y);
-				if(sphereCoords && debugMenu.active)
-					debugMenu.console.selectSquare(Math.round(sphereCoords[0] - 0.5) + 0.5, Math.round(sphereCoords[1] - 0.5) + 0.5);
+				var sphereCoords = R.getSphereCoords(status.mouse.x, status.mouse.y);
+				var clickHandled = false;
+				if(sphereCoords)
+					switch (event.which) {
+				        case 1: // left
+							for(var i = status.clickFunctionQueue.length - 1; i >= 0; i--) {
+								if(typeof status.clickFunctionQueue[i] === 'function') {
+									if(status.clickFunctionQueue[i](sphereCoords[0], sphereCoords[1])) {
+										clickHandled = true;
+										break;
+									}
+								}
+							}
+				            break;
+				        case 2: // middle
+				            break;
+				        case 3: // right
+							if(debugMenu.active)
+								debugMenu.console.selectSquare(Math.round(sphereCoords[0] - 0.5) + 0.5, Math.round(sphereCoords[1] - 0.5) + 0.5);
+				            break;
+				    }
 			}
 			status.mouse.x = status.mouse.lastx = status.mouse.y = status.mouse.lasty = status.mouse.scroll = 0;
 			status.mouse.click = status.mouse.down = false;

@@ -22,7 +22,9 @@ var UserInterface = function UserInterface(Renderer) {
 		},
 		UIstatus = {
 			mouse: { x:0, y:0, lastx:0, lasty:0, down:false, click: false, scroll: 0, bound: null },
-			pauseRenderer: false
+			pauseRenderer: false,
+			clickFunctionQueue: [],
+			rclickFunctionQueue: []
 		},
 		changedStatus = {
 		};
@@ -1230,6 +1232,9 @@ var UserInterface = function UserInterface(Renderer) {
 			},
 			getAllPointProperty: function(property) {
 				return S.getAllPointProperty(property);
+			},
+			moduleFunction: function(moduleId, functionName, parameters) {
+				return S.modules[moduleId][functionName].apply(S.modules[moduleId],parameters);
 			}
 		};
 	};
@@ -1248,6 +1253,9 @@ var UserInterface = function UserInterface(Renderer) {
 			},
 			decal: function(id, lat, lng, size, texture) {
 				Renderer.decal(id, lat, lng, size, texture);
+			},
+			drawCircle: function(id, lat, lng, radius, color, thickness) {
+				Renderer.drawCircle(id, lat, lng, radius, color, thickness);
 			},
 			updateVisual: function(targets) {
 				for(var i = 0; i < targets.length; i++) {
@@ -1270,6 +1278,12 @@ var UserInterface = function UserInterface(Renderer) {
 		},
 		addDataField: function(id, options) {
 			return mainSection.addDataField.call(mainSection, id, options);
+		},
+		addGlobeClickEvent: function(event) {
+			UIstatus.clickFunctionQueue.push(event);
+		},
+		addGlobeRightClickEvent: function(event) {
+			UIstatus.rclickFunctionQueue.push(event);
 		},
 		updateUI: function(data) {
 			var key;

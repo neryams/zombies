@@ -67,6 +67,7 @@ var Renderer = function (scaling,onLoad) {
     visualization.decalTextures.gun = new THREE.ImageUtils.loadTexture('ui/decals/gun.png');
     visualization.decalTextures.seaport = new THREE.ImageUtils.loadTexture('ui/decals/seaport.png');
     visualization.decalTextures.home = new THREE.ImageUtils.loadTexture('ui/decals/home.png');
+    visualization.decalTextures.moveto = new THREE.ImageUtils.loadTexture('ui/decals/moveto.png');
     
     /* Create 3D Globe --------------------- */
     Camera = new THREE.PerspectiveCamera( 60, WindowConfig.windowX / WindowConfig.windowY, 1, 10000 );
@@ -736,14 +737,6 @@ var Renderer = function (scaling,onLoad) {
         zoomCamera: function(z) {
             WindowConfig.mouseVector.addScalars(0,0,z);
         },
-        clickSphere: function(x,y) {
-            var sphereCoords = getSphereCoords(x,y);
-            if(sphereCoords) {
-                console.log(sphereCoords);
-                return sphereCoords;
-            } else
-                return false;
-        },
         decal: function(id, options) {
             var defaults = {
                 lat: 0,
@@ -751,14 +744,14 @@ var Renderer = function (scaling,onLoad) {
                 size: 5,
                 texture: 'gun',
                 opacity: 1
-            };
+            }, decal;
 
             if(visualization.decals[id] === undefined) {
                 options = $.extend({}, defaults, options);
 
                 var geometry = new THREE.PlaneGeometry(1, 1, 1, 1);
                 var material = new THREE.MeshBasicMaterial({map: visualization.decalTextures[options.texture], side: THREE.DoubleSide, transparent: true, opacity: options.opacity});
-                var decal = visualization.decals[id] = new THREE.Mesh(geometry, material);
+                decal = visualization.decals[id] = new THREE.Mesh(geometry, material);
                 decal.material.textureId = options.texture;
                 decal.options = options;
                 decal.scale.x = options.size;
@@ -768,11 +761,18 @@ var Renderer = function (scaling,onLoad) {
 
                 Sphere.add(decal);
             } else if(options !== undefined) {
-                var decal = visualization.decals[id];
-                if(options.opacity !== decal.options.opacity) {
+                decal = visualization.decals[id];
+                if(options.opacity !== undefined && options.opacity !== decal.options.opacity) {
                     decal.material.opacity = options.opacity;
                     decal.material.needsUpdate = true;
                     decal.options.opacity = options.opacity;
+                }
+                if((options.lat !== undefined && options.lat !== decal.options.lat) || 
+                (options.lng !== undefined && options.lng !== decal.options.lng)) {
+                    decal.position = coordToCartesian(options.lat, options.lng, 200.5);
+                    decal.options.lat = options.lat;
+                    decal.options.lng = options.lng;
+                    decal.lookAt(Sphere.position);
                 }
             }
         },

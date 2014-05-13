@@ -877,6 +877,9 @@ function Simulator(UI, loadModules, generatorConfig, generatorData) {
 		UILink: {
 			rendererDecal: function(id, lat, lng, size, texture) {
 				UI.renderer.decal(id, lat, lng, size, texture);
+			},
+			rendererCircle: function(id, lat, lng, radius, color, thickness) {
+				UI.renderer.drawCircle(id, lat, lng, radius, color, thickness);
 			}
 		},
 
