@@ -13,9 +13,10 @@ exports.options = {
 		this.burstSpeed = 0;
 		this.panic = 0;
 
-		this.canDetect = true;
+		this.canDetect = false;
 		this.detectStrength = 1500;
 		this.swimming = false;
+		this.smellItem = '';
 
 		var speedUpgrade = function() {
 			this.val('speed',1.5,'+');

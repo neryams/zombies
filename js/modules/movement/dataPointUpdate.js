@@ -3,7 +3,7 @@
 */
 exports.type = 'spread';
 exports.run = function(location) {
-	if(this.S.modules['movement.base'].val('canDetect')) {
+	if(this.S.modules['movement.base'].val('canDetect') && this.S.modules['movement.base'].val('smellItem')) {
 		var detectStrength = this.S.modules['movement.base'].val('detectStrength');
 		var direction = this.S.status.iteration % 4;
 
@@ -27,8 +27,6 @@ exports.run = function(location) {
 };
 exports.options = {
 	init: function() {
-		this.smellItem = 'tech';
-
 		this.detectDirection = function (dataPoint, direction, maxDistance) {
 			var returnAmount = 0,
 				totalDistance = 1,
@@ -39,7 +37,7 @@ exports.options = {
 				return dataPoint.nearby_prop[0] * 2;
 			}
 
-			while(totalDistance < maxDistance) {
+			while(totalDistance <= maxDistance) {
 				if(direction % 2 === 0)  {// horizontal and vertical
 					dataPoint = dataPoint.adjacent[direction/2];
 					totalDistance += this.S.bakedValues.latDistances[
@@ -75,13 +73,21 @@ exports.options = {
 		};
 
 		this.calculatePointNearbyProp = function(location) {
+			var smellItem = this.S.modules['movement.base'].val('smellItem');
+			var safeCalculate = function(val) {
+				if(typeof(val) === 'number')
+					return val;
+				else
+					return 0;
+			};
+
 			if(location.nearby_prop === undefined)
 				location.nearby_prop = [];
 
-			var totals = location[this.smellItem];
+			var totals = safeCalculate(location[smellItem]);
 			location.nearby_prop[0] = totals;
 
-			if(location.nearby_prop.length <= 1 || (this.S.status.iteration - location.nearby_prop.lastCalculated > 10 && location.nearby_prop[location.nearby_prop.length-1] > 0)) {
+			if(location.nearby_prop.length <= 1 || this.S.status.iteration - location.nearby_prop.lastCalculated > 10) {
 				var reduce,steps,target = location;
 
 				for (var j = 1; j <= 15; j++) {
@@ -90,27 +96,27 @@ exports.options = {
 					reduce = Math.pow(j * 2 + 1, 2);
 					do {
 						target = target.adjacent[1];
-						totals += target[this.smellItem] / reduce;
+						totals += safeCalculate(target[smellItem]) / reduce;
 					} while (--steps);
 					steps = j*2;
 					do {
 						target = target.adjacent[2];
-						totals += target[this.smellItem] / reduce;
+						totals += safeCalculate(target[smellItem]) / reduce;
 					} while (--steps);
 					steps = j*2;
 					do {
 						target = target.adjacent[3];
-						totals += target[this.smellItem] / reduce;
+						totals += safeCalculate(target[smellItem]) / reduce;
 					} while (--steps);
 					steps = j*2;
 					do {
 						target = target.adjacent[0];
-						totals += target[this.smellItem] / reduce;
+						totals += safeCalculate(target[smellItem]) / reduce;
 					} while (--steps);
 					steps = j;
 					do {
 						target = target.adjacent[1];
-						totals += target[this.smellItem] / reduce;
+						totals += safeCalculate(target[smellItem]) / reduce;
 					} while (--steps);
 
 					location.nearby_prop[j] = totals;
