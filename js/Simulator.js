@@ -880,6 +880,9 @@ function Simulator(UI, loadModules, generatorConfig, generatorData) {
 			},
 			rendererCircle: function(id, lat, lng, radius, color, thickness) {
 				UI.renderer.drawCircle(id, lat, lng, radius, color, thickness);
+			},
+			rendererRemoveDecal: function(id) {
+				UI.renderer.removeDecal(id);
 			}
 		},
 

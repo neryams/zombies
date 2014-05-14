@@ -805,6 +805,12 @@ var Renderer = function (scaling,onLoad) {
 
             Sphere.add( visualization.decals[id] );
         },
+        removeDecal: function(id) {
+            if(visualization.decals[id] !== undefined) {
+                Sphere.remove( visualization.decals[id] );
+                delete visualization.decals[id];
+            }
+        },
         lookAt: function (square) {
             var tween = new TWEEN.Tween(WindowConfig.rotation).to({x: -(90 - square.lng) * Math.PI / 180, y: square.lat * Math.PI / 180, z: 0}, 2000);
             tween.easing(TWEEN.Easing.Cubic.Out);

@@ -1257,6 +1257,9 @@ var UserInterface = function UserInterface(Renderer) {
 			drawCircle: function(id, lat, lng, radius, color, thickness) {
 				Renderer.drawCircle(id, lat, lng, radius, color, thickness);
 			},
+			removeDecal: function(id) {
+				Renderer.removeDecal(id);
+			},
 			updateVisual: function(targets) {
 				for(var i = 0; i < targets.length; i++) {
 					Renderer.setData(targets[i][0], targets[i][1]);

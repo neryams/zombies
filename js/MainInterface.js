@@ -223,10 +223,11 @@ function MainInterface(UI,R) {
 			if(status.mouse.click) {
 				var sphereCoords = R.getSphereCoords(status.mouse.x, status.mouse.y);
 				var clickHandled = false;
+				var i;
 				if(sphereCoords)
 					switch (event.which) {
 				        case 1: // left
-							for(var i = status.clickFunctionQueue.length - 1; i >= 0; i--) {
+							for(i = status.clickFunctionQueue.length - 1; i >= 0; i--) {
 								if(typeof status.clickFunctionQueue[i] === 'function') {
 									if(status.clickFunctionQueue[i](sphereCoords[0], sphereCoords[1])) {
 										clickHandled = true;
@@ -238,7 +239,15 @@ function MainInterface(UI,R) {
 				        case 2: // middle
 				            break;
 				        case 3: // right
-							if(debugMenu.active)
+							for(i = status.rclickFunctionQueue.length - 1; i >= 0; i--) {
+								if(typeof status.rclickFunctionQueue[i] === 'function') {
+									if(status.rclickFunctionQueue[i](sphereCoords[0], sphereCoords[1])) {
+										clickHandled = true;
+										break;
+									}
+								}
+							}
+							if(debugMenu.active && !clickHandled)
 								debugMenu.console.selectSquare(Math.round(sphereCoords[0] - 0.5) + 0.5, Math.round(sphereCoords[1] - 0.5) + 0.5);
 				            break;
 				    }
