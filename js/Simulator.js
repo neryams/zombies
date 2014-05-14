@@ -884,6 +884,9 @@ function Simulator(UI, loadModules, generatorConfig, generatorData) {
 			},
 			rendererRemoveDecal: function(id) {
 				UI.renderer.removeDecal(id);
+			},
+			addNews: function(message, replacements) {
+				UI.addNews(message, replacements);
 			}
 		},
 

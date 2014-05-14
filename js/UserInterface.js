@@ -1338,13 +1338,13 @@ var UserInterface = function UserInterface(Renderer) {
 
 			return status;
 		},
-		addNews: function(item) {
+		addNews: function(item, args) {
 			if(arguments.length === 0)
 				console.error('no language item id defined');
 			else {
 				var langStr;
-				if(arguments.length > 1)
-					langStr = i18n.t('messages:'+item, { postProcess: 'sprintf', sprintf: Array.prototype.slice.call(arguments,1) });
+				if(args.length > 0)
+					langStr = i18n.t('messages:'+item, { postProcess: 'sprintf', sprintf: args });
 				else
 					langStr = i18n.t('messages:'+item);
 

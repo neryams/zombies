@@ -11,6 +11,7 @@
 		"3": "World begins working feverishly on the cure",
 		"end": "World anarchy. Cure research ceases."
 	},
+	"vegetation_slow": "Trees are slowing your robots down!",
 	"win_message": "You Win!",
 	"lose_message": "You Lose!"
 }

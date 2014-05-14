@@ -3,13 +3,14 @@
 */
 exports.type = 'infect';
 exports.run = function(current, passData) {
-	passData.mobility = this.speed / (current.location.trees * this.vegetationSlow * 0.00001 + 1);
+	var vegetationSlow = current.location.trees * this.vegetationSlow * 0.00001 + 1;
+	passData.mobility = this.speed / vegetationSlow;
 	passData.encounterProbability = passData.mobility;
 	passData.panic += passData.mobility / 10 + this.panic;
-/*
-	if(current.location.trees * this.vegetationSlow > 1) {
-		UI.addNews('Vegetation is slowing your robots down!');
-	}*/
+
+	if(vegetationSlow > 2) {
+		this.S.UILink.addNews('vegetation_slow');
+	}
 };
 exports.options = {
 	init: function() {

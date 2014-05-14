@@ -54,6 +54,13 @@ exports.run = function() {
 };
 exports.options = {
 	init: function () {
+		this.addGlobalNews = function(panicLevel) {
+			this.S.UILink.addNews('world_research.' + panicLevel);
+		};
+		this.addCountryNews = function(panicLevel, name) {
+			this.S.UILink.addNews('country_military.' + panicLevel, [name]);
+		};
+
 		for(var i = 1; i < this.S.countries.length; i++) {
 			this.S.countries[i].currPanicLevel = 1;
 		}
@@ -63,12 +70,6 @@ exports.options = {
 	},
 	ui: function(UI) {
 		var mainInfo = UI.interfaceParts.main_info;
-		this.addGlobalNews = function(panicLevel) {
-			UI.addNews('world_research.' + panicLevel);
-		};
-		this.addCountryNews = function(panicLevel, name) {
-			UI.addNews('country_military.' + panicLevel, name);
-		};
 
 		this.worldPanicBar = mainInfo.addDataField({
 			type: 'progressBar',
