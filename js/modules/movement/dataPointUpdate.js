@@ -3,14 +3,16 @@
 */
 exports.type = 'spread';
 exports.run = function(location) {
-	if(this.S.modules['movement.base'].val('canDetect') && this.S.modules['movement.base'].val('smellItem')) {
-		var detectStrength = this.S.modules['movement.base'].val('detectStrength');
+	if(this.S.modules['movement.base'].getCurrentSmellDistance()) {
+		var smellItem = this.S.modules['movement.base'].getCurrentSmell();
+
+		var detectStrength = this.S.modules['movement.base'].getCurrentSmellDistance();
 		var direction = this.S.status.iteration % 4;
 
 		if(location.hordes.length > 0) {
-			var dirA = this.detectDirection(location, direction, detectStrength),
-				dirB = this.detectDirection(location, direction + 4, detectStrength),
-				self = this.detectDirection(location);
+			var dirA = this.detectDirection(location, smellItem, direction, detectStrength),
+				dirB = this.detectDirection(location, smellItem, direction + 4, detectStrength),
+				self = this.detectDirection(location, smellItem);
 
 			for(var i = 0; i < location.hordes.length; i++) {
 				// Go around the square calculating the opposing directions
@@ -27,13 +29,13 @@ exports.run = function(location) {
 };
 exports.options = {
 	init: function() {
-		this.detectDirection = function (dataPoint, direction, maxDistance) {
+		this.detectDirection = function (dataPoint, smellItem, direction, maxDistance) {
 			var returnAmount = 0,
 				totalDistance = 1,
 				i = 1;
 
 			if(direction === undefined) {
-				this.calculatePointNearbyProp(dataPoint);
+				this.calculatePointNearbyProp(dataPoint, smellItem);
 				return dataPoint.nearby_prop[0] * 2;
 			}
 
@@ -58,7 +60,7 @@ exports.options = {
 				if(i === 1 && dataPoint.water && !this.S.modules['movement.base'].val('swimming')) {
 					return 0;
 				} else {
-					this.calculatePointNearbyProp(dataPoint);
+					this.calculatePointNearbyProp(dataPoint, smellItem);
 
 					if(i < dataPoint.nearby_prop.length) {
 						returnAmount += dataPoint.nearby_prop[i] / Math.pow(totalDistance,(i-1)/10);
@@ -72,8 +74,7 @@ exports.options = {
 			return returnAmount;
 		};
 
-		this.calculatePointNearbyProp = function(location) {
-			var smellItem = this.S.modules['movement.base'].val('smellItem');
+		this.calculatePointNearbyProp = function(location, smellItem) {
 			var safeCalculate = function(val) {
 				if(typeof(val) === 'number')
 					return val;
@@ -96,30 +97,30 @@ exports.options = {
 					reduce = Math.pow(j * 2 + 1, 2);
 					do {
 						target = target.adjacent[1];
-						totals += safeCalculate(target[smellItem]) / reduce;
+						totals += safeCalculate(target[smellItem]);
 					} while (--steps);
 					steps = j*2;
 					do {
 						target = target.adjacent[2];
-						totals += safeCalculate(target[smellItem]) / reduce;
+						totals += safeCalculate(target[smellItem]);
 					} while (--steps);
 					steps = j*2;
 					do {
 						target = target.adjacent[3];
-						totals += safeCalculate(target[smellItem]) / reduce;
+						totals += safeCalculate(target[smellItem]);
 					} while (--steps);
 					steps = j*2;
 					do {
 						target = target.adjacent[0];
-						totals += safeCalculate(target[smellItem]) / reduce;
+						totals += safeCalculate(target[smellItem]);
 					} while (--steps);
 					steps = j;
 					do {
 						target = target.adjacent[1];
-						totals += safeCalculate(target[smellItem]) / reduce;
+						totals += safeCalculate(target[smellItem]);
 					} while (--steps);
 
-					location.nearby_prop[j] = totals;
+					location.nearby_prop[j] = totals / reduce;
 				}
 				location.nearby_prop.lastCalculated = this.S.status.iteration;
 			}

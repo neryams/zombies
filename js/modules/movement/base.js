@@ -13,10 +13,37 @@ exports.options = {
 		this.burstSpeed = 0;
 		this.panic = 0;
 
-		this.canDetect = false;
-		this.detectStrength = 1500;
 		this.swimming = false;
-		this.smellItem = '';
+
+		var smellItems = [];
+
+		this.getCurrentSmell = function() {
+			if(!smellItems.length)
+				return '';
+			else
+				return smellItems[smellItems.length - 1].id;
+		};
+		this.getCurrentSmellDistance = function() {
+			if(!smellItems.length)
+				return 0;
+			else
+				return smellItems[smellItems.length - 1].strength;			
+		};
+		this.currentSmellAdd = function(item, strength) {
+			this.currentSmellRemove(item);
+			smellItems.push({
+				id: item,
+				strength: strength
+			});
+		};
+		this.currentSmellRemove = function(item) {
+			for(var i = 0; i < smellItems.length; i++) {
+				if(smellItems[i].id == item) {
+					smellItems.splice(i, 1);
+					break;
+				}
+			}
+		};
 
 		var speedUpgrade = function() {
 			this.val('speed',1.5,'+');
