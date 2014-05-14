@@ -62,7 +62,8 @@ function MainInterface(UI,R) {
 		});
 		sidebarAccordion.addDataField('newsTicker',{
 			title: 'ui:buttons.news',
-			class: 'news'
+			class: 'news',
+			active: true
 		});
 
 		var viewOptionsMenu = mainControl.addDataField('viewOptionsMenu',{

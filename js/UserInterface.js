@@ -333,6 +333,10 @@ var UserInterface = function UserInterface(Renderer) {
 			},
 			dynamic: function(dynamic) {
 				this.data('dynamic', dynamic);
+			},
+			active: function(active) {
+				if(active)
+					this.addClass('active');
 			}
 		}
 	}));
