@@ -468,28 +468,29 @@ function Simulator(UI, loadModules, generatorConfig, generatorData) {
 		},
 		addUpgrades = function(module) {
 			var levels = [],
-				i = 0,
+				autoIdIndex = 0,
 				n = arguments.length;
 
-			// If an upgrade got added with the wrong id, fix it
+			// If an upgrade got added with id assuming only one upgrade, fix it now.
 			if(upgrades[module.id] !== undefined) {
 				upgrades[module.id + '_0'] = upgrades[module.id];
 				delete upgrades[module.id];
 			}
 
-			while(upgrades[module.id + '_' + i] !== undefined) {
-				i++;
-			}
-
-			for (var j = 1; j < n; i++,j++) {
-				var currentLevel = arguments[j];
+			for (var i = 1; i < n; i++) {
+				var currentLevel = arguments[i];
 				levels.push(currentLevel);
 
 				if(!currentLevel.id) {
+					// Find out what index this is
+					while(upgrades[module.id + '_' + autoIdIndex] !== undefined) {
+						autoIdIndex++;
+					}
+
 					if(n == 2)
 						currentLevel.id = module.id;
 					else
-						currentLevel.id = module.id + '_' + i;
+						currentLevel.id = module.id + '_' + autoIdIndex;
 				}
 
 				upgrades[currentLevel.id] = new Upgrade(currentLevel);

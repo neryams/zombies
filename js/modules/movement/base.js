@@ -1,17 +1,22 @@
 /*
-	Base Movement: upgrades to make zombies move faster
+	Base Movement: upgrades to make robots move faster
 */
 exports.type = 'infect';
-exports.run = function(current,passData) {
-	passData.mobility = this.speed;
-	passData.encounterProbability = this.speed + this.burstSpeed;
-	passData.panic += this.panic;
+exports.run = function(current, passData) {
+	passData.mobility = this.speed / (current.location.trees * this.vegetationSlow * 0.00001 + 1);
+	passData.encounterProbability = passData.mobility;
+	passData.panic += passData.mobility / 10 + this.panic;
+/*
+	if(current.location.trees * this.vegetationSlow > 1) {
+		UI.addNews('Vegetation is slowing your robots down!');
+	}*/
 };
 exports.options = {
 	init: function() {
-		this.speed = 3.5; // movement speed of zombies in kph. Average walking speed is 4.5-5.5 kph so they start pretty slow
+		this.speed = 2.5; // movement speed of robots in kph. Average walking speed is 4.5-5.5 kph so they start pretty slow
 		this.burstSpeed = 0;
 		this.panic = 0;
+		this.vegetationSlow = 10;
 
 		this.swimming = false;
 
@@ -46,19 +51,36 @@ exports.options = {
 		};
 
 		var speedUpgrade = function() {
-			this.val('speed',1.5,'+');
-			this.val('panic',1,'+');
+			this.val('speed',1,'+');
 		};
+
 		this.S.addUpgrades(this,
 			{
+				id: 'movement.base_0',
 				cost: 1000,
 				paths:['zombie.strain','reproducer.strain'],
-				name:'Servo Upgrade', 
+				name:'Servo Oil Research', 
 				onUpgrade: speedUpgrade, 
 				description:'Robots walk faster.',
 				style: {
 					angle: 0.66
 				}
+			},
+			{
+				id: 'movement.base_1',
+				cost: 2000,
+				paths:['movement.base_0'],
+				name:'Servo Motor Research', 
+				onUpgrade: speedUpgrade, 
+				description:'Robots walk faster.'
+			},
+			{
+				id: 'movement.base_2',
+				cost: 4000,
+				paths:['movement.base_1'],
+				name:'Actuator Servos', 
+				onUpgrade: speedUpgrade, 
+				description:'Robots walk faster.'
 			}
 		);
 	},

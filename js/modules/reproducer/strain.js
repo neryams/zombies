@@ -36,7 +36,7 @@ exports.options = {
 				dataPoints[i].trees = 0;
 			} else {
 				dataPoints[i].tech = Math.pow(Math.log(dataPoints[i].total_pop+1),4);
-				dataPoints[i].trees = Math.log(this.S.config.maximums.total_pop/(dataPoints[i].total_pop+10) + 1)*dataPoints[i].precipitation*dataPoints[i].temperature;
+				dataPoints[i].trees = Math.log(this.S.config.maximums.total_pop/(dataPoints[i].total_pop+10) + 1)*dataPoints[i].precipitation * (dataPoints[i].temperature / 100);
 			
 				if(this.S.config.maximums.tech < dataPoints[i].tech)
 					this.S.config.maximums.tech = dataPoints[i].tech;
