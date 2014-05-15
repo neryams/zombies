@@ -1343,10 +1343,10 @@ var UserInterface = function UserInterface(Renderer) {
 				console.error('no language item id defined');
 			else {
 				var langStr;
-				if(args.length > 0)
-					langStr = i18n.t('messages:'+item, { postProcess: 'sprintf', sprintf: args });
-				else
+				if(!args || args.length === 0)
 					langStr = i18n.t('messages:'+item);
+				else
+					langStr = i18n.t('messages:'+item, { postProcess: 'sprintf', sprintf: args });
 
 				interfaceParts.newsTicker.prepend($('<p>'+langStr+'</p>'));
 			}
