@@ -343,14 +343,7 @@ function Simulator() {
 			}
 		}
 
-		var pause = function() {
-				status.paused = true;
-			},
-			unPause = function() {
-				status.paused = false;
-				tick();
-			},
-			addUpgrades = function(module) {
+		var addUpgrades = function(module) {
 				var levels = [],
 					autoIdIndex = 0,
 					n = arguments.length;
@@ -754,12 +747,17 @@ function Simulator() {
 		var public = {
 			// true public functions, will need worker messages
 			config: config,
-			pause: pause,
-			unPause: unPause,
 			purchaseMutation: purchaseMutation,
 			availableUpgrades: availableUpgrades,
 			purchaseUpgrades: purchaseUpgrades,
 			getPointProperties: getPointProperties,
+			pause: function() {
+				status.paused = true;
+			},
+			unPause: function() {
+				status.paused = false;
+				tick();
+			},
 			moduleFunction: function(moduleId, functionName, parameters) {
 				 return modules[moduleId][functionName].apply(modules[moduleId],parameters);
 			},
@@ -802,17 +800,11 @@ function Simulator() {
 
 				UI.renderer.lookAt(startSq);
 
-				if(debugMenu.active) {
-					debugMenu.setSimulator($.extend({
-						points: points,
-						hordes: hordes,
-						tick: tick,
-						status: status,
-					}, public)).newTick();
-				}
-
 				status.displayData = 'total_pop';
 				status.updateAllPoints = true;
+
+				if(debugMenu.active)
+					debugMenu.console.newTick();
 
 				tick();
 
@@ -847,7 +839,7 @@ function Simulator() {
 			}
 		};
 
-		Module.prototype.S = $.extend({}, public, {
+		Module.prototype.S = $.extend({
 			hordes: hordes,
 			addUpgrades: addUpgrades,
 			modules: modules,
@@ -868,7 +860,14 @@ function Simulator() {
 					UI.addNews(message, replacements);
 				}
 			}
-		});
+		}, public);
+		if(debugMenu.active)
+			debugMenu.setSimulator($.extend({
+				points: points,
+				hordes: hordes,
+				tick: tick,
+				status: status,
+			}, public));
 
 		var initModules = {};
 		var recusiveInitModules = function(moduleId) {
