@@ -178,7 +178,7 @@ var Renderer = function (scaling,onLoad) {
                 currentWet = (currentWet + blendProperties(generatorData[dtI].precipitation, generatorData[dtI].adjacent[3].precipitation, generatorData[dtI].adjacent[1].precipitation, positionH)) / 2;
 
                 // Get the x/y coordinates in the climate coloring textureW
-                gradY = Math.round((1 - (312.5 - currentTemp) / 60) * (maxColorHeight - 1));
+                gradY = Math.round((1 - (312.5 - currentTemp) / 70) * (maxColorHeight - 1));
                 gradY = Math.min(Math.max(gradY, 0), maxColorHeight - 1);
 
                 // Generate height texture (greyscale map of elevation) and earth texture (color map using climate info)
