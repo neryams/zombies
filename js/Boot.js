@@ -55,7 +55,7 @@ if(node) {
     sass.render({
         data: '@import "third-party/normalize","settings","third-party/foundation","main","setup","ui";',
         success: function(css){
-            fs.writeFile('zombies/css/compiled.css', css, function (err) {
+            fs.writeFile('robots/css/compiled.css', css, function (err) {
                 if (err) throw err;
 
                 var queryString = '?reload=' + new Date().getTime();
@@ -67,7 +67,7 @@ if(node) {
         error: function(error) {
             console.log(error);
         },
-        includePaths: [ 'zombies/sass/' ],
+        includePaths: [ 'robots/sass/' ],
         outputStyle: 'nested'
     });
 }
@@ -201,7 +201,7 @@ $(function () {
                 }
                 console.timeEnd('webWorkerTransferTimer');
                 MI.load.endGenerator();
-                S = Simulator(UI, loadModules, generatorConfig, generatorData);
+                S = S.init(UI, loadModules, generatorConfig, generatorData);
                 S.setName(name);
 
                 UI.simulator.link(S);
@@ -213,7 +213,7 @@ $(function () {
         });
 
         var startLoad = function () {
-            var onLoadModules = function () {
+            var loadModules = function (toLoad) {
                 // Open debug menu by default in node.
                 R = Renderer(userConfig.resolution, function() {
                     UI = UserInterface(R);
@@ -227,7 +227,39 @@ $(function () {
                     R.init();
                 });
 
-                if(node) 
+                S = Simulator();
+
+                if(node) {
+                    // If running within node, import the modules through node
+                    var loaded = {};
+                    var requireModules = function(modules) {
+                        for(var i = 0; i < modules.length; i++) {
+                            if(!loaded[modules[i]]) {
+                                loaded[modules[i]] = true;
+                                var path = './js/modules/'+ modules[i].split('.').join('/')+'.js';
+                                var exports = require(path);
+
+                                if(exports.options.dependencies !== undefined)
+                                    requireModules(exports.options.dependencies);
+
+                                S.addModule(modules[i], exports);
+
+                                if(exports.options.children !== undefined)
+                                    requireModules(exports.options.children);
+                            }
+                        }
+                    };
+
+                    requireModules(toLoad);
+                } else {
+                    // If running in client, load the modules via server
+                    for (var moduleId in toLoad)
+                        if (toLoad.hasOwnProperty(moduleId)) {
+                            S.addModule(moduleId, toLoad[moduleId]);
+                        }
+                }
+
+                if(node)
                     debugMenu.openConsole();
                 debugMenu.setRenderer(R);
             };
@@ -235,10 +267,12 @@ $(function () {
             // Load the chosen modules first, then initiate the game 
             // If this is not running in node, load modules form server
             if(!node) {
-                $.getScript('js/loadModules.php?modules='+$('#s_modules').val(), onLoadModules);
+                $.getScript('modules/'+$('#s_modules').val(), function() {
+                    loadModules(window.toLoad);
+                    delete window.toLoad;
+                });
             } else {
-                loadModules = $('#s_modules').val().split(',');
-                onLoadModules();
+                loadModules($('#s_modules').val().split(','));
             }
         };
 

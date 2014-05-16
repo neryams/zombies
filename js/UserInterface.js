@@ -1238,7 +1238,7 @@ var UserInterface = function UserInterface(Renderer) {
 				return S.getAllPointProperty(property);
 			},
 			moduleFunction: function(moduleId, functionName, parameters) {
-				return S.modules[moduleId][functionName].apply(S.modules[moduleId],parameters);
+				return S.moduleFunction(moduleId, functionName, parameters);
 			}
 		};
 	};

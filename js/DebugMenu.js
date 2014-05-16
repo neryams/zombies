@@ -10,7 +10,7 @@ var debugMenu = {
 			sass.render({
 				data: '@import "third-party/webix","debugger";',
 				success: function(css){
-					fs.writeFile('zombies/css/debugger.css', css, function (err) {
+					fs.writeFile('robots/css/debugger.css', css, function (err) {
 						if (err) throw err;
 
 						var queryString = '?reload=' + new Date().getTime();
@@ -22,7 +22,7 @@ var debugMenu = {
 				error: function(error) {
 					console.log(error);
 				},
-				includePaths: [ 'zombies/sass/' ],
+				includePaths: [ 'robots/sass/' ],
 				outputStyle: 'nested'
 			});
 		}

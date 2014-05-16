@@ -5,7 +5,7 @@ exports.run = function() {
 			var robotsCreated = Math.ceil(this.productionSpeed / this.baseInterval);
 
 			for(var i = 0; i < this.locations.length; i++)
-				this.S.hordes.push(new Horde(robotsCreated, this.locations[i]));
+				this.S.hordes.push(robotsCreated, this.locations[i]);
 		}
 };
 exports.options = {
@@ -22,6 +22,6 @@ exports.options = {
 				texture: 'home'
 			});
 			this.val('locations',location,'append');
-		}
+		};
 	}
 };
