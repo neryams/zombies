@@ -660,7 +660,19 @@ Planet.prototype.calculateCoastLine = function() {
 Planet.prototype.calculateClimate = function() {
 	var i,current,
 		n = this.config.horse_lats * 1.5,
-		planet = this;
+		planet = this,
+		options = {
+			wtrChangeTemp: 0.65,
+			gndChangeTemp: 0.5,
+			feedbackChangeTemp: 0.1,
+			wtrAddMoisture: 0.1,
+			rainSpeed: 0.05,
+			gndChangeMoisture: 0.1,
+			centerWeight: 0.5,
+			coriolisStrength: 250,
+			reduceMultiplier: 0.85,
+			reduceMinimum: 0.05
+		};
 
 	var Wind = function(location, direction) {
 		this.location = location;
@@ -677,32 +689,21 @@ Planet.prototype.calculateClimate = function() {
 		saturationPressure: 0,
 		blendDistance: 4,
 		coriolis: 0,
-		options: {
-			wtrChangeTemp: 0.65,
-			gndChangeTemp: 0.5,
-			feedbackChangeTemp: 0.1,
-			wtrAddMoisture: 0.1,
-			rainSpeed: 0.05,
-			gndChangeMoisture: 0.1,
-			centerWeight: 0.5,
-			coriolisStrength: 250,
-		},
+		
 		// Changes temperature based on terrain, returns a value of precipitation
 		init: function() {
 			if(this.moveTo !== undefined) {
-				if(this.moveTo.wind) {
-					if(this.reduce === undefined)
-						this.reduce = 1;
-					else
-						this.reduce *= 0.75;
-
-					if(this.reduce < 0.025) {
-						return false;
-					}
+				if(this.reduce !== undefined)
+					this.reduce *= options.reduceMultiplier;
+				if(this.reduce < options.reduceMinimum) {
+					return false;
 				}
+
+				// If the destination has a wind object, swap places to avoid overwriting it.
 				if(this.moveTo.wind instanceof Wind) {
 					// swap move
 					var swapWith = this.moveTo.wind;
+
 					this.location.wind = swapWith;
 					swapWith.location = this.location;
 					delete swapWith.moveTo;
@@ -715,14 +716,24 @@ Planet.prototype.calculateClimate = function() {
 					swapWith.doBlend();
 					this.doBlend();
 
-					swapWith.blendDistance /= 4;
-					this.blendDistance /= 4;
+					swapWith.blendDistance = 1;
+					this.blendDistance = 1;
 
 					swapWith.reduce = 1;
 					this.reduce = 1;
 				}
+				// Otherwise, just move
 				else {
-					this.location.wind = true; // Went through here
+					this.location.wind = {
+						moisture: this.moisture,
+						temperature: this.temperature
+					}; // Went through here
+
+					// If there was wind in the square to move, blend
+					if(typeof(this.moveTo.wind) == 'object') {
+						this.temperature = this.moveTo.wind.temperature * (1 - this.reduce) + this.temperature * this.reduce;
+						this.moisture = this.moveTo.wind.moisture * (1 - this.reduce) + this.moisture * this.reduce;
+					}
 					this.location = this.moveTo;
 					this.location.wind = this;
 				}
@@ -739,9 +750,9 @@ Planet.prototype.calculateClimate = function() {
 				this.temperature = baseTemperature;
 			} else {
 				if(this.location.water)
-					this.temperature = this.temperature * (1 - this.options.wtrChangeTemp) + baseTemperature * this.options.wtrChangeTemp;
+					this.temperature = this.temperature * (1 - options.wtrChangeTemp) + baseTemperature * options.wtrChangeTemp;
 				else
-					this.temperature = this.temperature * (1 - this.options.gndChangeTemp) + baseTemperature * this.options.gndChangeTemp;
+					this.temperature = this.temperature * (1 - options.gndChangeTemp) + baseTemperature * options.gndChangeTemp;
 			}
 
 			// Equation for saturation pressure vs temperature: http://www.engineeringtoolbox.com/water-vapor-saturation-pressure-air-d_689.html
@@ -749,7 +760,7 @@ Planet.prototype.calculateClimate = function() {
 
 			// Add moisture up to saturation when over water
 			if(this.location.water)
-				this.moisture += (this.saturationPressure - this.moisture) * this.options.wtrAddMoisture;
+				this.moisture += (this.saturationPressure - this.moisture) * options.wtrAddMoisture;
 
 			return true;
 		},
@@ -757,27 +768,19 @@ Planet.prototype.calculateClimate = function() {
 			this.moveTo = newLocation;
 		},
 		apply: function() {
-			if(this.reduce !== undefined)
-				this.location.temperature = this.location.temperature * (1 - this.reduce) + this.temperature * this.reduce;
-			else
-				this.location.temperature = this.temperature;
-
-			this.saturationPressure = Math.pow(Math.E,77.3450+0.0057*this.temperature-7235/this.temperature)/Math.pow(this.temperature,8.2);
+			this.location.temperature = this.temperature;
 			
 			var precipitation = 0;
 			// If temperature decreases for whatever reason and lowers the saturation pressure, rain out the extra water
 			if(this.saturationPressure < this.moisture ) {
-				precipitation += (this.moisture - this.saturationPressure) * this.options.rainSpeed * 2;
+				precipitation += (this.moisture - this.saturationPressure) * options.rainSpeed * 2;
 			}
-			precipitation += (this.moisture/this.saturationPressure) * this.moisture * this.options.rainSpeed;
+			precipitation += (this.moisture/this.saturationPressure) * this.moisture * options.rainSpeed;
 
 			if(precipitation > this.moisture)
 				precipitation = this.moisture;
 
-			if(this.reduce !== undefined)
-				this.location.precipitation = this.location.precipitation * (1 - this.reduce) + precipitation * this.reduce;
-			else
-				this.location.precipitation = precipitation;
+			this.location.precipitation = precipitation;
 
 			this.moisture -= precipitation;
 		},
@@ -788,7 +791,7 @@ Planet.prototype.calculateClimate = function() {
 
 			this.location.temperature += dryModifier;
 
-			this.temperature = this.temperature * (1 - this.options.feedbackChangeTemp) + this.location.temperature * this.options.feedbackChangeTemp;
+			this.temperature = this.temperature * (1 - options.feedbackChangeTemp) + this.location.temperature * options.feedbackChangeTemp;
 		},
 		blend: function(blendWith, strength) {
 			this.blendWinds.push({
@@ -832,12 +835,6 @@ Planet.prototype.calculateClimate = function() {
 
 	var turns = 0, winds = [];
 	// Create all the wind objects
-	/*
-	for(i = 72; i < 86; i++) {
-		winds.push(new Wind(this.data[this.data.length / 2 - this.config.horse_lats * this.config.w + i],       's'));
-		winds.push(new Wind(this.data[this.data.length / 2 + (planet.config.horse_lats - 1) * this.config.w + i],       'n'));
-	}*/
-
 	for(i = 0; i < planet.config.w; i++) {
 		winds.push(new Wind(this.data[i],                                                                       's'));
 		winds.push(new Wind(this.data[this.data.length / 2 - (this.config.horse_lats + 1) * this.config.w + i], 'n'));
@@ -891,7 +888,7 @@ Planet.prototype.calculateClimate = function() {
 			}
 
 			// Calculate Coriolis Force 
-			current.coriolis += Math.asin(Math.sin((90 - current.location.lat) * Math.PI / 180) - Math.sin((90 - target.lat) * Math.PI / 180)) * current.options.coriolisStrength;
+			current.coriolis += Math.asin(Math.sin((90 - current.location.lat) * Math.PI / 180) - Math.sin((90 - target.lat) * Math.PI / 180)) * options.coriolisStrength;
 			if(current.coriolis > 0) { // Coriolis force is positive, move the wind east (positive lat)
 				while(current.coriolis > 1) {
 					target = target.adjacent[1];
