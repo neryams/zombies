@@ -9,11 +9,7 @@
 var Renderer = function (scaling,onLoad) {
     // Initialize variables
     var Camera, Scene, Sphere, SceneRenderer, DataBarsMesh, DataBarsGeometry, DataBarMesh,
-        hordeSystem = {
-            length: 0,
-            maxSize: 0,
-            particles: null,
-            arrayLinks: []
+        hordeSystems = {
         },
         WindowConfig = {
             windowX: 0,
@@ -27,7 +23,12 @@ var Renderer = function (scaling,onLoad) {
             texture: null,
             textureCanvas: null,
             textureStore: {},
-            decalTextures: {},
+            decalTextures: {
+                gun: new THREE.ImageUtils.loadTexture('ui/decals/gun.png'),
+                seaport: new THREE.ImageUtils.loadTexture('ui/decals/seaport.png'),
+                home: new THREE.ImageUtils.loadTexture('ui/decals/home.png'),
+                moveto: new THREE.ImageUtils.loadTexture('ui/decals/moveto.png')
+            },
             decals: {},
             arc: null
         },
@@ -62,12 +63,6 @@ var Renderer = function (scaling,onLoad) {
         onLoad();
     };
     climateBg.src = 'ui/climateGradient.jpg';
-
-    // Load decal textures here
-    visualization.decalTextures.gun = new THREE.ImageUtils.loadTexture('ui/decals/gun.png');
-    visualization.decalTextures.seaport = new THREE.ImageUtils.loadTexture('ui/decals/seaport.png');
-    visualization.decalTextures.home = new THREE.ImageUtils.loadTexture('ui/decals/home.png');
-    visualization.decalTextures.moveto = new THREE.ImageUtils.loadTexture('ui/decals/moveto.png');
     
     /* Create 3D Globe --------------------- */
     Camera = new THREE.PerspectiveCamera( 60, WindowConfig.windowX / WindowConfig.windowY, 1, 10000 );
@@ -129,7 +124,7 @@ var Renderer = function (scaling,onLoad) {
         DataBarsGeometry = new THREE.Geometry();
         DataBarsGeometry.dynamic = true;
 
-        addHordeParticles();
+        addHordeParticles('basic', 5000);
     },
 
     simulatorStart = function(texture, generatorOptions, generatorDataAll) {
@@ -312,41 +307,39 @@ var Renderer = function (scaling,onLoad) {
         };
     },
 
-    addHordeParticles = function() {
+    addHordeParticles = function(textureId, count) {
         var particleGroup = new SPE.Group({
-            texture: THREE.ImageUtils.loadTexture('ui/zombie_basic.png'),
-            maxAge: 2
+            texture: THREE.ImageUtils.loadTexture('ui/particles/' + textureId + '.png')
         });
 
-        var emitter = new SPE.Emitter({
-            type: 'sphere',
+        hordeSystems[textureId] = {
+            length: 0,
+            maxSize: 0,
+            particles: particleGroup.geometry,
+            attributes: particleGroup.attributes,
+            arrayLinks: [],
+            maxLength: count,
+            addEmitter: function(count) {
+                var emitter = new SPE.Emitter({
+                    type: 'sphere',
+                    particleCount: count,
+                    radius: 0,
+                    sizeStart: 1,
+                    opacityStart: 0.5,
+                    isStatic: 1
+                });
+                
+                particleGroup.addEmitter(emitter);
+            }
+        };
 
-            radius: 0,
-            radiusScale: new THREE.Vector3(1, 1, 1),
-
-            position: new THREE.Vector3( 0, 0, 0 ),
-
-            colorStart: (new THREE.Color()).setRGB(
-                1,
-                0,
-                0
-            ),
-            sizeStart: 1,
-
-            particleCount: 40000,
-
-            opacityStart: 0.5,
-            isStatic: 1
-        });
-
-        particleGroup.addEmitter( emitter );
+        hordeSystems[textureId].addEmitter(count);
         Sphere.add( particleGroup.mesh );
-        
-        hordeSystem.particles = particleGroup.geometry;
-        hordeSystem.attributes = particleGroup.attributes;
     },
 
-    updateHorde = function(horde, remove) {
+    updateHorde = function(textureId, horde, remove) {
+        var hordeSystem = hordeSystems[textureId];
+
         var selectedHorde = hordeSystem[horde.id];
         if(selectedHorde === undefined)
             selectedHorde = hordeSystem[horde.id] = {};
@@ -370,6 +363,10 @@ var Renderer = function (scaling,onLoad) {
             delete hordeSystem[horde.id];
         } else {
             if(selectedHorde.particleVertex === undefined) {
+                if(hordeSystem.length + 1 > hordeSystem.maxLength) {
+                    hordeSystem.addEmitter(hordeSystem.length);
+                    hordeSystem.maxLength += hordeSystem.length;
+                }
                 // If horde does not have a particle, create one
                 selectedHorde.particleVertex = hordeSystem.particles.vertices[hordeSystem.length];
                 selectedHorde.particleSizeAttrib = hordeSystem.attributes.size.value[hordeSystem.length];
@@ -710,6 +707,7 @@ var Renderer = function (scaling,onLoad) {
         animate: animate,
         getSphereCoords: getSphereCoords,
         resize: resize,
+        addNewHordeType: addHordeParticles,
         updateHorde: updateHorde,
         setData: setData,
         setDataBarColor: function(colorStart, colorEnd, updateBarsNow) {
@@ -726,7 +724,7 @@ var Renderer = function (scaling,onLoad) {
         },
         updateMatrix: function() {
             DataBarsGeometry.verticesNeedUpdate = true;
-            DataBarsGeometry.colorsNeedUpdate = true;      
+            DataBarsGeometry.colorsNeedUpdate = true;
         },
         moveCamera: function(x,y) {
             WindowConfig.mouseVector.multiplyScalar(0.5).addScalars(x,y,0);

@@ -529,7 +529,7 @@ function Simulator() {
 
 					// If current horde is empty, remove it from the simulation
 					if(current.size < 1) {
-						UI.renderer.updateHorde(current, true);
+						UI.renderer.updateHorde('basic', current, true);
 						current = hordes[i] = hordes.pop(); // don't use splice here, very expensive for huge array. Just swap element to remove with last.
 						n--;
 					}
@@ -679,7 +679,7 @@ function Simulator() {
 
 					tick_hordes(function(current) {
 						if(!current.renderer.cacheLat || current.renderer.cacheLat != current.location.lat || current.renderer.cacheLng != current.location.lng) {
-							UI.renderer.updateHorde(current);
+							UI.renderer.updateHorde('basic', current);
 							current.renderer.cacheLat = current.location.lat;
 							current.renderer.cacheLng = current.location.lng;
 						}
@@ -858,6 +858,12 @@ function Simulator() {
 				},
 				addNews: function(message, replacements) {
 					UI.addNews(message, replacements);
+				},
+				updateHorde: function(textureId, horde, remove) {
+					UI.renderer.updateHorde(textureId, horde, remove);
+				},
+				addNewHordeType: function(textureId, count) {
+					UI.renderer.updateHorde(textureId, count);
 				}
 			}
 		}, public);

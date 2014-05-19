@@ -1279,8 +1279,11 @@ var UserInterface = function UserInterface(Renderer) {
 				changedStatus.displayData = true;
 				changedStatus.updateAllPoints = true;
 			},
-			updateHorde: function(horde, remove) {
-				Renderer.updateHorde(horde, remove);
+			updateHorde: function(textureId, horde, remove) {
+				Renderer.updateHorde(textureId, horde, remove);
+			},
+			addNewHordeType: function(textureId, count) {
+				Renderer.addNewHordeType(textureId, count);
 			}
 		},
 		addDataField: function(id, options) {
