@@ -18,16 +18,13 @@ exports.options = {
 			globeSize = 200,
 			circleColor = 0xff00ff;
 
-		this.addBeacon = function(lat, lng) {
+		var addBeacon = function(lat, lng) {
 			var circleRadius = globeSize * this.beaconStrength / globeRadius;
 
 			while(beacons.length >= this.maxBeacons) {
 				var beacon = beacons.shift();
 				beacon.location.beacon = 0;
 			}
-
-			lat = Math.round(lat - 0.5) + 0.5;
-			lng = Math.round(lng - 0.5) + 0.5;
 
 			this.S.UILink.rendererDecal('beacon' + beacons.length, {
 				lat: lat,
@@ -49,31 +46,37 @@ exports.options = {
 			this.S.modules['movement.base'].currentSmellAdd('beacon', this.beaconStrength);
 		};
 
-		this.removeBeacon = function(lat, lng) {
-			lat = Math.round(lat - 0.5) + 0.5;
-			lng = Math.round(lng - 0.5) + 0.5;
-
-			for(var i = 0; i < beacons.length; i++) {
-				if(beacons[i].location.lat == lat && beacons[i].location.lng == lng) {
-					beacons[i].location.beacon = 0;
-					this.S.UILink.rendererRemoveDecal('beacon' + i);
-					this.S.UILink.rendererRemoveDecal('beacon_c' + i);
-					beacons.splice(i, 1);
-					break;
-				}
-			}
+		var removeBeacon = function(index) {
+			beacons[index].location.beacon = 0;
+			this.S.UILink.rendererRemoveDecal('beacon' + index);
+			this.S.UILink.rendererRemoveDecal('beacon_c' + index);
+			beacons.splice(index, 1);
 
 			if(!beacons.length)
 				this.S.modules['movement.base'].currentSmellRemove('beacon');
 		};
+
+		this.toggleBeacon = function(lat, lng) {
+			lat = Math.round(lat - 0.5) + 0.5;
+			lng = Math.round(lng - 0.5) + 0.5;
+			var removed = false;
+
+			for(var i = 0; i < beacons.length; i++) {
+				if(beacons[i].location.lat == lat && beacons[i].location.lng == lng) {
+					removeBeacon(i);
+					removed = true;
+				}
+			}
+
+			if(!removed) {
+				addBeacon(lat, lng);
+			}
+		};
 	},
 	ui: function(UI) {
-		UI.addGlobeClickEvent(function(lat, lng) {
-			UI.simulator.moduleFunction('beacon','addBeacon',[lat, lng]);
-		});
-		UI.addGlobeRightClickEvent(function(lat, lng) {
-			UI.simulator.moduleFunction('beacon','removeBeacon',[lat, lng]);
-		});
+		UI.on('globeClick', function(lat, lng) {
+			UI.simulator.moduleFunction('beacon','toggleBeacon',[lat, lng]);
+		}, 50);
 	},
 	dependencies: ['movement.base']
 };

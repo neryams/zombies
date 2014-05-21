@@ -847,6 +847,9 @@ function Simulator() {
 			bakedValues: bakedValues,
 			countries: countries,
 			UILink: {
+				trigger: function(eventId, parameters) {
+					UI.trigger(eventId, parameters);
+				},
 				rendererDecal: function(id, lat, lng, size, texture) {
 					UI.renderer.decal(id, lat, lng, size, texture);
 				},

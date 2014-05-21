@@ -23,8 +23,7 @@ var UserInterface = function UserInterface(Renderer) {
 		UIstatus = {
 			mouse: { x:0, y:0, lastx:0, lasty:0, down:false, click: false, scroll: 0, bound: null },
 			pauseRenderer: false,
-			clickFunctionQueue: [],
-			rclickFunctionQueue: []
+			events: {}
 		},
 		changedStatus = {
 		};
@@ -1284,6 +1283,29 @@ var UserInterface = function UserInterface(Renderer) {
 			},
 			addNewHordeType: function(textureId, count) {
 				Renderer.addNewHordeType(textureId, count);
+			}
+		},
+		on: function(eventId, eventFunction, priority) {
+			var prioritySort = function(a, b) {
+				return b.priority - a.priority;
+			};
+
+			if(UIstatus.events[eventId] === undefined)
+				UIstatus.events[eventId] = [];
+
+			UIstatus.events[eventId].push({
+				eventFunction: eventFunction,
+				priority: priority
+			});
+
+			UIstatus.events[eventId].sort(prioritySort);
+		},
+		trigger: function(eventId, parameters) {
+			if(UIstatus.events[eventId] !== undefined) {
+				for(var i = 0; i < UIstatus.events[eventId].length; i--) {
+					if(UIstatus.events[eventId][i].apply(this, parameters))
+						break;
+				}
 			}
 		},
 		addDataField: function(id, options) {
