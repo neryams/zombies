@@ -100,7 +100,7 @@ var Renderer = function (scaling,onLoad) {
         var visualArcGeometry = new THREE.Geometry();
         while(visualArcGeometry.vertices.length < 108)
             visualArcGeometry.vertices.push( new THREE.Vector3( 0, 0, 0 ) );
-        visualization.arc = new THREE.Line(visualArcGeometry,new THREE.LineBasicMaterial({linewidth:2}));
+        visualization.arc = new THREE.Line(visualArcGeometry, new THREE.LineBasicMaterial({ linewidth:2, transparent: true }));
         visualization.arc.visible = false;
         Sphere.add( visualization.arc );
 
@@ -850,40 +850,48 @@ var Renderer = function (scaling,onLoad) {
                 tween.start();
             }
         },
-        displayArc: function (point1, point2) {
-            var i,position,index,
-                phi1 = (90 - point1.lat) * Math.PI / 180,
-                theta1 = (180 - point1.lng) * Math.PI / 180,
-                phi2 = (90 - point2.lat) * Math.PI / 180,
-                theta2 = (180 - point2.lng) * Math.PI / 180,
-                n_sub = 24;
+        displayArc: function (point1, point2, opacity) {
+            if(point1 && point2) {
+                var i,position,index,
+                    phi1 = (90 - point1.lat) * Math.PI / 180,
+                    theta1 = (180 - point1.lng) * Math.PI / 180,
+                    phi2 = (90 - point2.lat) * Math.PI / 180,
+                    theta2 = (180 - point2.lng) * Math.PI / 180,
+                    n_sub = 24;
 
-            var d = Math.acos(Math.sin(phi1) * Math.sin(phi2) + Math.cos(phi1) * Math.cos(phi2) * Math.cos(theta1 - theta2)),
-                points = [coordToCartesian(point1.lat,point1.lng)];
+                var d = Math.acos(Math.sin(phi1) * Math.sin(phi2) + Math.cos(phi1) * Math.cos(phi2) * Math.cos(theta1 - theta2)),
+                    points = [coordToCartesian(point1.lat,point1.lng)];
 
-            for(i = 1; i < n_sub; i++) {
-                var f = i/n_sub,
-                    A = Math.sin((1 - f) * d) / Math.sin(d),
-                    B = Math.sin(f * d) / Math.sin(d),
-                    x = A * Math.sin(phi1) * Math.cos(theta1) + B * Math.sin(phi2) * Math.cos(theta2),
-                    y = A * Math.cos(phi1) + B * Math.cos(phi2),
-                    z = A * Math.sin(phi1) * Math.sin(theta1) + B * Math.sin(phi2) * Math.sin(theta2);
+                for(i = 1; i < n_sub; i++) {
+                    var f = i/n_sub,
+                        A = Math.sin((1 - f) * d) / Math.sin(d),
+                        B = Math.sin(f * d) / Math.sin(d),
+                        x = A * Math.sin(phi1) * Math.cos(theta1) + B * Math.sin(phi2) * Math.cos(theta2),
+                        y = A * Math.cos(phi1) + B * Math.cos(phi2),
+                        z = A * Math.sin(phi1) * Math.sin(theta1) + B * Math.sin(phi2) * Math.sin(theta2);
 
-                points.push(new THREE.Vector3(x,y,z).setLength(200+30*Math.sin(f*Math.PI)));
+                    points.push(new THREE.Vector3(x,y,z).setLength(200+30*Math.sin(f*Math.PI)));
+                }
+                points.push(coordToCartesian(point2.lat,point2.lng));
+
+                var spline = new THREE.Spline(points);
+
+                for ( i = 0; i < n_sub*3; i++ ) {
+                    index = i / ( n_sub*3 - 1 );
+                    position = spline.getPoint( index );
+
+                    visualization.arc.geometry.vertices[i].copy( position );
+                }
+                visualization.arc.geometry.verticesNeedUpdate = true;
+
+                if(!visualization.arc.visible)
+                    visualization.arc.visible = true;     
             }
-            points.push(coordToCartesian(point2.lat,point2.lng));
 
-            var spline = new THREE.Spline(points);
-
-            for ( i = 0; i < n_sub*3; i++ ) {
-                index = i / ( n_sub*3 - 1 );
-                position = spline.getPoint( index );
-
-                visualization.arc.geometry.vertices[i].copy( position );
+            if(visualization.arc.material.opacity !== opacity && opacity !== undefined) {
+                visualization.arc.material.opacity = opacity;
+                visualization.arc.material.needsUpdate = true;
             }
-            visualization.arc.geometry.verticesNeedUpdate = true;
-
-            visualization.arc.visible = true;
         },
         hideArc: function () {
             visualization.arc.visible = false;
