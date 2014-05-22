@@ -1128,7 +1128,7 @@ var UserInterface = function UserInterface(Renderer) {
 					var pointFunction = status.pointFunction[status.pointFunction.length - 1];
 
 					var sphere_coords = Renderer.getSphereCoords(UIstatus.mouse.x,UIstatus.mouse.y),
-						result;
+						result = toolTipContent.html();
 
 					if(sphere_coords && !isNaN(sphere_coords[0]) && !isNaN(sphere_coords[1]) && 
 						(status.lastIteration != turnNumber || sphere_coords[0] != status.lastLat || sphere_coords[1] != status.lastLng)
