@@ -1321,14 +1321,16 @@ var UserInterface = function UserInterface(Renderer) {
 				priority = 0;
 			}
 
-			if(eventFunction !== undefined) {
+			var eventIdParts = eventId.split('.');
+
+			// It's a new handler and the function is defined
+			if(eventFunction !== undefined && (eventIdParts.length === 1 || (eventIdParts.length > 1 && (UIstatus.events[eventId] === undefined || !UIstatus.events[eventId].length)))) {
 				var eventObject = {
 					eventFunction: eventFunction,
 					priority: priority,
 					active: true
 				};
 
-				var eventIdParts = eventId.split('.');
 				eventId = '';
 				while(eventIdParts.length > 0) {
 					eventId += eventIdParts.shift();
@@ -1341,26 +1343,28 @@ var UserInterface = function UserInterface(Renderer) {
 
 					eventId += '.';
 				}
+			// If there's no handler or the handler already existed, just reactivate it.
 			} else {
 				if(UIstatus.events[eventId] === undefined) {
 					console.error(eventId + ' not found');
 				} else {
-					if(priority !== undefined) {
-						UIstatus.events[eventId].priority = priority;
-						UIstatus.events[eventId].sort(prioritySort);
-					}
-					UIstatus.events[eventId].active = true;
+					for(var i = 0; i < UIstatus.events[eventId].length; i++)
+						UIstatus.events[eventId][i].active = true;
 				}
 			}
 		},
 		off: function(eventId) {
-			if(UIstatus.events[eventId] !== undefined) {
+			if(UIstatus.events[eventId] === undefined) {
+				console.error(eventId + ' not found');
+			} else {
 				for(var i = 0; i < UIstatus.events[eventId].length; i++)
 					UIstatus.events[eventId][i].active = false;
 			}
 		},
 		trigger: function(eventId, parameters) {
-			if(UIstatus.events[eventId] !== undefined) {
+			if(UIstatus.events[eventId] === undefined) {
+				console.error(eventId + ' not found');
+			} else {
 				for(var i = 0; i < UIstatus.events[eventId].length; i++) {
 					if(typeof UIstatus.events[eventId][i].eventFunction === 'function')
 						if(UIstatus.events[eventId][i].eventFunction.apply(this, parameters))
