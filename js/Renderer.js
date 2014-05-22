@@ -100,7 +100,7 @@ var Renderer = function (scaling,onLoad) {
         var visualArcGeometry = new THREE.Geometry();
         while(visualArcGeometry.vertices.length < 108)
             visualArcGeometry.vertices.push( new THREE.Vector3( 0, 0, 0 ) );
-        visualization.arc = new THREE.Line(visualArcGeometry,new THREE.LineBasicMaterial({linewidth:5}));
+        visualization.arc = new THREE.Line(visualArcGeometry,new THREE.LineBasicMaterial({linewidth:2}));
         visualization.arc.visible = false;
         Sphere.add( visualization.arc );
 

@@ -25,7 +25,8 @@ var UserInterface = function UserInterface(Renderer) {
 			pauseRenderer: false,
 			events: {
 				globeClick: [],
-				globeRClick: []
+				globeRClick: [],
+				rClick: []
 			}
 		},
 		changedStatus = {
@@ -1111,24 +1112,32 @@ var UserInterface = function UserInterface(Renderer) {
 			status = {
 				active: false,
 				pointFunction: [],
-				hidden: true
+				hidden: true,
+				lastIteration: 0,
+				lastLat: -1,
+				lastLng: -1
 			};
 
 		toolTipElement.hide();
 		$('#ui').append(toolTipElement);
 
-		var update = function() {
-				if(status.active && status.pointFunction.length > 0 && !UIstatus.pauseRenderer) {
+		var update = function(turnNumber) {
+				if(status.active && !UIstatus.pauseRenderer && status.pointFunction.length > 0 && 
+					(status.lastIteration != turnNumber || UIstatus.mouse.y != UIstatus.mouse.lasty || UIstatus.mouse.x != UIstatus.mouse.lastx)
+				) {
 					var pointFunction = status.pointFunction[status.pointFunction.length - 1];
 
 					var sphere_coords = Renderer.getSphereCoords(UIstatus.mouse.x,UIstatus.mouse.y),
 						result;
 
-					if(sphere_coords && !isNaN(sphere_coords[0]) && !isNaN(sphere_coords[1])) {
+					if(sphere_coords && !isNaN(sphere_coords[0]) && !isNaN(sphere_coords[1]) && 
+						(status.lastIteration != turnNumber || sphere_coords[0] != status.lastLat || sphere_coords[1] != status.lastLng)
+					) {
 						result = pointFunction(sphere_coords[0], sphere_coords[1]);
 						toolTipContent.html(result);
+						status.lastLat = sphere_coords[0];
+						status.lastLng = sphere_coords[1];
 					}
-					toolTipElement.css('left', UIstatus.mouse.x).css('top', UIstatus.mouse.y);
 
 					if(!result && !status.hidden) {
 						toolTipElement.hide();
@@ -1137,7 +1146,11 @@ var UserInterface = function UserInterface(Renderer) {
 						toolTipElement.show();
 						status.hidden = false;
 					}
+
+					if(!status.hidden)
+						toolTipElement.css('left', UIstatus.mouse.x).css('top', UIstatus.mouse.y);
 				}
+				status.lastIteration = turnNumber;
 			},
 			setPointFunction = function(process, queueLevel) {
 				if(queueLevel === undefined)
@@ -1165,6 +1178,9 @@ var UserInterface = function UserInterface(Renderer) {
 				toolTipContent.html('');
 				toolTipElement.hide();
 				status.active = false;
+			},
+			active: function() {
+				return status.active;
 			}
 		};
 	};
@@ -1174,6 +1190,8 @@ var UserInterface = function UserInterface(Renderer) {
 	// Function that runs on every frame, sending mouse movement from UI as coordinates to the renderer to move 3-d elements around
 	Renderer.onRender(function() {
 		if(!UIstatus.pauseRenderer) {
+			MT.update(status.iteration);
+
 			if(UIstatus.mouse.down) {
 				Renderer.moveCamera(UIstatus.mouse.lastx - UIstatus.mouse.x, UIstatus.mouse.lasty - UIstatus.mouse.y);
 				UIstatus.mouse.lastx = UIstatus.mouse.x;
@@ -1184,7 +1202,6 @@ var UserInterface = function UserInterface(Renderer) {
 				UIstatus.mouse.scroll = 0;
 			}
 
-			MT.update();
 			return false; // not paused
 		}
 		else {
@@ -1286,7 +1303,13 @@ var UserInterface = function UserInterface(Renderer) {
 			},
 			addNewHordeType: function(textureId, count) {
 				Renderer.addNewHordeType(textureId, count);
-			}
+			},
+	        displayArc: function (point1, point2) {
+	        	Renderer.displayArc(point1, point2);
+	        },
+	        hideArc: function () {
+	            Renderer.hideArc();
+	        }
 		},
 		on: function(eventId, priority, eventFunction) {
 			var prioritySort = function(a, b) {
@@ -1331,13 +1354,17 @@ var UserInterface = function UserInterface(Renderer) {
 			}
 		},
 		off: function(eventId) {
-			UIstatus.events[eventId].active = false;
+			if(UIstatus.events[eventId] !== undefined) {
+				for(var i = 0; i < UIstatus.events[eventId].length; i++)
+					UIstatus.events[eventId][i].active = false;
+			}
 		},
 		trigger: function(eventId, parameters) {
 			if(UIstatus.events[eventId] !== undefined) {
 				for(var i = 0; i < UIstatus.events[eventId].length; i++) {
-					if(UIstatus.events[eventId][i].eventFunction.apply(this, parameters))
-						break;
+					if(typeof UIstatus.events[eventId][i].eventFunction === 'function')
+						if(UIstatus.events[eventId][i].eventFunction.apply(this, parameters))
+							break;
 				}
 			}
 		},
