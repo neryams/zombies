@@ -219,13 +219,24 @@ function MainInterface(UI,R) {
 				R.stopCameraMovement();
 			}
 		});
-		$('#ui').on('mouseup.moveCamera', function () {
+		$('#ui').on('mouseup.moveCamera', function (event) {
 			// If mouse didn't move, do the click
 			if(status.mouse.click) {
 				var sphereCoords = R.getSphereCoords(status.mouse.x, status.mouse.y);
 				var clickHandled = false;
 				var i;
-				if(sphereCoords)
+
+				if(event.which == 3) { // Check for the right click anywhere on the screen first, generally used for cancelling actions
+					for(i = 0; i < status.events.rClick.length; i++) {
+						if(status.events.rClick[i].eventFunction && status.events.rClick[i].active) {
+							if(status.events.rClick[i].eventFunction()) {
+								clickHandled = true;
+								break;
+							}
+						}
+					}					
+				}
+				if(sphereCoords && !clickHandled)
 					switch (event.which) {
 				        case 1: // left
 							for(i = 0; i < status.events.globeClick.length; i++) {
