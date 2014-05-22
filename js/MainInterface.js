@@ -228,9 +228,9 @@ function MainInterface(UI,R) {
 				if(sphereCoords)
 					switch (event.which) {
 				        case 1: // left
-							for(i = status.clickFunctionQueue.length - 1; i >= 0; i--) {
-								if(typeof status.clickFunctionQueue[i] === 'function') {
-									if(status.clickFunctionQueue[i](sphereCoords[0], sphereCoords[1])) {
+							for(i = 0; i < status.events.globeClick.length; i++) {
+								if(status.events.globeClick[i].eventFunction && status.events.globeClick[i].active) {
+									if(status.events.globeClick[i].eventFunction(sphereCoords[0], sphereCoords[1])) {
 										clickHandled = true;
 										break;
 									}
@@ -240,9 +240,9 @@ function MainInterface(UI,R) {
 				        case 2: // middle
 				            break;
 				        case 3: // right
-							for(i = status.rclickFunctionQueue.length - 1; i >= 0; i--) {
-								if(typeof status.rclickFunctionQueue[i] === 'function') {
-									if(status.rclickFunctionQueue[i](sphereCoords[0], sphereCoords[1])) {
+							for(i = 0; i < status.events.globeRClick.length; i++) {
+								if(status.events.globeRClick[i].eventFunction && status.events.globeRClick[i].active) {
+									if(status.events.globeRClick[i].eventFunction(sphereCoords[0], sphereCoords[1])) {
 										clickHandled = true;
 										break;
 									}

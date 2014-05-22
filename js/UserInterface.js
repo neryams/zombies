@@ -23,7 +23,10 @@ var UserInterface = function UserInterface(Renderer) {
 		UIstatus = {
 			mouse: { x:0, y:0, lastx:0, lasty:0, down:false, click: false, scroll: 0, bound: null },
 			pauseRenderer: false,
-			events: {}
+			events: {
+				globeClick: [],
+				globeRClick: []
+			}
 		},
 		changedStatus = {
 		};
@@ -1285,37 +1288,61 @@ var UserInterface = function UserInterface(Renderer) {
 				Renderer.addNewHordeType(textureId, count);
 			}
 		},
-		on: function(eventId, eventFunction, priority) {
+		on: function(eventId, priority, eventFunction) {
 			var prioritySort = function(a, b) {
 				return b.priority - a.priority;
 			};
 
-			if(UIstatus.events[eventId] === undefined)
-				UIstatus.events[eventId] = [];
+			if(typeof priority === 'function') {
+				eventFunction = priority;
+				priority = 0;
+			}
 
-			UIstatus.events[eventId].push({
-				eventFunction: eventFunction,
-				priority: priority
-			});
+			if(eventFunction !== undefined) {
+				var eventObject = {
+					eventFunction: eventFunction,
+					priority: priority,
+					active: true
+				};
 
-			UIstatus.events[eventId].sort(prioritySort);
+				var eventIdParts = eventId.split('.');
+				eventId = '';
+				while(eventIdParts.length > 0) {
+					eventId += eventIdParts.shift();
+
+					if(UIstatus.events[eventId] === undefined)
+						UIstatus.events[eventId] = [];
+
+					UIstatus.events[eventId].push(eventObject);
+					UIstatus.events[eventId].sort(prioritySort);
+
+					eventId += '.';
+				}
+			} else {
+				if(UIstatus.events[eventId] === undefined) {
+					console.error(eventId + ' not found');
+				} else {
+					if(priority !== undefined) {
+						UIstatus.events[eventId].priority = priority;
+						UIstatus.events[eventId].sort(prioritySort);
+					}
+					UIstatus.events[eventId].active = true;
+				}
+			}
+		},
+		off: function(eventId) {
+			UIstatus.events[eventId].active = false;
 		},
 		trigger: function(eventId, parameters) {
 			if(UIstatus.events[eventId] !== undefined) {
-				for(var i = 0; i < UIstatus.events[eventId].length; i--) {
-					if(UIstatus.events[eventId][i].apply(this, parameters))
+				for(var i = 0; i < UIstatus.events[eventId].length; i++) {
+					if(UIstatus.events[eventId][i].eventFunction.apply(this, parameters))
 						break;
 				}
 			}
 		},
 		addDataField: function(id, options) {
 			return mainSection.addDataField.call(mainSection, id, options);
-		},
-		addGlobeClickEvent: function(event) {
-			UIstatus.clickFunctionQueue.push(event);
-		},
-		addGlobeRightClickEvent: function(event) {
-			UIstatus.rclickFunctionQueue.push(event);
 		},
 		updateUI: function(data) {
 			var key;

@@ -63,20 +63,21 @@ exports.options = {
 
 			for(var i = 0; i < beacons.length; i++) {
 				if(beacons[i].location.lat == lat && beacons[i].location.lng == lng) {
-					removeBeacon(i);
+					removeBeacon.call(this, i);
 					removed = true;
 				}
 			}
 
 			if(!removed) {
-				addBeacon(lat, lng);
+				addBeacon.call(this, lat, lng);
 			}
+			return true;
 		};
 	},
 	ui: function(UI) {
-		UI.on('globeClick', function(lat, lng) {
-			UI.simulator.moduleFunction('beacon','toggleBeacon',[lat, lng]);
-		}, 50);
+		UI.on('globeRClick', function(lat, lng) {
+			return UI.simulator.moduleFunction('beacon','toggleBeacon',[lat, lng]);
+		});
 	},
 	dependencies: ['movement.base']
 };
