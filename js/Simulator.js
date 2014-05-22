@@ -910,7 +910,8 @@ function Simulator() {
 
 	function Module(type,processFunction,options) {
 		this.type = type;
-		this.process = processFunction.bind(this);
+		if(this.type !== 'helper')
+			this.process = processFunction.bind(this);
 		if(options !== undefined)
 			for (var key in options)
 				if (options.hasOwnProperty(key)) {
@@ -942,7 +943,7 @@ function Simulator() {
 		},
 		activate: function() {
 			var i;
-			if(!this.isActive()) {
+			if(!this.isActive() && this.type !== 'helper') {
 				// Also activate this module's dependencies
 				if(this.dependencies.length > 0)
 					for(i = 0; i < this.dependencies.length; i++)

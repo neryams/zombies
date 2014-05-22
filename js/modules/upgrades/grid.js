@@ -1,7 +1,7 @@
 /* 
 	Grid Booster: Allows the evolution grid to be expanded
 */
-exports.type = 'event';
+exports.type = 'helper';
 exports.run = function() {
 };
 exports.options = {
