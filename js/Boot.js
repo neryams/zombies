@@ -276,37 +276,7 @@ $(function () {
             }
         };
 
-        if(node && userConfig.saveGenerator) {
-            fs.readFile('./generated.data', function (err, data) {
-                if (err) {
-                    console.log(err);
-                    userConfig.saveData = {};
-                } else {
-                    userConfig.saveData = JSON.parse(data);
-                    userConfig.saveData.loaded = true;
-
-                    generatorWorker = {
-                        postMessage: function() {
-                            // Set the seed so the module functions have a predictable seed when loading saved generator.
-                            generatorLoadConfig(userConfig.saveData.config, true);
-
-                            generatorLoadData(userConfig.saveData.points, userConfig.saveData.countries, userConfig.saveData.name);
-                            generatorTexture = [];
-                            var i = 0;
-                            while(userConfig.saveData.texture[i]) {
-                                generatorTexture.push(userConfig.saveData.texture[i]);
-                                i++;
-                            }
-                            delete userConfig.saveData;
-                            checkLoadingState(3);
-                        },
-                        terminate: function() {}
-                    };
-                }
-
-                startLoad();
-            });
-        } else {
+        var startWorker = function() {
             generatorWorker = new Worker('js/Generator.js');
             generatorWorker.addEventListener('message', function(event) {
                 switch (event.data.cmd) {
@@ -346,7 +316,41 @@ $(function () {
                         break;
                 }
             }, false);
+        }
 
+        if(node && userConfig.saveGenerator) {
+            fs.readFile('./generated.data', function (err, data) {
+                if (err) {
+                    console.log(err);
+                    userConfig.saveData = {};
+                    startWorker();
+                } else {
+                    userConfig.saveData = JSON.parse(data);
+                    userConfig.saveData.loaded = true;
+
+                    generatorWorker = {
+                        postMessage: function() {
+                            // Set the seed so the module functions have a predictable seed when loading saved generator.
+                            generatorLoadConfig(userConfig.saveData.config, true);
+
+                            generatorLoadData(userConfig.saveData.points, userConfig.saveData.countries, userConfig.saveData.name);
+                            generatorTexture = [];
+                            var i = 0;
+                            while(userConfig.saveData.texture[i]) {
+                                generatorTexture.push(userConfig.saveData.texture[i]);
+                                i++;
+                            }
+                            delete userConfig.saveData;
+                            checkLoadingState(3);
+                        },
+                        terminate: function() {}
+                    };
+                }
+
+                startLoad();
+            });
+        } else {
+            startWorker();
             startLoad();
         }
 

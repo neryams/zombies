@@ -32,11 +32,11 @@ var debugMenu = {
 
 			$(newConsole).load(function() {
 				menu.console.window = newConsole;
-				menu.active = true;
 				menu.console.window.Simulator = menu.simulator;
 				menu.console.window.Console = menu.console;
 				menu.console.window.Renderer = menu.renderer;
 			});
+			menu.active = true;
 		}
     },
 	setRenderer: function(Renderer) {
