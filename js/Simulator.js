@@ -865,8 +865,8 @@ function Simulator() {
 				updateHorde: function(textureId, horde, remove) {
 					UI.renderer.updateHorde(textureId, horde, remove);
 				},
-				addNewHordeType: function(textureId, count) {
-					UI.renderer.updateHorde(textureId, count);
+				addNewHordeType: function(textureId, count, options) {
+					UI.renderer.addNewHordeType(textureId, count, options);
 				}
 			}
 		}, public);

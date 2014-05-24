@@ -1301,8 +1301,8 @@ var UserInterface = function UserInterface(Renderer) {
 			updateHorde: function(textureId, horde, remove) {
 				Renderer.updateHorde(textureId, horde, remove);
 			},
-			addNewHordeType: function(textureId, count) {
-				Renderer.addNewHordeType(textureId, count);
+			addNewHordeType: function(textureId, count, options) {
+				Renderer.addNewHordeType(textureId, count, options);
 			},
 	        displayArc: function (point1, point2, opacity) {
 	        	Renderer.displayArc(point1, point2, opacity);

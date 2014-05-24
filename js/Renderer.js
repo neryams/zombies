@@ -307,31 +307,38 @@ var Renderer = function (scaling,onLoad) {
         };
     },
 
-    addHordeParticles = function(textureId, count) {
+    addHordeParticles = function(textureId, count, options) {
         var particleGroup = new SPE.Group({
             texture: THREE.ImageUtils.loadTexture('ui/particles/' + textureId + '.png')
         });
 
-        hordeSystems[textureId] = {
-            length: 0,
-            maxSize: 0,
-            particles: particleGroup.geometry,
-            attributes: particleGroup.attributes,
-            arrayLinks: [],
-            maxLength: count,
-            addEmitter: function(count) {
-                var emitter = new SPE.Emitter({
-                    type: 'sphere',
-                    particleCount: count,
-                    radius: 0,
-                    sizeStart: 1,
-                    opacityStart: 0.5,
-                    isStatic: 1
-                });
-                
-                particleGroup.addEmitter(emitter);
-            }
-        };
+        var defaultHordeSystem = {
+                length: 0,
+                maxSize: 0,
+                particles: particleGroup.geometry,
+                attributes: particleGroup.attributes,
+                arrayLinks: [],
+                maxLength: count,
+                addEmitter: function(count) {
+                    var emitter = new SPE.Emitter({
+                        type: 'sphere',
+                        particleCount: count,
+                        radius: 0,
+                        sizeStart: 1,
+                        opacityStart: hordeSystems[textureId].opacity,
+                        isStatic: 1
+                    });
+                    
+                    particleGroup.addEmitter(emitter);
+                },
+
+                iconSizeMin: 2,
+                iconSizeMax: 7,
+                iconSizeMaxThreshold: 5000,
+                opacity: 0.5
+            };
+
+        hordeSystems[textureId] = $.extend({}, defaultHordeSystem, options);
 
         hordeSystems[textureId].addEmitter(count);
         Sphere.add( particleGroup.mesh );
@@ -380,8 +387,15 @@ var Renderer = function (scaling,onLoad) {
             if(hordeSystem.maxSize < horde.size)
                 hordeSystem.maxSize = horde.size;
 
-            // Particle size ranges from 6.75 to 2.75
-            var newParticleSize = (hordeSystem.maxSize > 5000 ? 26 : hordeSystem.maxSize / 200 + 1) * horde.size / hordeSystem.maxSize + 1.75;
+            var newParticleSize;
+            if(hordeSystem.maxSize > hordeSystem.iconSizeMaxThreshold) {
+                newParticleSize = (hordeSystem.iconSizeMax - hordeSystem.iconSizeMin) * 
+                    horde.size / hordeSystem.maxSize + hordeSystem.iconSizeMin;
+            } else {
+                newParticleSize = ((hordeSystem.iconSizeMax - hordeSystem.iconSizeMin) * hordeSystem.maxSize / hordeSystem.iconSizeMaxThreshold) *
+                    horde.size / hordeSystem.maxSize + hordeSystem.iconSizeMin;
+            }
+
             if(selectedHorde.particleSizeAttrib.length() != newParticleSize) {
                 selectedHorde.particleSizeAttrib.setLength(newParticleSize);
                 hordeSystem.attributes.size.needsUpdate = true;
