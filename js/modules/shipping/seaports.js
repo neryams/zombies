@@ -62,8 +62,9 @@ exports.options = {
 				end = this.S.getPointProperties(endLat, endLng);
 
 			this.S.UILink.trigger('rClick.cancelPortDestination');
-			window.console.log(start);
-			window.console.log(end);
+			var path = this.S.modules.pathfind.search(start, end, 'ocean');
+
+			this.S.modules['shipping.seaMove'].addNew(path);
 		};
 	},
 	ui: function(UI) {
@@ -121,6 +122,6 @@ exports.options = {
 			});
 		});
 	},
-	dependencies: ['shipping.seaMove'],
+	dependencies: ['shipping.seaMove', 'pathfind'],
 	alwaysActive: true
 };
