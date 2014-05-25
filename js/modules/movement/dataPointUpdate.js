@@ -42,19 +42,11 @@ exports.options = {
 			while(totalDistance <= maxDistance) {
 				if(direction % 2 === 0)  {// horizontal and vertical
 					dataPoint = dataPoint.adjacent[direction/2];
-					totalDistance += this.S.bakedValues.latDistances[
-							Math.floor( Math.abs(dataPoint.lat) )
-						][
-							direction/2
-						];
+					totalDistance += dataPoint.getDistanceTo(direction/2);
 				}
 				else {
 					dataPoint = dataPoint.adjacent[Math.floor(direction/2)].adjacent[Math.ceil(direction/2)%4];
-					totalDistance += this.S.bakedValues.latDistances[
-							Math.floor( Math.abs(dataPoint.lat) )
-						][
-							Math.floor(direction / 2) + 4
-						];
+					totalDistance += dataPoint.getDistanceTo(Math.floor(direction / 2) + 4);
 				}
 
 				if(i === 1 && dataPoint.water && !this.S.modules['movement.base'].val('swimming')) {

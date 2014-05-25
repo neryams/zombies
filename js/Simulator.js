@@ -290,58 +290,11 @@ function Simulator() {
 			return false;
 		};
 
-		var bakedValues = {
-				latDistances: [],
-				latCumChance: []
-			},
-			points =  generatorData.points,
+		var points =  generatorData.points,
 			countries = generatorData.countries,
 			config = generatorConfig;
 
 		status.date.setTime(1577880000000); // Jan 1st, 2030
-
-		// Pre-generate some values for the simulation so they only have to be calculated once
-		var getGridDistance = function (lat,latdelta,lngdelta) {
-			var phi = latdelta/180*Math.PI,
-				theta = lngdelta/180*Math.PI,
-				phix = lat/180*Math.PI,
-				phiy = (lat+latdelta)/180*Math.PI;
-			
-			var a = (Math.sin(phi/2) * Math.sin(phi/2) +
-				Math.sin(theta/2) * Math.sin(theta/2) * Math.cos(phix) * Math.cos(phiy));
-			return 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)) * 6378; // rough estimate of the radius of the earth in km (6378.1)
-		};
-
-		for (var i = 0; i < 90; i++) {
-			// directly adjacent points clockwise from top, then diagonal points clockwise from top right.
-			bakedValues.latDistances.push([
-				getGridDistance(i + 0.5,-1, 0),
-				getGridDistance(i + 0.5, 0, 1),
-				getGridDistance(i + 0.5, 1, 0),
-				getGridDistance(i + 0.5, 0,-1),
-				getGridDistance(i + 0.5,-1, 1),
-				getGridDistance(i + 0.5, 1, 1),
-				getGridDistance(i + 0.5, 1,-1),
-				getGridDistance(i + 0.5,-1,-1)
-			]);
-			var total_dists = 0;
-			for(var j = 0; j < 8; j++) {
-				total_dists += 1/bakedValues.latDistances[i][j];
-			}
-			bakedValues.latCumChance.push([
-				1/bakedValues.latDistances[i][0]/total_dists,
-				1/bakedValues.latDistances[i][1]/total_dists,
-				1/bakedValues.latDistances[i][2]/total_dists,
-				1/bakedValues.latDistances[i][3]/total_dists,
-				1/bakedValues.latDistances[i][4]/total_dists,
-				1/bakedValues.latDistances[i][5]/total_dists,
-				1/bakedValues.latDistances[i][6]/total_dists,
-				1/bakedValues.latDistances[i][7]/total_dists
-			]);
-			for(j = 1; j < 8; j++) {
-				bakedValues.latCumChance[i][j] += bakedValues.latCumChance[i][j-1];
-			}
-		}
 
 		var addUpgrades = function(module) {
 				var levels = [],
@@ -536,8 +489,6 @@ function Simulator() {
 
 					var target,
 						currentLocation = current.location,
-						latId = Math.floor(Math.abs(currentLocation.lat)),
-						chances = bakedValues.latCumChance[latId],
 						rand = Math.random();
 
 					status.pointsToWatch[currentLocation.id] = true;
@@ -555,43 +506,10 @@ function Simulator() {
 
 					if(rand > 0.5) {
 						target = currentLocation;
-						current.passData.targetDistance = 0;
 					}
 					else {
 						rand *= 2;
-
-						if(rand < chances[0]){
-							target = currentLocation.adjacent[0];
-							current.passData.targetDistance = bakedValues.latDistances[latId][0];
-						}
-						else if(rand < chances[1]){
-							target = currentLocation.adjacent[1];
-							current.passData.targetDistance = bakedValues.latDistances[latId][1];
-						}
-						else if(rand < chances[2]){
-							target = currentLocation.adjacent[2];
-							current.passData.targetDistance = bakedValues.latDistances[latId][2];
-						}
-						else if(rand < chances[3]){
-							target = currentLocation.adjacent[3];
-							current.passData.targetDistance = bakedValues.latDistances[latId][3];
-						}
-						else if(rand < chances[4]){
-							target = currentLocation.adjacent[0].adjacent[1];
-							current.passData.targetDistance = bakedValues.latDistances[latId][4];
-						}
-						else if(rand < chances[5]){
-							target = currentLocation.adjacent[2].adjacent[1];
-							current.passData.targetDistance = bakedValues.latDistances[latId][5];
-						}
-						else if(rand < chances[6]){
-							target = currentLocation.adjacent[2].adjacent[3];
-							current.passData.targetDistance = bakedValues.latDistances[latId][6];
-						}
-						else{
-							target = currentLocation.adjacent[0].adjacent[3];
-							current.passData.targetDistance = bakedValues.latDistances[latId][7];
-						}
+						target = currentLocation.angularDirection(rand);
 					}
 
 					status.pointsToWatch[target.id] = true;
@@ -844,7 +762,6 @@ function Simulator() {
 			addUpgrades: addUpgrades,
 			modules: modules,
 			status: status,
-			bakedValues: bakedValues,
 			countries: countries,
 			UILink: {
 				trigger: function(eventId, parameters) {

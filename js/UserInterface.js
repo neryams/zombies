@@ -1348,8 +1348,11 @@ var UserInterface = function UserInterface(Renderer) {
 				if(UIstatus.events[eventId] === undefined) {
 					console.error(eventId + ' not found');
 				} else {
-					for(var i = 0; i < UIstatus.events[eventId].length; i++)
+					for(var i = 0; i < UIstatus.events[eventId].length; i++) {
 						UIstatus.events[eventId][i].active = true;
+						if(eventFunction !== undefined)
+							UIstatus.events[eventId][i].eventFunction = eventFunction;
+					}
 				}
 			}
 		},

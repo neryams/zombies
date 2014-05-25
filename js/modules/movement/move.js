@@ -12,7 +12,7 @@ exports.run = function(current,passData,multiplier) {
 
 	    // Default movement direction is obtained from the default direction for the turn
 		var target = passData.target,
-			targetDistance = passData.targetDistance,
+			targetDistance = current.location.getDistanceTo(passData.target),
 			max = 0;
 
 		// If zombies can smell humans, get the movement weighting values to change the direction
@@ -38,17 +38,9 @@ exports.run = function(current,passData,multiplier) {
 					}
 
 					if(maxDir%2 === 0)
-						targetDistance = this.S.bakedValues.latDistances[
-								Math.floor( Math.abs(currentLocation.lat) )
-							][
-								maxDir / 2
-							];
+						targetDistance = currentLocation.getDistanceTo(maxDir / 2);
 					else
-						targetDistance = this.S.bakedValues.latDistances[
-								Math.floor( Math.abs(currentLocation.lat) )
-							][
-								Math.floor(maxDir/2)+4
-							];
+						targetDistance = currentLocation.getDistanceTo(Math.floor(maxDir/2)+4);
 				}
 			}
 			else {

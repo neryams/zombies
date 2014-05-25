@@ -7,8 +7,7 @@ exports.options = {
 		var grids = {
 				ocean: [],
 				land: []
-			},
-			latDistances = this.S.bakedValues.latDistances;
+			};
 
 		for(var i = 0, n = dataPoints.length; i < n; i++) {
 			if(dataPoints[i].water) {
@@ -28,7 +27,7 @@ exports.options = {
 			});
 		};
 
-		// javascript-astar 0.2.0
+		// javascript-astar 0.2.0 modified to work with globe dataPoints
 		// http://github.com/bgrins/javascript-astar
 		// Freely distributable under the MIT License.
 		// Implements the astar search algorithm in javascript using a Binary Heap.
@@ -117,7 +116,7 @@ exports.options = {
 
 		                // The g score is the shortest distance from start to current node.
 		                // We need to check if the path we have arrived at this neighbor is the shortest one we have seen yet.
-		                var gScore = currentNode.g + neighbor.cost * currentNode.distances[i];
+		                var gScore = currentNode.g + neighbor.cost * dataPoints[currentNode.id].getDistanceTo(dataPoints[neighbor.id]);
 		                var beenVisited = neighbor.visited;
 
 		                if(!beenVisited || gScore < neighbor.g) {
@@ -207,7 +206,7 @@ exports.options = {
 		    var nodes = [];
 
 		    for (var i = 0; i < grid.length; i++) {
-		        nodes[i] = new GraphNode(i, latDistances[Math.floor(Math.abs(dataPoints[i].lat))], grid[i]);
+		        nodes[i] = new GraphNode(i, grid[i]);
 		    }
 
 		    this.input = grid;
@@ -229,10 +228,9 @@ exports.options = {
 		    return graphString;
 		};
 
-		function GraphNode(id, distances, type) {
+		function GraphNode(id, type) {
 			this.id = id;
 		    this.data = { };
-		    this.distances = distances;
 		    this.type = type;
 		}
 
