@@ -335,7 +335,8 @@ var Renderer = function (scaling,onLoad) {
                 iconSizeMin: 2,
                 iconSizeMax: 7,
                 iconSizeMaxThreshold: 5000,
-                opacity: 0.5
+                opacity: 0.5,
+                randomize: true
             };
 
         hordeSystems[textureId] = $.extend({}, defaultHordeSystem, options);
@@ -382,7 +383,10 @@ var Renderer = function (scaling,onLoad) {
                 hordeSystem.length++;
             }
 
-            selectedHorde.particleVertex.copy(coordToCartesian(horde.location.lat-0.5+Math.random(), horde.location.lng-0.5+Math.random(), 201));
+            if(hordeSystem.randomize)
+                selectedHorde.particleVertex.copy(coordToCartesian(horde.location.lat-0.5+Math.random(), horde.location.lng-0.5+Math.random(), 201));
+            else
+                selectedHorde.particleVertex.copy(coordToCartesian(horde.location.lat, horde.location.lng, 201));
 
             if(hordeSystem.maxSize < horde.size)
                 hordeSystem.maxSize = horde.size;
