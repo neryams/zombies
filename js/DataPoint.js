@@ -43,8 +43,6 @@ DataPoint.prototype = {
 			return distances[dataPoint];
 
 		if(dataPoint.id < this.id) {
-			if(this.id - dataPoint.id === 1)
-
 			if(dataPoint.id === this.adjacent[0].id)
 				return distances[0];
 			else if(dataPoint.id === this.adjacent[3].id)
