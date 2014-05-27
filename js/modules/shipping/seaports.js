@@ -15,7 +15,8 @@ exports.run = function(location) {
 exports.options = {
 	init: function(dataPoints) {
 		var seaport_count = 10,
-			coast_tiles = [];
+			coast_tiles = [],
+			seaports = [];
 		for(var i = 0, n = dataPoints.length; i < n; i++) {
 			if(dataPoints[i].coast_distance === 1) {
 				coast_tiles.push(dataPoints[i]);
@@ -39,19 +40,18 @@ exports.options = {
 				texture: 'seaport',
 				opacity: 0.5
 			});
+
+			seaports.push(coast_tiles[index].lat + ',' + coast_tiles[index].lng);
 		}
+		// Set the valid seaport points
+		this.S.UILink.trigger('shipping.setPorts', seaports);
 
 		this.selectPort = function(lat, lng) {
 			var point = this.S.getPointProperties(lat, lng);
 			if(point.seaport) {
 				// Handle the click when there's a port
-				lat = Math.round(lat - 0.5) + 0.5;
-				lng = Math.round(lng - 0.5) + 0.5;
 				this.S.UILink.trigger('shipping.selectPort', [lat, lng]);
-				return true;
-			} else
-				// Pass the click through to the next function when there's no port
-				return false;
+			}
 		};
 		this.destinationValid = function(lat, lng) {
 			var point = this.S.getPointProperties(lat, lng);
@@ -62,19 +62,33 @@ exports.options = {
 				end = this.S.getPointProperties(endLat, endLng);
 
 			this.S.UILink.trigger('rClick.cancelPortDestination');
-			var path = this.S.modules.pathfind.search(start, end, 'ocean');
+			if(end.coast_distance === 1) {
+				var path = this.S.modules.pathfind.search(start, end, 'ocean');
 
-			this.S.modules['shipping.seaMove'].addNew(path);
+				this.S.modules['shipping.seaMove'].addNew(path);				
+			}
 		};
 	},
 	ui: function(UI) {
 		// Handler for starting the port selection
-		UI.on('globeClick.selectPort', 100, function(lat, lng) {
-			return UI.simulator.moduleFunction('shipping.seaports','selectPort',[lat, lng]);
+		UI.on('shipping.setPorts', function() {
+			UI.status.ports = Array.prototype.slice.call(arguments);
+
+			UI.on('globeClick.selectPort', 100, function(lat, lng) {
+				lat = Math.round(lat - 0.5) + 0.5;
+				lng = Math.round(lng - 0.5) + 0.5;
+
+				if(UI.status.ports.indexOf(lat + ',' + lng) != -1)
+					UI.simulator.moduleFunction('shipping.seaports','selectPort',[lat, lng]);
+				else
+					// Pass the click through to the next function when there's no port
+					return false;
+			});
 		});
 
 		// Valid port selected, time to pick the destination
 		UI.on('shipping.selectPort', function(startLat, startLng) {
+
 			// Draw arcs to destinations on mouseover
 			UI.tooltip.setPointFunction(function(endLat, endLng) {
 				endLat = Math.round(endLat - 0.5) + 0.5;

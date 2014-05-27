@@ -804,11 +804,11 @@ function Simulator() {
 				for(var i = 0, n = module.dependencies.length; i < n; i++)
 					recusiveInitModules(module.dependencies[i]);
 
-				if(module.init)
-					module.init(points);
-
 				if(module.ui)
 					module.ui.call(module, UI);
+
+				if(module.init)
+					module.init(points);
 
 				for(i = 0, n = module.children.length; i < n; i++)
 					recusiveInitModules(module.children[i]);
