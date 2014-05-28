@@ -46,23 +46,31 @@ exports.options = {
 		// Set the valid seaport points
 		this.S.UILink.trigger('shipping.setPorts', seaports);
 
+		// Verify that the chosen port is a seaport, then trigger
 		this.selectPort = function(lat, lng) {
 			var point = this.S.getPointProperties(lat, lng);
 			if(point.seaport) {
+				for(var i = 0, total = 0; i < point.hordes.length; i++) {
+					total += point.hordes[i].size;
+				}
 				// Handle the click when there's a port
-				this.S.UILink.trigger('shipping.selectPort', [lat, lng]);
+				this.S.UILink.trigger('shipping.selectPort', [lat, lng, total]);
 			}
 		};
+
+		// Tell the UI whether a tile is a valid boat target
 		this.destinationValid = function(lat, lng) {
 			var point = this.S.getPointProperties(lat, lng);
 			this.S.UILink.trigger('shipping.destinationValid', [point.coast_distance === 1]);
 		};
+
+		// Verify that the chosen port is a seaport, chosen destination is coastal, then trigger boat
 		this.selectPortDestination = function(startLat, startLng, endLat, endLng) {
 			var start = this.S.getPointProperties(startLat, startLng),
 				end = this.S.getPointProperties(endLat, endLng);
 
 			this.S.UILink.trigger('rClick.cancelPortDestination');
-			if(end.coast_distance === 1) {
+			if(end.coast_distance === 1 && start.seaport) {
 				var path = this.S.modules.pathfind.search(start, end, 'ocean');
 
 				this.S.modules['shipping.seaMove'].addNew(path);				
@@ -70,6 +78,12 @@ exports.options = {
 		};
 	},
 	ui: function(UI) {
+		var shippingLoadMenu = UI.addDataField('shippingLoadMenu', {
+			type: 'modal',
+			title: 'Depart Ship',
+			class: 'tiny'
+		});
+
 		// Handler for starting the port selection
 		UI.on('shipping.setPorts', function() {
 			UI.status.ports = Array.prototype.slice.call(arguments);
@@ -78,62 +92,86 @@ exports.options = {
 				lat = Math.round(lat - 0.5) + 0.5;
 				lng = Math.round(lng - 0.5) + 0.5;
 
-				if(UI.status.ports.indexOf(lat + ',' + lng) != -1)
+				// If the clicked point is a valid port, initiate selecting the endpoint
+				if(UI.status.ports.indexOf(lat + ',' + lng) != -1) {
 					UI.simulator.moduleFunction('shipping.seaports','selectPort',[lat, lng]);
-				else
+				} else
 					// Pass the click through to the next function when there's no port
 					return false;
 			});
 		});
 
 		// Valid port selected, time to pick the destination
-		UI.on('shipping.selectPort', function(startLat, startLng) {
+		UI.on('shipping.selectPort', function(startLat, startLng, maxLoad) {
+			shippingLoadMenu.empty();
+			// Add slider for zombie behavior: how much 
+			shippingLoadMenu.addDataField('control_shipLoad',{
+				type:'slider',
+				title: 'Number of Robots to load in ship',
+				dataOptions: 'start: 0; end: ' + maxLoad + '; initial: 0; step: 1;'
+			});
+			shippingLoadMenu.addDataField({
+				type: 'button',
+				label: 'Accept',
+				click: function() {
+					shippingLoadMenu.hide();
 
-			// Draw arcs to destinations on mouseover
-			UI.tooltip.setPointFunction(function(endLat, endLng) {
-				endLat = Math.round(endLat - 0.5) + 0.5;
-				endLng = Math.round(endLng - 0.5) + 0.5;
+					// Draw arcs to destinations on mouseover
+					UI.tooltip.setPointFunction(function(endLat, endLng) {
+						endLat = Math.round(endLat - 0.5) + 0.5;
+						endLng = Math.round(endLng - 0.5) + 0.5;
 
-				UI.renderer.displayArc({
-					lat: startLat,
-					lng: startLng
-				}, {
-					lat: endLat,
-					lng: endLng
-				});
+						UI.renderer.displayArc({
+							lat: startLat,
+							lng: startLng
+						}, {
+							lat: endLat,
+							lng: endLng
+						});
 
-				// Check with simulator to see if the destination is valid
-				UI.simulator.moduleFunction('shipping.seaports','destinationValid', [endLat, endLng]);
-			}, 5); // high priority to override all other point functions.
+						// Check with simulator to see if the destination is valid
+						UI.simulator.moduleFunction('shipping.seaports','destinationValid', [endLat, endLng]);
+					}, 5); // high priority to override all other point functions.
 
-			var toolTipWasActive = false;
-			if(UI.tooltip.active())
-				toolTipWasActive = true;
-			else
-				UI.tooltip.activate();
+					var toolTipWasActive = false;
+					if(UI.tooltip.active())
+						toolTipWasActive = true;
+					else
+						UI.tooltip.activate();
 
-			// If destination isn't valid, grey out the arc
-			UI.on('shipping.destinationValid', function(valid) {
-				if(valid)
-					UI.renderer.displayArc(undefined, undefined, 1);
-				else
-					UI.renderer.displayArc(undefined, undefined, 0.4);
+					// If destination isn't valid, grey out the arc
+					UI.on('shipping.destinationValid', function(valid) {
+						if(valid)
+							UI.renderer.displayArc(undefined, undefined, 1);
+						else
+							UI.renderer.displayArc(undefined, undefined, 0.4);
+					});
+
+					// Set up handlers for choosing the destination
+					UI.on('globeClick.selectPortDestination', 150, function(endLat, endLng) {
+						UI.simulator.moduleFunction('shipping.seaports','selectPortDestination',[startLat, startLng, endLat, endLng]);
+						return true;
+					});
+					UI.on('rClick.cancelPortDestination', function() {
+						UI.tooltip.restore();
+						if(!toolTipWasActive)
+							UI.tooltip.deactivate();
+						UI.renderer.hideArc();
+						UI.off('globeClick.selectPortDestination');
+						UI.off('rClick.cancelPortDestination');
+						return true;
+					});
+				}
+			});
+			shippingLoadMenu.addDataField({
+				type: 'button',
+				class: 'icon cancel',
+				click: function() {
+					shippingLoadMenu.hide();
+				}
 			});
 
-			// Set up handlers for choosing the destination
-			UI.on('globeClick.selectPortDestination', 150, function(endLat, endLng) {
-				UI.simulator.moduleFunction('shipping.seaports','selectPortDestination',[startLat, startLng, endLat, endLng]);
-				return true;
-			});
-			UI.on('rClick.cancelPortDestination', function() {
-				UI.tooltip.restore();
-				if(!toolTipWasActive)
-					UI.tooltip.deactivate();
-				UI.renderer.hideArc();
-				UI.off('globeClick.selectPortDestination');
-				UI.off('rClick.cancelPortDestination');
-				return true;
-			});
+			shippingLoadMenu.show();
 		});
 	},
 	dependencies: ['shipping.seaMove', 'pathfind'],
