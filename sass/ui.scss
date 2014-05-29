@@ -76,6 +76,11 @@ $body-font: 'Arial', sans-serif;
 .dataField-slider .range-slider {
 	margin-top: rem-calc(12);
 }
+.dataField-slider input {
+	color: white;
+	height: 32px;
+	margin-top: 7px;
+}
 .dataField-progressBar .progress {
 	background-color: #444;
 	margin-top: rem-calc(12);

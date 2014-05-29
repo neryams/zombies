@@ -90,7 +90,8 @@ exports.options = {
 			type:'slider',
 			title: 'Resource to put towards reproduction',
 			dynamic: 'control_moneyRatio',
-			dataOptions: 'start: 0; end: 12; initial: 2; step: 0.1;'
+			dataOptions: 'start: 0; end: 12; initial: 2; step: 0.1;',
+			displayValue: true
 		});		
 	},
 	startSimulation: function(dataPoints) {

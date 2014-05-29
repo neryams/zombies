@@ -203,7 +203,7 @@ var UserInterface = function UserInterface(Renderer) {
 				return field;
 			},
 			progressBar: function(config) {
-				var field = $('<label/>'),
+				var field = $('<div/>'),
 					bar = i18n.t('dom:interface.dataField.progressBar');
 				this.val = function(value) {
 					var bar = this.find('.progress div');
@@ -217,13 +217,13 @@ var UserInterface = function UserInterface(Renderer) {
 					}
 				};
 				if(config.title)
-					field.html(i18n.t(config.title));
+					field.append($('<label/>').html(i18n.t(config.title)));
 				field.append(bar);
 
 				return field;
 			},
 			slider: function(config) {
-				var field = $('<label/>'),
+				var field = $('<div/>'),
 					slider = $(i18n.t('dom:interface.dataField.slider',{ options: config.dataOptions || '' }));
 
 				if(config.dynamic)
@@ -241,8 +241,24 @@ var UserInterface = function UserInterface(Renderer) {
 				};
 
 				if(config.title)
-					field.html(i18n.t(config.title));
-				field.append(slider);
+					field.append($('<label/>').html(i18n.t(config.title)));
+
+				if(config.displayValue) {
+					var content = $('<div class="row" />');
+					this.valueField = $('<input type="text" readonly />').val(0);
+
+					content.append($('<div class="small-9 columns" />').append(slider));
+					content.append($('<div class="small-3 columns" />').append(this.valueField));
+
+					field.append(content);
+
+					slider.on('change', this, function(event) {
+						event.data.valueField.val($(this).attr('data-slider'));
+					});
+				}
+				else
+					field.append(slider);
+
 
 				return field;
 			},

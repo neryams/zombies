@@ -108,7 +108,8 @@ exports.options = {
 			shippingLoadWindow.addDataField('control_shipLoad',{
 				type:'slider',
 				title: 'Number of Robots to load in ship',
-				dataOptions: 'start: 0; end: ' + maxLoad + '; initial: 0; step: 1;'
+				dataOptions: 'start: 0; end: ' + maxLoad + '; initial: 0; step: 1;',
+				displayValue: true
 			});
 			var shippingLoadMenu = shippingLoadWindow.addDataField({
 				type: 'div',
@@ -124,7 +125,7 @@ exports.options = {
 				type: 'button',
 				class: 'icon cancel secondary',
 				click: function() {
-					shippingLoadMenu.hide();
+					shippingLoadWindow.hide();
 				}
 			});
 			shippingLoadWindow.append(shippingLoadMenu);
@@ -135,7 +136,7 @@ exports.options = {
 		var selectDestination = function(startLat, startLng) {
 			return function() {
 				shippingLoadWindow.hide();
-				
+
 				// Draw arcs to destinations on mouseover
 				UI.tooltip.setPointFunction(function(endLat, endLng) {
 					endLat = Math.round(endLat - 0.5) + 0.5;
