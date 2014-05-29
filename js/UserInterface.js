@@ -112,7 +112,7 @@ var UserInterface = function UserInterface(Renderer) {
 		_typeOptions: {
 			button: function(config) {
 				var button = $(i18n.t('dom:interface.dataField.default',{ element:'a' })),
-					label = config.label || '';
+					label = config.label || '&nbsp;';
 				if(label && i18n.exists(label))
 					button.html(i18n.t(label));
 				else
@@ -386,7 +386,7 @@ var UserInterface = function UserInterface(Renderer) {
 
 		var evolveMenu_controls = evolveMenuOuter.addDataField({
 			type: 'div',
-			class: 'menu'
+			class: 'menu fixed'
 		});
 		evolveMenu_controls.addDataField({
 			type: 'button',
@@ -429,7 +429,7 @@ var UserInterface = function UserInterface(Renderer) {
 
 		var mutationMenu_controls = mutationMenu.addDataField({
 			type: 'div',
-			class: 'menu'
+			class: 'menu fixed'
 		});
 		mutationMenu_controls.addDataField('mutationMenu_clear',{
 			type: 'button',

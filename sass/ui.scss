@@ -48,18 +48,30 @@ $body-font: 'Arial', sans-serif;
 }
 .dataField-button {
 	@include button(rem-calc(8));
+	margin-right: 1px;
+	
+	&.secondary {
+		background-color: $secondary-color;
+	}
 }
 .dataField-toggle {
 	@include button(rem-calc(8));
+	margin-right: 1px;
 	
 	&.active {
 		background-color: lighten( $primary-color, 20% );
 	}
 }
-.dataField-modal .menu {
+.dataField-modal .menu.fixed {
 	position: absolute;
 	bottom: 0;
 	left: 24px;
+}
+.dataField-modal .menu .dataField-button {
+	line-height: 32px;
+	height: 32px;
+	padding: 0 12px;
+	margin-bottom: 0;
 }
 .dataField-slider .range-slider {
 	margin-top: rem-calc(12);
