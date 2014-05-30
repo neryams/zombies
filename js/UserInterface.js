@@ -27,7 +27,8 @@ var UserInterface = function UserInterface(Renderer) {
 				globeClick: [],
 				globeRClick: [],
 				rClick: []
-			}
+			},
+			foundationInit: false
 		},
 		changedStatus = {
 		};
@@ -102,6 +103,8 @@ var UserInterface = function UserInterface(Renderer) {
 			}
 
 			var newDataField = new DataField(id, options, this);
+			if(UIstatus.foundationInit)
+				this.foundation();
 			return newDataField;
 		},
 		clone: function() {
@@ -152,7 +155,7 @@ var UserInterface = function UserInterface(Renderer) {
 			},
 			modal: function(config) {
 				var modal = $('<div id="modal-' + this.id + '" class="reveal-modal" data-reveal></div>');
-				modal.on('open', this, function (event) {
+				modal.on('open', this, function(event) {
 					var modal = event.data;
 
 					if(modal.onShow)
@@ -161,7 +164,7 @@ var UserInterface = function UserInterface(Renderer) {
 					UIstatus.pauseRenderer = true;
 					S.pause();
 				});
-				modal.on('closed', this, function (event) {
+				modal.on('closed', this, function(event) {
 					var modal = event.data;
 
 					UIstatus.pauseRenderer = false;
@@ -169,6 +172,9 @@ var UserInterface = function UserInterface(Renderer) {
 
 					if(modal.onHide)
 						modal.onHide.call(modal);
+				});
+				modal.on('opened', this, function(event) { 
+					event.data.foundation();
 				});
 
 				this.attachOpener = function(opener) {
@@ -237,7 +243,10 @@ var UserInterface = function UserInterface(Renderer) {
 					});
 
 				this.val = function(value) {
-					this.foundation('slider', 'set_value', value);
+					if(value)
+						slider.foundation('slider', 'set_value', value);
+					else
+						return parseFloat(slider.attr('data-slider'));
 				};
 
 				if(config.title)
@@ -252,12 +261,13 @@ var UserInterface = function UserInterface(Renderer) {
 
 					field.append(content);
 
-					slider.on('change', this, function(event) {
-						event.data.valueField.val($(this).attr('data-slider'));
+					slider.on('change', this.valueField, function(event) {
+						event.data.val($(this).attr('data-slider'));
 					});
 				}
-				else
+				else {
 					field.append(slider);
+				}
 
 
 				return field;

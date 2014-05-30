@@ -31,6 +31,7 @@ function MainInterface(UI,R) {
 		end: function() {
 			attachEvents();
 			$(document).foundation();
+			status.foundationInit = true;
 			R.togglePopDisplay();
 		},
 		progress: function(message, totalProgress) {

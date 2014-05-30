@@ -9,14 +9,15 @@ exports.run = function(location) {
 			this.S.UILink.rendererDecal('seaport' + location.id, {
 				opacity: 1
 			});
+			// set a valid seaport
+			this.S.UILink.trigger('shipping.addPorts', [location.lat + ',' + location.lng]);
 		}
 	}
 };
 exports.options = {
 	init: function(dataPoints) {
 		var seaport_count = 10,
-			coast_tiles = [],
-			seaports = [];
+			coast_tiles = [];
 		for(var i = 0, n = dataPoints.length; i < n; i++) {
 			if(dataPoints[i].coast_distance === 1) {
 				coast_tiles.push(dataPoints[i]);
@@ -40,12 +41,7 @@ exports.options = {
 				texture: 'seaport',
 				opacity: 0.5
 			});
-
-			seaports.push(coast_tiles[index].lat + ',' + coast_tiles[index].lng);
 		}
-		// Set the valid seaport points
-		this.S.UILink.trigger('shipping.setPorts', seaports);
-
 		// Verify that the chosen port is a seaport, then trigger
 		this.selectPort = function(lat, lng) {
 			var point = this.S.getPointProperties(lat, lng);
@@ -65,7 +61,7 @@ exports.options = {
 		};
 
 		// Verify that the chosen port is a seaport, chosen destination is coastal, then trigger boat
-		this.selectPortDestination = function(startLat, startLng, endLat, endLng) {
+		this.selectPortDestination = function(startLat, startLng, endLat, endLng, number) {
 			var start = this.S.getPointProperties(startLat, startLng),
 				end = this.S.getPointProperties(endLat, endLng);
 
@@ -73,7 +69,7 @@ exports.options = {
 			if(end.coast_distance === 1 && start.seaport) {
 				var path = this.S.modules.pathfind.search(start, end, 'ocean');
 
-				this.S.modules['shipping.seaMove'].addNew(path);				
+				this.S.modules['shipping.seaMove'].addNew(path, number);				
 			}
 		};
 	},
@@ -83,29 +79,32 @@ exports.options = {
 			title: 'Depart Ship',
 			class: 'tiny'
 		});
+		UI.status.ports = [];
+		UI.on('globeClick.selectPort', 100, function(lat, lng) {
+			lat = Math.round(lat - 0.5) + 0.5;
+			lng = Math.round(lng - 0.5) + 0.5;
+
+			// If the clicked point is a valid port, initiate selecting the endpoint
+			if(UI.status.ports.indexOf(lat + ',' + lng) != -1) {
+				UI.simulator.moduleFunction('shipping.seaports','selectPort',[lat, lng]);
+			} else
+				// Pass the click through to the next function when there's no port
+				return false;
+		});
 
 		// Handler for starting the port selection
-		UI.on('shipping.setPorts', function() {
-			UI.status.ports = Array.prototype.slice.call(arguments);
-
-			UI.on('globeClick.selectPort', 100, function(lat, lng) {
-				lat = Math.round(lat - 0.5) + 0.5;
-				lng = Math.round(lng - 0.5) + 0.5;
-
-				// If the clicked point is a valid port, initiate selecting the endpoint
-				if(UI.status.ports.indexOf(lat + ',' + lng) != -1) {
-					UI.simulator.moduleFunction('shipping.seaports','selectPort',[lat, lng]);
-				} else
-					// Pass the click through to the next function when there's no port
-					return false;
-			});
+		UI.on('shipping.addPorts', function() {
+			var portsToAdd = Array.prototype.slice.call(arguments);
+			while(portsToAdd.length) {
+				UI.status.ports.push(portsToAdd.pop());
+			}
 		});
 
 		// Valid port selected, time to pick the destination
 		UI.on('shipping.selectPort', function(startLat, startLng, maxLoad) {
 			shippingLoadWindow.empty();
 
-			shippingLoadWindow.addDataField('control_shipLoad',{
+			var countSlider = shippingLoadWindow.addDataField('control_shipLoad',{
 				type:'slider',
 				title: 'Number of Robots to load in ship',
 				dataOptions: 'start: 0; end: ' + maxLoad + '; initial: 0; step: 1;',
@@ -119,7 +118,7 @@ exports.options = {
 			shippingLoadMenu.addDataField({
 				type: 'button',
 				label: 'Accept',
-				click: selectDestination(startLat, startLng)
+				click: selectDestination(startLat, startLng, countSlider)
 			});
 			shippingLoadMenu.addDataField({
 				type: 'button',
@@ -133,55 +132,58 @@ exports.options = {
 			shippingLoadWindow.show();
 		});
 
-		var selectDestination = function(startLat, startLng) {
+		var selectDestination = function(startLat, startLng, countSlider) {
 			return function() {
 				shippingLoadWindow.hide();
+				var shipsize = countSlider.val();
+				
+				if(shipsize > 0) {
+					// Draw arcs to destinations on mouseover
+					UI.tooltip.setPointFunction(function(endLat, endLng) {
+						endLat = Math.round(endLat - 0.5) + 0.5;
+						endLng = Math.round(endLng - 0.5) + 0.5;
 
-				// Draw arcs to destinations on mouseover
-				UI.tooltip.setPointFunction(function(endLat, endLng) {
-					endLat = Math.round(endLat - 0.5) + 0.5;
-					endLng = Math.round(endLng - 0.5) + 0.5;
+						UI.renderer.displayArc({
+							lat: startLat,
+							lng: startLng
+						}, {
+							lat: endLat,
+							lng: endLng
+						});
 
-					UI.renderer.displayArc({
-						lat: startLat,
-						lng: startLng
-					}, {
-						lat: endLat,
-						lng: endLng
+						// Check with simulator to see if the destination is valid
+						UI.simulator.moduleFunction('shipping.seaports','destinationValid', [endLat, endLng]);
+					}, 5); // high priority to override all other point functions.
+
+					var toolTipWasActive = false;
+					if(UI.tooltip.active())
+						toolTipWasActive = true;
+					else
+						UI.tooltip.activate();
+
+					// If destination isn't valid, grey out the arc
+					UI.on('shipping.destinationValid', function(valid) {
+						if(valid)
+							UI.renderer.displayArc(undefined, undefined, 1);
+						else
+							UI.renderer.displayArc(undefined, undefined, 0.4);
 					});
 
-					// Check with simulator to see if the destination is valid
-					UI.simulator.moduleFunction('shipping.seaports','destinationValid', [endLat, endLng]);
-				}, 5); // high priority to override all other point functions.
-
-				var toolTipWasActive = false;
-				if(UI.tooltip.active())
-					toolTipWasActive = true;
-				else
-					UI.tooltip.activate();
-
-				// If destination isn't valid, grey out the arc
-				UI.on('shipping.destinationValid', function(valid) {
-					if(valid)
-						UI.renderer.displayArc(undefined, undefined, 1);
-					else
-						UI.renderer.displayArc(undefined, undefined, 0.4);
-				});
-
-				// Set up handlers for choosing the destination
-				UI.on('globeClick.selectPortDestination', 150, function(endLat, endLng) {
-					UI.simulator.moduleFunction('shipping.seaports','selectPortDestination',[startLat, startLng, endLat, endLng]);
-					return true;
-				});
-				UI.on('rClick.cancelPortDestination', function() {
-					UI.tooltip.restore();
-					if(!toolTipWasActive)
-						UI.tooltip.deactivate();
-					UI.renderer.hideArc();
-					UI.off('globeClick.selectPortDestination');
-					UI.off('rClick.cancelPortDestination');
-					return true;
-				});
+					// Set up handlers for choosing the destination
+					UI.on('globeClick.selectPortDestination', 150, function(endLat, endLng) {
+						UI.simulator.moduleFunction('shipping.seaports','selectPortDestination',[startLat, startLng, endLat, endLng, shipsize]);
+						return true;
+					});
+					UI.on('rClick.cancelPortDestination', function() {
+						UI.tooltip.restore();
+						if(!toolTipWasActive)
+							UI.tooltip.deactivate();
+						UI.renderer.hideArc();
+						UI.off('globeClick.selectPortDestination');
+						UI.off('rClick.cancelPortDestination');
+						return true;
+					});
+				}
 			};
 		};
 	},

@@ -33,9 +33,11 @@ exports.options = {
 			randomize: false
 		});
 
-		this.addNew = function(path) {
-			this.boats.push(new Boat(boatCount, path, 100));
-			boatCount++;
+		this.addNew = function(path, size) {
+			if(size) {
+				this.boats.push(new Boat(boatCount, path, size));
+				boatCount++;
+			}
 		};
 
 		var Boat = function(id, route, size) {
