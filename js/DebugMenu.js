@@ -5,6 +5,15 @@
 var debugMenu = {
 	active: false,
     logModules: false,
+    createHorde: function(size) {
+    	if(this.console.options.activePoint) {
+    		if(!size)
+    			size = 0;
+    		
+    		var point = debugMenu.console.options.activePoint;
+    		this.simulator.S.hordes.push(size, point);
+    	}
+    },
     openConsole: function () {
 		if(node) {
 			sass.render({

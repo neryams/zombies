@@ -247,6 +247,8 @@ function MainInterface(UI,R) {
 									}
 								}
 							}
+							if(debugMenu.active && !clickHandled)
+								debugMenu.console.selectSquare(Math.round(sphereCoords[0] - 0.5) + 0.5, Math.round(sphereCoords[1] - 0.5) + 0.5);
 				            break;
 				        case 2: // middle
 				            break;
@@ -259,8 +261,6 @@ function MainInterface(UI,R) {
 									}
 								}
 							}
-							if(debugMenu.active && !clickHandled)
-								debugMenu.console.selectSquare(Math.round(sphereCoords[0] - 0.5) + 0.5, Math.round(sphereCoords[1] - 0.5) + 0.5);
 				            break;
 				    }
 			}
