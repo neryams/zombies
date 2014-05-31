@@ -68,6 +68,7 @@ exports.options = {
 			this.S.UILink.trigger('rClick.cancelPortDestination');
 			if(end.coast_distance === 1 && start.seaport) {
 				var path = this.S.modules.pathfind.search(start, end, 'ocean');
+				path.unshift(start);
 
 				this.S.modules['shipping.seaMove'].addNew(path, number);				
 			}

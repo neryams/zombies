@@ -7,6 +7,7 @@ exports.run = function() {
 		var boat = this.boats[i];
 
 		if(boat.route.length === 0) {
+			this.S.hordes.push(this.boats[i].size, this.boats[i].location);
 			this.S.UILink.updateHorde('boat', boat, true);
 			this.boats.splice(i, 1);
 			n--;
@@ -46,6 +47,19 @@ exports.options = {
 			this.size = size;
 
 			this.location = this.route.pop();
+
+			for(var i = 0, n = this.location.hordes.length, toAdd = size; i < n && toAdd > 0; i++) {
+				if(this.location.hordes[i].size > toAdd) {
+					toAdd -= this.location.hordes[i].size;
+					this.location.hordes[i].size = 0;
+				} else {
+					this.location.hordes[i].size -= toAdd;
+					toAdd = 0;
+				}
+			}
+			if(toAdd > 0)
+				this.size -= toAdd;
+
 			UILink.updateHorde('boat', this);
 		};
 		Boat.prototype = {
