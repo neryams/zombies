@@ -1,15 +1,11 @@
 {
 	"country_military": {
-		"1": "%s issues kill-on-sight order for carriers of advanced necrosis.",
-		"2": "%s mobilizes army to kill zombies.",
+		"1": "Moving toasters sighted in %s",
+		"2": "%s mobilizes army to kill robots.",
 		"3": "%s is under martial law.",
-		"end": "%s is in anarchy. Research ceases."
+		"end": "%s is in anarchy."
 	},
 	"world_research": {
-		"1": "World cooperation begins on vaccine research!",
-		"2": "International center for researching the cure opens.",
-		"3": "World begins working feverishly on the cure",
-		"end": "World anarchy. Cure research ceases."
 	},
 	"vegetation_slow": "Trees are slowing your robots down!",
 	"win_message": "You Win!",
