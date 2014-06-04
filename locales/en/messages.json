@@ -2,8 +2,7 @@
 	"country_military": {
 		"1": "Moving toasters sighted in %s",
 		"2": "%s mobilizes army to kill robots.",
-		"3": "%s is under martial law.",
-		"end": "%s is in anarchy."
+		"3": "%s is under martial law."
 	},
 	"world_research": {
 	},
