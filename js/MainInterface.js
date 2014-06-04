@@ -84,7 +84,10 @@ function MainInterface(UI,R) {
 
 				UI.tooltip.setPointFunction(function(lat, lng) {
 					var point_prop = Simulator.getPointProperties(lat, lng);
-					return mathFunction(point_prop);
+					if(point_prop)
+						return mathFunction(point_prop);
+					else
+						return false;
 				}, 1);
 
 				UI.interfaceParts.toggleTooltips.activate();

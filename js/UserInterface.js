@@ -1160,12 +1160,16 @@ var UserInterface = function UserInterface(Renderer) {
 						(status.lastIteration != turnNumber || sphere_coords[0] != status.lastLat || sphere_coords[1] != status.lastLng)
 					) {
 						result = pointFunction(sphere_coords[0], sphere_coords[1]);
-						toolTipContent.html(result);
+						if(!result)
+							result = '';
 						status.lastLat = sphere_coords[0];
 						status.lastLng = sphere_coords[1];
+					} else {
+						result = '';
 					}
+					toolTipContent.html(result);
 
-					if(!result && !status.hidden) {
+					if(result === '' && !status.hidden) {
 						toolTipElement.hide();
 						status.hidden = true;
 					} else if(result && status.hidden) {

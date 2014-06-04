@@ -26,21 +26,22 @@ exports.run = function() {
 };
 exports.options = {
 	init: function () {
-		for(var i = 1; i < this.S.countries.length; i++) {
-			this.S.countries[i].panicLevel = 0;
-			this.S.countries[i].panic = 0;
+		var S = this.S;
+		for(var i = 1; i < S.countries.length; i++) {
+			S.countries[i].panicLevel = 0;
+			S.countries[i].panic = 0;
 		}
 		this.countryPanicThresholds = [
 			0,
 			10,
-			500,
+			300,
 			10000
 		];
 
 		var panicFunctions = [
 			null,
 			function(country) {
-
+				S.modules['armies.bases'].createBase(country);
 			},
 			function(country) {
 
@@ -52,7 +53,7 @@ exports.options = {
 		this.raisePanic = function(country) {
 			country.panicLevel++;
 
-			this.S.UILink.addNews('country_military.' + country.panicLevel, [country.name]);
+			S.UILink.addNews('country_military.' + country.panicLevel, [country.name]);
 			panicFunctions[country.panicLevel](country);
 
 			// If panic level is maxed, make sure you don't add any more
@@ -70,5 +71,6 @@ exports.options = {
 		}).prependTo(mainInfo);
 	},
 	alwaysActive: true,
-	children: ['panic.applyToPoint','panic.applyToGlobal']
+	children: ['panic.applyToPoint','panic.applyToGlobal'],
+	dependencies: ['armies.bases']
 };
