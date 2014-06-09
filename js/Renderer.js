@@ -27,7 +27,8 @@ var Renderer = function (scaling,onLoad) {
                 gun: new THREE.ImageUtils.loadTexture('ui/decals/gun.png'),
                 seaport: new THREE.ImageUtils.loadTexture('ui/decals/seaport.png'),
                 home: new THREE.ImageUtils.loadTexture('ui/decals/home.png'),
-                moveto: new THREE.ImageUtils.loadTexture('ui/decals/moveto.png')
+                moveto: new THREE.ImageUtils.loadTexture('ui/decals/moveto.png'),
+                armybase: new THREE.ImageUtils.loadTexture('ui/decals/armybase.png')
             },
             decals: {},
             arc: null

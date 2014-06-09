@@ -40,14 +40,14 @@ exports.options = {
 
 		var panicFunctions = [
 			null,
+			function() {
+				// Do nothing
+			},
 			function(country) {
 				S.modules['armies.bases'].createBase(country);
 			},
-			function(country) {
-
-			},
-			function(country) {
-
+			function() {
+				// Do nothing
 			}
 		];
 		this.raisePanic = function(country) {
