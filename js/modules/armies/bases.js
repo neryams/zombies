@@ -3,12 +3,24 @@
 */
 exports.type = 'event';
 exports.run = function() {
-	
+	for(var i = 0; i < this.armyBases.length; i++) {
+		var current = this.armyBases[i].armyBase;
+		if(current.productionSpeed > this.baseInterval || this.S.status.iteration % (this.baseInterval / current.productionSpeed) === 0) {
+			var robotsCreated = Math.ceil(current.productionSpeed / this.baseInterval);
+			var newArmy = this.createArmy(current.location, robotsCreated);
+
+			this.S.UILink.updateHorde('swords', newArmy);
+			this.armies.push(newArmy);
+		}
+	}
 };
 exports.options = {
 	init: function(dataPoints) {
-		var UILink = this.S.UILink,
-			armyBases = [];
+		this.baseInterval = 10;
+		this.armyBases = [];
+		this.armies = [];
+
+		var UILink = this.S.UILink;
 
 		var ArmyBase = function(country, location) {
 			this.location = location;
@@ -19,11 +31,12 @@ exports.options = {
 			location: {
 				lat: 0,
 				lng: 0
-			}
+			},
+			productionSpeed: 0
 		};
 
 		var Army = function(base, size) {
-			this.location = base.location;
+			this.location = base;
 			this.size = size;
 
 			UILink.updateHorde('swords', this);
@@ -49,8 +62,9 @@ exports.options = {
 			var randPoint = countryPoints[ Math.floor(Math.random() * countryPoints.length) ];
 
 			var newBase = dataPoints[randPoint];
-			armyBases.push(newBase);
+			this.armyBases.push(newBase);
 			newBase.armyBase = new ArmyBase(country, newBase);
+			newBase.armyBase.productionSpeed = 1;
 
 			this.S.UILink.rendererDecal('armybase' + newBase.id, {
 				lat: newBase.lat,
@@ -61,7 +75,8 @@ exports.options = {
 			});
 		};
 		this.createArmy = function(base, size) {
-			return new Army(base, size);
+			var newArmy = new Army(base, size);
+			return newArmy;
 		};
 
 		this.S.UILink.addNewHordeType('swords', 20, {
