@@ -205,7 +205,10 @@ function MainInterface(UI,R) {
 			$(this).off('mousemove.dragging');
 		});
 
-
+		$('#ui').on('contextmenu', function(e) {
+            e.preventDefault();
+            return false;
+        }, false);
 		$('#ui').on('mousemove', function (event) {
 			status.mouse.x = event.clientX;
 			status.mouse.y = event.clientY;
