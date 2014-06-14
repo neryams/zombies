@@ -310,7 +310,8 @@ var Renderer = function (scaling,onLoad) {
 
     addHordeParticles = function(textureId, count, options) {
         var particleGroup = new SPE.Group({
-            texture: THREE.ImageUtils.loadTexture('ui/particles/' + textureId + '.png')
+            texture: THREE.ImageUtils.loadTexture('ui/particles/' + textureId + '.png'),
+            depthWrite: true
         });
 
         var defaultHordeSystem = {
@@ -326,7 +327,7 @@ var Renderer = function (scaling,onLoad) {
                         particleCount: count,
                         radius: 0,
                         sizeStart: 1,
-                        opacityStart: hordeSystems[textureId].opacity,
+                        opacityStart: 1,
                         isStatic: 1
                     });
                     
@@ -336,7 +337,7 @@ var Renderer = function (scaling,onLoad) {
                 iconSizeMin: 2,
                 iconSizeMax: 7,
                 iconSizeMaxThreshold: 5000,
-                opacity: 0.5,
+                opacity: 1,
                 randomize: true
             };
 
@@ -766,15 +767,15 @@ var Renderer = function (scaling,onLoad) {
             if(visualization.decals[id] === undefined) {
                 options = $.extend({}, defaults, options);
 
-                var geometry = new THREE.PlaneGeometry(1, 1, 1, 1);
-                var material = new THREE.MeshBasicMaterial({map: visualization.decalTextures[options.texture], side: THREE.DoubleSide, transparent: true, opacity: options.opacity});
-                decal = visualization.decals[id] = new THREE.Mesh(geometry, material);
+                var material = new THREE.SpriteMaterial({
+                    map: visualization.decalTextures[options.texture],
+                    useScreenCoordinates: false
+                });
+                decal = visualization.decals[id] = new THREE.Sprite( material );
+                decal.position = coordToCartesian(options.lat, options.lng, 200.25);
                 decal.material.textureId = options.texture;
                 decal.options = options;
-                decal.scale.x = options.size;
-                decal.scale.y = options.size;
-                decal.position = coordToCartesian(options.lat, options.lng, 200.5);
-                decal.lookAt(Sphere.position);
+                decal.scale.set( options.size, options.size, 1.0 ); // imageWidth, imageHeight
 
                 Sphere.add(decal);
             } else if(options !== undefined) {
