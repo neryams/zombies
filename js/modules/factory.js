@@ -18,7 +18,7 @@ exports.options = {
 			this.S.UILink.rendererDecal('factory' + location.id, {
 				lat: location.lat,
 				lng: location.lng,
-				size: 8,
+				size: 5,
 				texture: 'home'
 			});
 			this.val('locations',location,'append');

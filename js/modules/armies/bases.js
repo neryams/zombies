@@ -69,7 +69,7 @@ exports.options = {
 			this.S.UILink.rendererDecal('armybase' + newBase.id, {
 				lat: newBase.lat,
 				lng: newBase.lng,
-				size: 8,
+				size: 5,
 				texture: 'armybase',
 				opacity: 1
 			});
@@ -80,10 +80,9 @@ exports.options = {
 		};
 
 		this.S.UILink.addNewHordeType('swords', 20, {
-			iconSizeMin: 2,
+			iconSizeMin: 4,
 			iconSizeMax: 4,
-			opacity: 1,
-			randomize: false
+			opacity: 1
 		});
 	},
 	ui: function() {

@@ -37,7 +37,7 @@ exports.options = {
 			this.S.UILink.rendererDecal('seaport' + coast_tiles[index].id, {
 				lat: coast_tiles[index].lat,
 				lng: coast_tiles[index].lng,
-				size: 10,
+				size: 5,
 				texture: 'seaport',
 				opacity: 0.5
 			});

@@ -24,7 +24,6 @@ var Renderer = function (scaling,onLoad) {
             textureCanvas: null,
             textureStore: {},
             decalTextures: {
-                gun: new THREE.ImageUtils.loadTexture('ui/decals/gun.png'),
                 seaport: new THREE.ImageUtils.loadTexture('ui/decals/seaport.png'),
                 home: new THREE.ImageUtils.loadTexture('ui/decals/home.png'),
                 moveto: new THREE.ImageUtils.loadTexture('ui/decals/moveto.png'),
