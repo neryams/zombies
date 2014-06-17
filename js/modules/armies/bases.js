@@ -9,9 +9,10 @@ exports.run = function() {
 			var robotsCreated = Math.ceil(current.productionSpeed / this.baseInterval);
 			var newArmy = this.createArmy(current.location, robotsCreated);
 
-			this.S.UILink.updateHorde('swords', newArmy);
 			this.armies.push(newArmy);
 		}
+	}
+	for(i = 0; i < this.armies.length; i++) {
 	}
 };
 exports.options = {
@@ -38,10 +39,13 @@ exports.options = {
 		var Army = function(base, size) {
 			this.location = base;
 			this.size = size;
+			Army.prototype.nextId++;
+			this.id = Army.prototype.nextId;
 
-			UILink.updateHorde('swords', this);
+			UILink.updateHorde('e1', this);
 		};
 		Army.prototype = {
+			nextId: 0,
 			size: 0,
 			location: {
 				lat: 0,
@@ -79,9 +83,9 @@ exports.options = {
 			return newArmy;
 		};
 
-		this.S.UILink.addNewHordeType('swords', 20, {
-			iconSizeMin: 4,
-			iconSizeMax: 4,
+		this.S.UILink.addNewHordeType('e1', 20, {
+			iconSizeMin: 8,
+			iconSizeMax: 8,
 			opacity: 1
 		});
 	},
