@@ -6,22 +6,16 @@ exports.run = function() {
 	for(var i = 0; i < this.armyBases.length; i++) {
 		var current = this.armyBases[i].armyBase;
 		if(current.productionSpeed > this.baseInterval || this.S.status.iteration % (this.baseInterval / current.productionSpeed) === 0) {
-			var robotsCreated = Math.ceil(current.productionSpeed / this.baseInterval);
-			var newArmy = this.createArmy(current.location, robotsCreated);
+			var armySize = Math.ceil(current.productionSpeed / this.baseInterval);
 
-			this.armies.push(newArmy);
+			this.S.modules['armies.armies'].addNew(current, armySize);
 		}
-	}
-	for(i = 0; i < this.armies.length; i++) {
 	}
 };
 exports.options = {
 	init: function(dataPoints) {
 		this.baseInterval = 10;
 		this.armyBases = [];
-		this.armies = [];
-
-		var UILink = this.S.UILink;
 
 		var ArmyBase = function(country, location) {
 			this.location = location;
@@ -34,23 +28,6 @@ exports.options = {
 				lng: 0
 			},
 			productionSpeed: 0
-		};
-
-		var Army = function(base, size) {
-			this.location = base;
-			this.size = size;
-			Army.prototype.nextId++;
-			this.id = Army.prototype.nextId;
-
-			UILink.updateHorde('e1', this);
-		};
-		Army.prototype = {
-			nextId: 0,
-			size: 0,
-			location: {
-				lat: 0,
-				lng: 0
-			}
 		};
 
 		this.createBase = function(country) {
@@ -78,19 +55,10 @@ exports.options = {
 				opacity: 1
 			});
 		};
-		this.createArmy = function(base, size) {
-			var newArmy = new Army(base, size);
-			return newArmy;
-		};
 
-		this.S.UILink.addNewHordeType('e1', 20, {
-			iconSizeMin: 8,
-			iconSizeMax: 8,
-			opacity: 1
-		});
 	},
 	ui: function() {
 	},
-	dependencies: ['shipping.seaMove', 'pathfind'],
+	dependencies: ['armies.armies'],
 	alwaysActive: true
 };
