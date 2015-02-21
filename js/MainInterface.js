@@ -84,7 +84,10 @@ function MainInterface(UI,R) {
 
 				UI.tooltip.setPointFunction(function(lat, lng) {
 					var point_prop = Simulator.getPointProperties(lat, lng);
-					return mathFunction(point_prop);
+					if(point_prop)
+						return mathFunction(point_prop);
+					else
+						return false;
 				}, 1);
 
 				UI.interfaceParts.toggleTooltips.activate();
@@ -202,7 +205,10 @@ function MainInterface(UI,R) {
 			$(this).off('mousemove.dragging');
 		});
 
-
+		$('#ui').on('contextmenu', function(e) {
+            e.preventDefault();
+            return false;
+        }, false);
 		$('#ui').on('mousemove', function (event) {
 			status.mouse.x = event.clientX;
 			status.mouse.y = event.clientY;

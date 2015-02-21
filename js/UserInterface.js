@@ -1160,18 +1160,22 @@ var UserInterface = function UserInterface(Renderer) {
 						(status.lastIteration != turnNumber || sphere_coords[0] != status.lastLat || sphere_coords[1] != status.lastLng)
 					) {
 						result = pointFunction(sphere_coords[0], sphere_coords[1]);
-						toolTipContent.html(result);
+						
 						status.lastLat = sphere_coords[0];
 						status.lastLng = sphere_coords[1];
-					}
-
-					if(!result && !status.hidden) {
+						
+						if(!result && !status.hidden) {
+							toolTipElement.hide();
+							status.hidden = true;
+						} else if(result && status.hidden) {
+							toolTipElement.show();
+							status.hidden = false;
+						}
+					} else if(!sphere_coords || isNaN(sphere_coords[0]) || isNaN(sphere_coords[1]) && !status.hidden) {
 						toolTipElement.hide();
 						status.hidden = true;
-					} else if(result && status.hidden) {
-						toolTipElement.show();
-						status.hidden = false;
 					}
+					toolTipContent.html(result);
 
 					if(!status.hidden)
 						toolTipElement.css('left', UIstatus.mouse.x).css('top', UIstatus.mouse.y);
@@ -1438,8 +1442,6 @@ var UserInterface = function UserInterface(Renderer) {
 				} else {
 					Renderer.togglePopDisplay(true);
 				}
-
-				MT.update();
 			} else {
 				for (key in changedStatus)
 					if (changedStatus.hasOwnProperty(key))

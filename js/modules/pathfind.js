@@ -6,19 +6,23 @@ exports.options = {
 	init: function(dataPoints) {
 		var grids = {
 				ocean: [],
-				land: []
+				land: [],
+				both: []
 			};
 
 		for(var i = 0, n = dataPoints.length; i < n; i++) {
 			if(dataPoints[i].water) {
 				grids.land[i] = 0;
+				grids.both[i] = 2;
 				grids.ocean[i] = 1;
 			} else {
 				grids.land[i] = 1;
+				grids.both[i] = 1;
 				grids.ocean[i] = 0;
 			}
 		}
 		grids.land = new Graph(grids.land);
+		grids.both = new Graph(grids.both);
 		grids.ocean = new Graph(grids.ocean);
 
 		this.search = function(startPoint, endPoint, type) {

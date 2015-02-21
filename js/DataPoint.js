@@ -1,8 +1,3 @@
-(function(definition) {
-    var exports = definition();
-    window.DataPoint = exports.DataPoint;
-})(function() {
-
 function DataPoint(i,config) {
 	this.hordes = [];
 	this.adjacent = [];
@@ -143,9 +138,3 @@ for (var i = 0; i < 90; i++) {
 		bakedValues.latCumChance[i][j] += bakedValues.latCumChance[i][j-1];
 	}
 }
-
-return {
-	DataPoint: DataPoint
-};
-
-});

@@ -24,10 +24,10 @@ var Renderer = function (scaling,onLoad) {
             textureCanvas: null,
             textureStore: {},
             decalTextures: {
-                gun: new THREE.ImageUtils.loadTexture('ui/decals/gun.png'),
                 seaport: new THREE.ImageUtils.loadTexture('ui/decals/seaport.png'),
                 home: new THREE.ImageUtils.loadTexture('ui/decals/home.png'),
-                moveto: new THREE.ImageUtils.loadTexture('ui/decals/moveto.png')
+                moveto: new THREE.ImageUtils.loadTexture('ui/decals/moveto.png'),
+                armybase: new THREE.ImageUtils.loadTexture('ui/decals/armybase.png')
             },
             decals: {},
             arc: null
@@ -132,16 +132,19 @@ var Renderer = function (scaling,onLoad) {
         var generatorData = generatorDataAll.points;
 
         // Function for filling the canvases with the data generated previously
-        var buildImage = function(globeTexture, globeHeightmap, texture) {
+        var buildImage = function(globeTexture, globeHeightmap, specularMap, texture) {
             var current, dtI, gradX, gradY, gradI, color, currentTemp, currentWet,
                 ctxT = globeTexture.getContext('2d'),
                 ctxH = globeHeightmap.getContext('2d'),
+                ctxS = specularMap.getContext('2d'),
                 ctxC = climateGradient.getContext('2d'),
                 imgdT = ctxT.getImageData(0, 0, generatorConfig.tx_w, generatorConfig.tx_h),
                 imgdH = ctxH.getImageData(0, 0, generatorConfig.tx_w, generatorConfig.tx_h),
+                imgdS = ctxH.getImageData(0, 0, generatorConfig.tx_w, generatorConfig.tx_h),
                 imgdC = ctxC.getImageData(0, 0, climateGradient.width, climateGradient.height),
                 pixT = imgdT.data,
                 pixH = imgdH.data,
+                pixS = imgdS.data,
                 grdC = imgdC.data,
                 maxColorHeight = climateBg.height/2,
                 maxColorWidth = climateBg.width,
@@ -186,6 +189,8 @@ var Renderer = function (scaling,onLoad) {
 
                     var currentHeight = Math.floor((current - generatorConfig.waterLevel)/(1 - generatorConfig.waterLevel) * 25) * 2;
                     pixH[i * 4] = pixH[i * 4 + 1] = pixH[i * 4 + 2] = Math.min(currentHeight, maxColorWidth - 1);
+
+                    pixS[i * 4] = pixS[i * 4 + 1] = pixS[i * 4 + 2] = 0;
                 } else {
                     gradX = Math.floor(current/generatorConfig.waterLevel * maxColorWidth);
                     gradX = Math.min(Math.max(gradX, 0), maxColorWidth - 1);
@@ -194,6 +199,8 @@ var Renderer = function (scaling,onLoad) {
                     color = [grdC[gradI * 4],grdC[gradI * 4 + 1],grdC[gradI * 4 + 2]];
 
                     pixH[i * 4] = pixH[i * 4 + 1] = pixH[i * 4 + 2] = 0;
+
+                    pixS[i * 4] = pixS[i * 4 + 1] = pixS[i * 4 + 2] = 255;
                 }
                 pixT[i * 4] = color[0];
                 pixT[i * 4 + 1] = color[1];
@@ -201,6 +208,7 @@ var Renderer = function (scaling,onLoad) {
             }
             ctxT.putImageData(imgdT, 0, 0);
             ctxH.putImageData(imgdH, 0, 0);
+            ctxS.putImageData(imgdS, 0, 0);
         };
         var addData = function() {
             var i;
@@ -231,7 +239,6 @@ var Renderer = function (scaling,onLoad) {
         var globeTexture = document.createElement( 'canvas' );
         globeTexture.width = generatorConfig.tx_w;
         globeTexture.height = generatorConfig.tx_h;
-
         var ctx = globeTexture.getContext('2d');
         ctx.fillStyle = 'rgba(0, 0, 0, 255)';
         ctx.fillRect(0, 0, generatorConfig.tx_w, generatorConfig.tx_h);
@@ -239,7 +246,13 @@ var Renderer = function (scaling,onLoad) {
         var globeHeightmap = document.createElement( 'canvas' );
         globeHeightmap.width = generatorConfig.tx_w;
         globeHeightmap.height = generatorConfig.tx_h;
-
+        ctx = globeHeightmap.getContext('2d');
+        ctx.fillStyle = 'rgba(0, 0, 0, 255)';
+        ctx.fillRect(0, 0, generatorConfig.tx_w, generatorConfig.tx_h);
+        
+        var specularMap = document.createElement( 'canvas' );
+        specularMap.width = generatorConfig.tx_w;
+        specularMap.height = generatorConfig.tx_h;
         ctx = globeHeightmap.getContext('2d');
         ctx.fillStyle = 'rgba(0, 0, 0, 255)';
         ctx.fillRect(0, 0, generatorConfig.tx_w, generatorConfig.tx_h);
@@ -251,7 +264,7 @@ var Renderer = function (scaling,onLoad) {
         ctx.fillStyle = 'rgba(0, 0, 0, 255)';
         ctx.fillRect(0, 0, generatorConfig.w, generatorConfig.h);
 
-        buildImage(globeTexture,globeHeightmap,texture);
+        buildImage(globeTexture,globeHeightmap,specularMap,texture);
 
         // earth
 
@@ -259,17 +272,20 @@ var Renderer = function (scaling,onLoad) {
         earthTexture.needsUpdate = true;
         var earthHeight = new THREE.Texture( globeHeightmap );
         earthHeight.needsUpdate = true;
+        var earthSpecular = new THREE.Texture( specularMap );
+        earthSpecular.needsUpdate = true;
 
         var geometry = new THREE.SphereGeometry( 200, 40, 30 );
         //var material = new THREE.MeshBasicMaterial( { map: earthTexture, overdraw: true } );
         var material = new THREE.MeshPhongMaterial({
             ambient: 0x404040,
             color: 0x888888,
-            specular: 0x333333,
-            shininess: 2,
+            specular: 0x666666,
+            shininess: 6,
             perPixel: true,
             map: earthTexture,
             bumpMap: earthHeight,
+            specularMap: earthSpecular,
             bumpScale: 20,
             metal: false
         });
@@ -760,32 +776,49 @@ var Renderer = function (scaling,onLoad) {
                 size: 5,
                 texture: 'gun',
                 opacity: 1
-            }, decal;
+            }, decal, position, targetPosition;
+
+            position = coordToCartesian(options.lat + 1.25, options.lng - 1.25, 208);
+            targetPosition = coordToCartesian(options.lat, options.lng, 200);
 
             if(visualization.decals[id] === undefined) {
                 options = $.extend({}, defaults, options);
 
-                var geometry = new THREE.PlaneGeometry(1, 1, 1, 1);
-                var material = new THREE.MeshBasicMaterial({map: visualization.decalTextures[options.texture], side: THREE.DoubleSide, transparent: true, opacity: options.opacity});
-                decal = visualization.decals[id] = new THREE.Mesh(geometry, material);
+                var material = new THREE.SpriteMaterial({
+                    map: visualization.decalTextures[options.texture],
+                    useScreenCoordinates: false,
+                    transparent: true,
+                    opacity: options.opacity
+                });
+                decal = visualization.decals[id] = new THREE.Sprite( material );
+                decal.position = position;
                 decal.material.textureId = options.texture;
                 decal.options = options;
-                decal.scale.x = options.size;
-                decal.scale.y = options.size;
-                decal.position = coordToCartesian(options.lat, options.lng, 200.5);
-                decal.lookAt(Sphere.position);
+                decal.scale.set( options.size, options.size, 1.0 ); // imageWidth, imageHeight
 
                 Sphere.add(decal);
+
+                var geometry = new THREE.Geometry();
+                geometry.vertices.push( targetPosition );
+                geometry.vertices.push( position );
+                decal.line = new THREE.Line( geometry, new THREE.LineBasicMaterial( { color: 0xffffff, opacity: options.opacity } ) );
+                Sphere.add( decal.line );
+
             } else if(options !== undefined) {
                 decal = visualization.decals[id];
                 if(options.opacity !== undefined && options.opacity !== decal.options.opacity) {
                     decal.material.opacity = options.opacity;
                     decal.material.needsUpdate = true;
+                    decal.line.material.opacity = options.opacity;
+                    decal.line.material.needsUpdate = true;
                     decal.options.opacity = options.opacity;
                 }
                 if((options.lat !== undefined && options.lat !== decal.options.lat) || 
                 (options.lng !== undefined && options.lng !== decal.options.lng)) {
-                    decal.position = coordToCartesian(options.lat, options.lng, 200.5);
+                    decal.position = position;
+                    decal.line.geometry.vertices[0] = targetPosition;
+                    decal.line.geometry.vertices[1] = position;
+                    decal.line.geometry.verticesNeedUpdate = true;
                     decal.options.lat = options.lat;
                     decal.options.lng = options.lng;
                     decal.lookAt(Sphere.position);

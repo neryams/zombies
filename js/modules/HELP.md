@@ -115,6 +115,8 @@ Runs once during loading before simulation starts. Use it to initialize module v
 	todo: adjacent can also include airports and seaports
 	
 # Module functions
+* `activate()` Activates the module so it runs at the intervals specified by the module type
+* `bool isActive()` Returns whether the module is activated
 * `val(property, value, string operation, bool reversible)` Setter function for properties of modules. 
 	* operation is the math function used to apply `newval`, and can be set to +, -, *, /, ^, append. If blank, value is replaced.
 	* reversible should be set to true for upgrades by genes, since when genes are removed the module's values are set to the default.
