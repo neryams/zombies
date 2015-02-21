@@ -1,3 +1,7 @@
+@import "third-party/normalize";
+@import "settings";
+@import "foundation";
+
 @mixin grey-filter($amount) {
 	filter: #{'grayscale('}$amount#{')'};
 	-webkit-filter: #{'grayscale('}$amount#{')'};	
@@ -24,3 +28,5 @@
 ul {
 	list-style: none;
 }
+
+@import "setup","ui";

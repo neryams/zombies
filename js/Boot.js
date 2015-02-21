@@ -50,26 +50,6 @@ var S,debugMenu,
     node = typeof require !== 'undefined';
 if(node) {
     var fs = require('fs');
-    var sass = require('node-sass');
-
-    sass.render({
-        data: '@import "third-party/normalize","settings","third-party/foundation","main","setup","ui";',
-        success: function(css){
-            fs.writeFile('robots/css/compiled.css', css, function (err) {
-                if (err) throw err;
-
-                var queryString = '?reload=' + new Date().getTime();
-                $('link.main').each(function () {
-                    this.href = this.href.replace(/\?.*|$/, queryString);
-                });
-            });
-        },
-        error: function(error) {
-            console.log(error);
-        },
-        includePaths: [ 'robots/sass/' ],
-        outputStyle: 'nested'
-    });
 }
 
 $(function () {
