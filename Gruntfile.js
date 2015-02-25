@@ -4,16 +4,22 @@ module.exports = function(grunt) {
 
     sass: {
       options: {
-        includePaths: ['bower_components/foundation/scss']
+        includePaths: ['client/bower_components/foundation/scss']
       },
       dist: {
         options: {
           outputStyle: 'compressed'
         },
         files: {
-          'css/app.css': 'scss/app.scss',
-          'css/debugger.css': 'scss/debugger.scss'
+          'client/css/app.css': 'client/scss/app.scss',
+          'client/css/debugger.css': 'client/scss/debugger.scss'
         }        
+      }
+    },
+
+    nodemon: {
+      dev: {
+        script: 'server.js'
       }
     },
 
@@ -24,12 +30,23 @@ module.exports = function(grunt) {
         files: 'scss/**/*.scss',
         tasks: ['sass']
       }
+    },
+
+    concurrent: {
+      dev: {
+        tasks: ['nodemon', 'watch'],
+        options: {
+          logConcurrentOutput: true
+        }
+      }
     }
   });
 
   grunt.loadNpmTasks('grunt-sass');
+  grunt.loadNpmTasks('grunt-nodemon');
   grunt.loadNpmTasks('grunt-contrib-watch');
+  grunt.loadNpmTasks('grunt-concurrent');
 
   grunt.registerTask('build', ['sass']);
-  grunt.registerTask('default', ['build','watch']);
+  grunt.registerTask('default', ['build','concurrent:dev']);
 }

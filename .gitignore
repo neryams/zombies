@@ -1,4 +1,3 @@
-/bower_components/*
 /node_modules/*
 
 # Packages #
@@ -17,11 +16,12 @@ resources/
 
 # Image files     #
 ######################
-/ui/*
+**/ui/*
 
 # Compiled files     #
 ######################
-/css/*
+**/css/*
+**/vendor/*
 
 # Logs and databases #
 ######################
