@@ -90,11 +90,11 @@ $(function () {
             $.getScript('vendor/foundation/js/foundation/foundation.tooltip.js');
         });
     });
-    $.getScript('js/third-party/three.js', function() {
-        $.getScript('js/third-party/ShaderParticles.js');
+    $.getScript('vendor/three.js/build/three.min.js', function() {
+        $.getScript('vendor/ShaderParticleEngine/build/ShaderParticles.min.js');
     });
     $.getScript('js/third-party/seedrandom.min.js');
-    $.getScript('js/third-party/tween.min.js');
+    $.getScript('vendor/tween.js/build/tween.min.js');
     $.getScript('js/third-party/hqx.min.js');
     $.getScript('js/DebugMenu.js');
     $.getScript('js/DataPoint.js');

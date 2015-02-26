@@ -3,6 +3,9 @@
   "dependencies": {
     "foundation": "zurb/bower-foundation",
     "i18next": "^1.7.7",
-    "PACE": "HubSpot/pace#^1.0.2"
+    "PACE": "HubSpot/pace#^1.0.2",
+    "three.js": "mrdoob/three.js",
+    "ShaderParticleEngine": "squarefeet/ShaderParticleEngine",
+    "tween.js": "tweenjs/tween.js"
   }
 }
