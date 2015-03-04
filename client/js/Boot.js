@@ -90,7 +90,7 @@ $(function () {
             $.getScript('vendor/foundation/js/foundation/foundation.tooltip.js');
         });
     });
-    $.getScript('vendor/three.js/build/three.min.js', function() {
+    $.getScript('vendor/three.js/build/three.js', function() {
         $.getScript('vendor/ShaderParticleEngine/build/ShaderParticles.min.js');
     });
     $.getScript('js/third-party/seedrandom.min.js');

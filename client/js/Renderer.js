@@ -314,7 +314,8 @@ var Renderer = function (scaling,onLoad) {
         for (var i = 0; i < DataBarMesh.geometry.faces.length; i++)
             DataBarMesh.geometry.faces[i].color = new THREE.Color();
 
-        THREE.GeometryUtils.merge(DataBarsGeometry, DataBarMesh);
+        DataBarMesh.updateMatrix();
+        DataBarsGeometry.merge(DataBarMesh.geometry, DataBarMesh.matrix);
         // Last 8 points in merged geometry should be the vertices of the moving bar
         dataPoints[datapoint.id] = {
             faces: DataBarsGeometry.faces.slice(-DataBarMesh.geometry.faces.length),
@@ -786,12 +787,11 @@ var Renderer = function (scaling,onLoad) {
 
                 var material = new THREE.SpriteMaterial({
                     map: visualization.decalTextures[options.texture],
-                    useScreenCoordinates: false,
                     transparent: true,
                     opacity: options.opacity
                 });
                 decal = visualization.decals[id] = new THREE.Sprite( material );
-                decal.position = position;
+                decal.position.copy(position);
                 decal.material.textureId = options.texture;
                 decal.options = options;
                 decal.scale.set( options.size, options.size, 1.0 ); // imageWidth, imageHeight
@@ -815,7 +815,7 @@ var Renderer = function (scaling,onLoad) {
                 }
                 if((options.lat !== undefined && options.lat !== decal.options.lat) || 
                 (options.lng !== undefined && options.lng !== decal.options.lng)) {
-                    decal.position = position;
+                    decal.position.copy(position);
                     decal.line.geometry.vertices[0] = targetPosition;
                     decal.line.geometry.vertices[1] = position;
                     decal.line.geometry.verticesNeedUpdate = true;
@@ -849,7 +849,7 @@ var Renderer = function (scaling,onLoad) {
             }
 
             visualization.decals[id] = new THREE.Line(circleGeometry, material);
-            visualization.decals[id].position = coordToCartesian(lat,lng,200.5);
+            visualization.decals[id].position.copy(coordToCartesian(lat,lng,200.5));
             visualization.decals[id].lookAt(Sphere.position);
 
             Sphere.add( visualization.decals[id] );
