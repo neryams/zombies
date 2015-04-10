@@ -4,15 +4,15 @@ module.exports = function(grunt) {
 
     sass: {
       options: {
-        includePaths: ['client/bower_components/foundation/scss']
+        includePaths: ['client/vendor/foundation/scss']
       },
       dist: {
         options: {
           outputStyle: 'compressed'
         },
         files: {
-          'client/css/app.css': 'client/scss/app.scss',
-          'client/css/debugger.css': 'client/scss/debugger.scss'
+          'client/css/app.css': 'scss/app.scss',
+          'client/css/debugger.css': 'scss/debugger.scss'
         }        
       }
     },
