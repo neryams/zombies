@@ -155,15 +155,6 @@ var UserInterface = function UserInterface(Renderer) {
 			},
 			modal: function(config) {
 				var modal = $('<div id="modal-' + this.id + '" class="reveal-modal" data-reveal></div>');
-				modal.on('open', this, function(event) {
-					var modal = event.data;
-
-					if(modal.onShow)
-						modal.onShow.call(modal);
-
-					UIstatus.pauseRenderer = true;
-					S.pause();
-				});
 				modal.on('closed', this, function(event) {
 					var modal = event.data;
 
@@ -174,6 +165,13 @@ var UserInterface = function UserInterface(Renderer) {
 						modal.onHide.call(modal);
 				});
 				modal.on('opened', this, function(event) { 
+					var modal = event.data;
+
+					if(modal.onShow)
+						modal.onShow.call(modal);
+
+					UIstatus.pauseRenderer = true;
+					S.pause();
 					event.data.foundation();
 				});
 
