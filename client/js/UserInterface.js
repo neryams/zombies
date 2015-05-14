@@ -155,31 +155,41 @@ var UserInterface = function UserInterface(Renderer) {
 			},
 			modal: function(config) {
 				var modal = $('<div id="modal-' + this.id + '" class="reveal-modal" data-reveal></div>');
-				modal.on('closed', this, function(event) {
-					var modal = event.data;
+				$(document).on('open.fndtn.reveal','[data-reveal]', this, function(event) { 
+					if(event.data[0] === event.target) {
+						var modal = event.data;
 
-					UIstatus.pauseRenderer = false;
-					S.unPause();
+						if(modal.onShow)
+							modal.onShow.call(modal);
 
-					if(modal.onHide)
-						modal.onHide.call(modal);
+						UIstatus.pauseRenderer = true;
+						S.pause();
+					}
 				});
-				modal.on('opened', this, function(event) { 
-					var modal = event.data;
+				$(document).on('closed.fndtn.reveal','[data-reveal]', this, function(event) {
+					if(event.data[0] === event.target) {
+						var modal = event.data;
 
-					if(modal.onShow)
-						modal.onShow.call(modal);
+						UIstatus.pauseRenderer = false;
+						S.unPause();
 
-					UIstatus.pauseRenderer = true;
-					S.pause();
-					event.data.foundation();
+						if(modal.onHide)
+							modal.onHide.call(modal);
+					}
+				});
+				$(document).on('opened.fndtn.reveal','[data-reveal]', this, function(event) { 
+					if(event.data[0] === event.target) {
+						event.data.foundation();
+					}
 				});
 
 				this.attachOpener = function(opener) {
 					if(this.opener)
-						this.opener.removeAttr('data-reveal').removeAttr('data-reveal-id');
+						this.opener.removeAttr('data-reveal-id');
 
-					opener.attr('data-reveal','').attr('data-reveal-id', 'modal-' + this.id);
+					opener.attr('data-reveal-id', 'modal-' + this.id).on('click', function() {
+						modal.foundation('reveal','open');
+					});
 					this.opener = opener;
 				};
 				this.show = function() {
