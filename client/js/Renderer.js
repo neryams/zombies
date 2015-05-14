@@ -452,7 +452,7 @@ var Renderer = function (scaling,onLoad) {
         Sphere.rotation.y = -WindowConfig.rotation.x;
         Sphere.rotation.x = WindowConfig.rotation.y;
 
-        if(!onRender()) {
+        if(!onRender() && ready) {
             SceneRenderer.render( Scene, Camera );
         }
     },
@@ -468,13 +468,12 @@ var Renderer = function (scaling,onLoad) {
     },
 
     checkIntersection = function( mouseX, mouseY ) {
-        var projector = new THREE.Projector();
         var vector    = new THREE.Vector3( (mouseX / WindowConfig.windowX) * 2 - 1,    -(mouseY / WindowConfig.windowY) * 2 + 1, 0.5);
 
         // now 'unproject' the point on the screen
         // back into the the Scene itself. This gives
         // us a ray direction
-        projector.unprojectVector(vector, Camera);
+        vector.unproject(Camera);
 
         // create a ray from our current Camera position
         // with that ray direction and see if it hits the sphere
