@@ -241,7 +241,7 @@ var UserInterface = function UserInterface(Renderer) {
 					slider = $(i18n.t('dom:interface.dataField.slider',{ options: config.dataOptions || '' }));
 
 				if(config.dynamic)
-					slider.on('change', this, function(event) {
+					slider.on('change.fndtn.slider', this, function(event) {
 						var df = event.data,
 							value = parseFloat($(this).attr('data-slider'));
 						if(value != status[df.data('dynamic')]) {
@@ -269,7 +269,7 @@ var UserInterface = function UserInterface(Renderer) {
 
 					field.append(content);
 
-					slider.on('change', this.valueField, function(event) {
+					slider.on('change.fndtn.slider', this.valueField, function(event) {
 						event.data.val($(this).attr('data-slider'));
 					});
 				}
