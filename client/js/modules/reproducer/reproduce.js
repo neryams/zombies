@@ -10,9 +10,9 @@ exports.run = function(current, passData, multiplier) {
 		passData.panic += resource_collected;
 
 		resource_collected *= multiplier;
-		if(current.location.tech < resource_collected)
-			resource_collected = current.location.tech;
-		current.location.tech -= resource_collected;
+		if(current.location.total_pop < resource_collected)
+			resource_collected = current.location.total_pop;
+		current.location.total_pop -= resource_collected;
 		
 		var money_collected = Math.ceil(resource_collected * this.ratio_money);
 

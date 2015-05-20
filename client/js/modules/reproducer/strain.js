@@ -115,7 +115,7 @@ exports.options = {
 		this.fort = startPoint;
 		this.S.modules['factory'].val('productionSpeed',1);
 		this.S.modules['factory'].addLocation(startPoint);
-		this.S.modules['movement.base'].currentSmellAdd('tech', 10);
+		this.S.modules['movement.base'].currentSmellAdd('total_pop', 10);
 
 		// Send the starting point back to the callback function to start the simulation
 		return startPoint;
