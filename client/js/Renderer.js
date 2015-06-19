@@ -6,6 +6,7 @@
 /* global hqx */
 /* global SPE */
 /* exported Renderer */
+'use strict';
 var Renderer = function (scaling,onLoad) {
     // Initialize variables
     var Camera, Scene, Sphere, SceneRenderer, DataBarsMesh, DataBarsGeometry, DataBarMesh,
@@ -443,7 +444,7 @@ var Renderer = function (scaling,onLoad) {
             else if(Camera.position.z > 500)
                 Camera.position.z = 500;
             if(Camera.position.z < 400) {
-                Scene.position.y = 400 - Camera.position.z;
+                Camera.position.y = 400 - Camera.position.z;
                 Camera.lookAt(Scene.position);
             }
         }
@@ -468,17 +469,12 @@ var Renderer = function (scaling,onLoad) {
     },
 
     checkIntersection = function( mouseX, mouseY ) {
-        var vector    = new THREE.Vector3( (mouseX / WindowConfig.windowX) * 2 - 1,    -(mouseY / WindowConfig.windowY) * 2 + 1, 0.5);
-
-        // now 'unproject' the point on the screen
-        // back into the the Scene itself. This gives
-        // us a ray direction
-        vector.unproject(Camera);
-
+        var raycaster = new THREE.Raycaster();
         // create a ray from our current Camera position
         // with that ray direction and see if it hits the sphere
-        var raycaster  = new THREE.Raycaster(Camera.position, vector.sub(Camera.position).normalize());
-        var intersects = raycaster.intersectObjects([visualization.mesh]);
+        raycaster.setFromCamera ( new THREE.Vector2( (mouseX / WindowConfig.windowX) * 2 - 1, 
+            -(mouseY / WindowConfig.windowY) * 2 + 1), Camera );
+        var intersects = raycaster.intersectObjects( [visualization.mesh] );
 
         if(intersects.length) {
             return intersects[0].point;
